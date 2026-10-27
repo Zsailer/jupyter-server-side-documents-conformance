@@ -1,0 +1,96 @@
+# The page: what it says before the stories, and a title and an introduction for each group of suite.yaml.
+# The stories themselves are in the other files of this directory, one per group. See storyboard.py for how they are written.
+#
+# This is a description of the PRODUCT. It says what a user must be able to count on; it knows nothing of how any version of the
+# code gets there, and a test keeps implementation words off the page.
+# {stories} and {open} stand for the number of stories and the number that still need alignment.
+page:
+  title: "Notebooks in more than one tab: what Jupyter does when things go wrong"
+  intro: >-
+    {stories} stories about one notebook that is open in one or more browser tabs while connections drop, the server lets go of the
+    notebook or dies, or the file changes underneath. Each is drawn step by step and ends with what every copy of the notebook must
+    hold. This page says what the product should do, whatever the code does today. Where that is not settled, the story is marked
+    “Needs alignment” and shows the proposed answer next to the alternatives.
+  principles:
+    - name: "Coming back is not special"
+      text: >-
+        A tab that returns after being offline is treated like someone who stayed online: its work is merged with everyone else's by
+        the same rules, and nothing is replaced wholesale.
+    - name: "Nothing is lost or doubled by accident"
+      text: >-
+        Work that has reached the notebook is never lost by accident. A dropped connection, a lost message, a rebuilt notebook, a moved
+        cell or a missing cell id never make it disappear and never show a cell twice. Only another person's choice, such as a deletion or
+        a rewrite, can change what you typed.
+    - name: "The file is the truth for what it carries"
+      text: >-
+        A change made to the file outside Jupyter (git, a sync tool, a restore from a backup) is applied: the notebook follows the file.
+    - name: "What was never saved is not promised"
+      text: >-
+        If the server dies before it saved and no open tab still holds the work, at most the last autosave interval of typing is
+        missing. The notebook is the last saved state, whole.
+    - name: "Nobody is cut off for being slow"
+      text: >-
+        A tab that answers late is still served. A stray message from a tab that is gone never stops the notebook for the people
+        who are still there.
+    - name: "Everyone ends with the same notebook"
+      text: >-
+        When a story is over, every tab, the server and the file hold the same cells.
+  decisions_intro: >-
+    {open} of the stories do not have a settled answer yet. Each shows, below its picture, the proposed behavior and the alternatives.
+    The proposals follow one rule of thumb: where two people's intentions conflict (a deletion against typing, two rewrites of one text)
+    the merge decides, as it does between two people who are online; where the machinery could lose or duplicate something that nobody
+    meant to, nothing may be lost or duplicated.
+  applies_if:
+    persisted_lineage:
+      badge: "Applies only if the server keeps a history record"
+      text: >-
+        The server keeps a record of each notebook's editing history next to the file, so that a tab that comes back can pick up where
+        it left off.
+  footer: >-
+    Generated from the files in storyboards/ by python -m jupyter_server_documents.tests.acceptance.render. Each story is also a test of the
+    acceptance suite (SCENARIOS.md), which says which versions of the code already do what the page describes (CATALOGUE.md). The page
+    states the intended behavior in full; the suite checks most of what it shows, not every detail (for instance, not every tab's copy
+    at the end of every story).
+
+groups:
+  handshake:
+    title: "Reconnecting"
+    intro: >-
+      A tab that comes back from offline and the server first compare what they each hold. These are the situations around that
+      moment: a message that is lost or late, a brand-new tab, a second tab, and two tabs that are both out of date.
+  edges:
+    title: "More corners of reconnecting"
+    intro: >-
+      A tab that has only been reading, a view-only user, a tab that left, a late answer after offline typing, and cells that were
+      created, moved or saved by tabs that come back in a different order.
+  rebuild:
+    title: "Offline edits across a rebuilt notebook"
+    intro: >-
+      While a tab is offline the server lets go of the notebook and builds it again from the file. What the user typed, moved or
+      deleted in the meantime must still hold when the tab comes back.
+  crash:
+    title: "A server that dies before it saved"
+    intro: >-
+      What survives when the server stops before saving, and what a tab that comes back may bring back.
+  files:
+    title: "The file changes underneath"
+    intro: >-
+      The file is edited outside Jupyter, replaced by another copy, or deleted.
+  lineage:
+    title: "The server's history record"
+    intro: >-
+      These stories apply only if the server keeps a record of each notebook's editing history next to the file. They say what that
+      record must do when it is missing, damaged, too big, written by another version, or no longer needed.
+  outputs:
+    title: "Notebook outputs"
+    intro: >-
+      The outputs of cells (results, plots, text) must survive the server letting go of a notebook and building it again.
+  stop:
+    title: "Shutting a notebook down"
+    intro: >-
+      What the server does with messages that are still waiting when it shuts a notebook down.
+  residual:
+    title: "What still needs a decision"
+    intro: >-
+      Situations in which two people's intentions conflict, or in which the machinery could lose something. Each has a proposed answer
+      and the alternatives to align on.

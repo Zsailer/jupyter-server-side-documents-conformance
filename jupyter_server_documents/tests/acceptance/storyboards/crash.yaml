@@ -1,0 +1,121 @@
+# A server that dies before it saved.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  typed_cell: &typed_cell ["c0=+TYPED", c1, c2, "+ONLINE CELL"]
+  kept_cell: &kept_cell ["c0=+TYPED", c1, c2, ONLINE CELL]
+  server_edit: &server_edit ["c0=+SERVER", c1, c2]
+  four: &four [c0, c1, c2, "+BOTH TABS HOLD THIS"]
+  four_kept: &four_kept [c0, c1, c2, BOTH TABS HOLD THIS]
+
+scenarios:
+  S2:
+    title: "The server dies before it saved; the tab holds newer edits"
+    story: >-
+      A tab adds a cell and types while it is online. The server dies before it saved anything, so the file is as it was when the
+      notebook was opened. The tab, which still holds its edits, reconnects to a server that starts again from the file.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: add, text: "adds a cell “ONLINE CELL” and types “+TYPED” into c0; both reach the server", cells: *typed_cell}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: crash, text: "dies before it saved anything: the file still has the three cells"}
+      - {at: server, kind: rebuild, text: "starts again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects and brings back what it holds", cells: *kept_cell}
+      - {at: file, kind: save, text: "autosave", cells: *kept_cell}
+    result: "The tab brings back what the server lost: the new cell and the typing are kept, once."
+    ends: {all: *kept_cell}
+    risk: "A server that dies must not take with it what a tab still holds."
+
+  S3:
+    title: "An edit made on the server itself survives a crash"
+    story: >-
+      Code running on the server edits the notebook directly. A connected tab sees the edit live. The server then dies before it saved
+      it, and starts again from the file.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: server, kind: type, text: "code on the server appends “+SERVER” to c0", cells: *server_edit}
+      - {at: tab, kind: note, text: "sees the edit live", cells: *server_edit}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: crash, text: "dies before it saved: the file still has the old c0"}
+      - {at: server, kind: rebuild, text: "starts again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects and brings the edit back", cells: *server_edit}
+      - {at: file, kind: save, text: "autosave", cells: *server_edit}
+    result: "The edit survives: a tab that saw it brings it back."
+    ends: {all: *server_edit}
+    risk: "A change the user could see on screen must not disappear because of a crash that the user did not cause."
+
+  Q1:
+    title: "A cell held by two tabs is lost by the server in a crash"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      The second tab adds a cell online and the server relays it to the first tab. The server then dies before it saved the cell. Whichever
+      tab reconnects first finds a server that never had the cell.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: add, text: "adds a cell “BOTH TABS HOLD THIS”", cells: *four}
+      - {at: tab, kind: note, text: "receives it: both tabs now hold the cell", cells: *four_kept}
+      - {at: [tab, tab2], kind: offline, text: "the server dies: both tabs lose their connection"}
+      - {at: server, kind: crash, text: "dies before it saved the new cell: the file still has the three cells"}
+      - {at: server, kind: rebuild, text: "starts again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "the first tab reconnects first", cells: *four_kept}
+      - {at: tab2, kind: reconnect, to: server, text: "the second tab reconnects", cells: *four_kept}
+      - {at: file, kind: save, text: "autosave", cells: *four_kept}
+    result: "The cell is kept: four cells everywhere."
+    ends: {all: *four_kept}
+    risk: "The first tab to come back must not delete a cell that the other tab still holds, taking the other tab's copy with it."
+
+  P1:
+    title: "The file is put back to an older copy"
+    story: >-
+      A tab holds newer content than the file: it added a cell and typed, and the server saved that. Then the file is replaced by an older
+      copy of the notebook (a restore from a backup, or a sync tool that put the old copy back), and the tab, which still holds the newer
+      content, reconnects to a server that starts again from that file. Unlike the story of a server that dies before it saved, the older
+      file is not an accident of timing: somebody put it there.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: add, text: "adds a cell “ONLINE CELL” and types “+TYPED” into c0; both reach the server", cells: *typed_cell}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook, saving it"}
+      - {at: file, kind: save, text: "holds the newer notebook", cells: *kept_cell}
+      - {at: file, kind: restore, text: "an older copy of the file is put back (a restore from a backup)", cells: *three}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects, still holding newer content", cells: *three}
+    result: "The file wins: every copy ends with the file's three cells. A restore from a backup holds even against a tab that still has newer content."
+    ends: {all: *three}
+    risk: "If an open tab could undo a restore, nothing could ever be restored."
+    decision:
+      question: >-
+        When the file is older than what a tab still holds (a restore from a backup, a stale sync), does the file win, or does the newer
+        content come back?
+      options:
+        - label: "The file wins"
+          proposed: true
+          detail: >-
+            A restore from a backup, or a sync that put an older copy on disk, has to hold even against a tab that still has newer
+            content, or nothing could ever be restored. The newer content is the price.
+          ends: *three
+        - label: "The newer content comes back"
+          detail: >-
+            The tab's newer work is put back into the notebook, so no work is lost. The price: an open tab can undo a restore from a
+            backup.
+          ends: *kept_cell
+
+  S6:
+    title: "The server dies in the middle of saving"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      A tab adds a cell and types. The server writes its record of the new state and dies before it writes the file, so the file still has
+      the old content. When the server starts again it must notice the unfinished save and complete it, with no tab connected.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: add, text: "adds a cell “ONLINE CELL” and types “+TYPED” into c0", cells: *typed_cell}
+      - {at: record, kind: save, text: "the server writes its record of the new state", cells: *kept_cell}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: crash, text: "dies before it writes the file: the file still has the old content"}
+      - {at: server, kind: rebuild, text: "starts again, notices the unfinished save, takes the newer state and finishes the save; no tab is connected", cells: *kept_cell}
+      - {at: file, kind: save, text: "now holds the new state", cells: *kept_cell}
+      - {at: tab, kind: reconnect, to: server, text: "later the tab reconnects: it already agrees with the server", cells: *kept_cell}
+    result: "The save is completed on restart, with nobody connected: the new cell and the typing are in the file."
+    ends: {all: *kept_cell}
+    risk: "An interrupted save must neither lose the new state nor leave the file and the record disagreeing."

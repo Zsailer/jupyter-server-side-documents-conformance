@@ -1,0 +1,68 @@
+# What YRoom.stop() does with queued work.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  queued: &queued ["c0=+QUEUED", c1, c2]
+  valid: &valid ["c0=+VALID", c1, c2]
+
+scenarios:
+  X1:
+    title: "Shutting down with an update still waiting from a connected tab"
+    story: >-
+      A tab that is connected and in sync types, and the server is told to shut the notebook down while the update is still waiting in
+      its queue.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+QUEUED” into c0; the update is waiting in the server's queue", cells: *queued}
+      - {at: server, kind: free, text: "is told to shut the notebook down while the update is still waiting"}
+      - {at: server, kind: note, text: "applies the waiting update, saves it, and finishes shutting down", cells: *queued}
+      - {at: file, kind: save, text: "holds the edit", cells: *queued}
+    result: "The waiting update is applied and saved, and shutting down completes."
+    ends: {tab: *queued, server: *queued, file: *queued}
+    risk: "An edit the server had already received must not be dropped because it was still in the queue."
+
+  X2:
+    title: "Shutting down with a damaged message ahead of a valid one"
+    story: >-
+      A damaged message and, right behind it, a valid edit are waiting in the server's queue when the notebook is shut down.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+VALID” into c0, right after a damaged message reached the server's queue", cells: *valid}
+      - {at: server, kind: free, text: "is told to shut the notebook down while both messages are still waiting"}
+      - {at: server, kind: note, text: "skips the damaged message, applies the valid edit, saves it, and finishes shutting down", cells: *valid}
+      - {at: file, kind: save, text: "holds the valid edit", cells: *valid}
+    result: "The damaged message is skipped, the valid edit is applied and saved, and shutting down completes."
+    ends: {tab: *valid, server: *valid, file: *valid}
+    risk: "One damaged message must not keep the edits behind it from being saved, nor keep the notebook from shutting down."
+
+  X3:
+    title: "Shutting down waits for the cleanup work registered for it"
+    lanes: {server: "Server"}
+    start: {server: "an open notebook"}
+    story: >-
+      Another part of the server (for example, the kernel sessions) registers some cleanup work to run when the notebook is shut down.
+      The work takes a moment. The server must not report the notebook as shut down before it is done.
+    steps:
+      - {at: server, kind: note, text: "another part of the server registers some cleanup work for when the notebook shuts down; it takes a moment"}
+      - {at: server, kind: free, text: "is told to shut the notebook down"}
+      - {at: server, kind: deadline, text: "waits for the cleanup work to finish"}
+      - {at: server, kind: note, text: "only then reports that the notebook is saved and shut down"}
+    result: "The notebook is reported as shut down only after the cleanup work registered for the shutdown has finished."
+    ends: {server: "the cleanup work finished before the server reported it was done"}
+    risk: "Reporting “done” too early lets the next step, such as building the notebook again, run before the cleanup that it depends on."
+
+  X4:
+    title: "Shutting down with an update from a tab that has already left"
+    story: >-
+      A tab sends an update and leaves before the server handled it. The update is still in the server's queue when the notebook is shut
+      down.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+DEPARTED” into c0; the update is waiting in the server's queue", cells: ["c0=+DEPARTED", c1, c2]}
+      - {at: tab, kind: leave, text: "closes the tab before the server handled the update"}
+      - {at: server, kind: free, text: "is told to shut the notebook down"}
+      - {at: server, kind: note, text: "drops the update of the tab that has left, and finishes shutting down", cells: *three}
+      - {at: file, kind: save, text: "holds the notebook as it was", cells: *three}
+    result: "The update of a tab that has left is dropped (it never reached the notebook), and shutting down completes."
+    ends: {server: *three, file: *three}
+    risk: "A message from a tab that is gone must never keep the notebook from shutting down."
