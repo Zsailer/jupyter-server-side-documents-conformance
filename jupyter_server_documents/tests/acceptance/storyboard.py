@@ -43,7 +43,8 @@ A cell is a short string. The first character is a mark, ``=`` starts a note::
 ``cells`` may also be a plain string (a remark about that lane) or ``[]`` (nothing).
 
 A scenario whose answer is not settled (``policy`` of ``suite.yaml`` is ``best_effort`` or ``pending``) has a ``decision``: the
-question, and options of which exactly one is ``proposed``. A scenario that is settled has none.
+question, and options of which exactly one is ``proposed``. A scenario that is settled has none. The page calls the preferred option
+"Proposed" when the answer was taken for now (best effort) and "Suggested" when nobody has answered yet (pending).
 
 A group of ``page.yaml`` with ``played: false`` holds stories that ``suite.yaml`` does not have: situations the product has to answer
 for that no scenario plays yet (today, the ones with an AI agent). They are drawn like the others, marked as not played so that nobody
@@ -154,6 +155,16 @@ IMPLEMENTATION_WORDS = (
 )
 
 
+PROPOSED = "Proposed"
+SUGGESTED = "Suggested"
+
+
+def _answer_label(scn) -> str:
+    """The word for the preferred option of a decision: "Proposed" for an answer taken for now (a best-effort policy of suite.yaml),
+    "Suggested" for one that nobody has discussed (a pending policy, or a story that no scenario plays yet)."""
+    return SUGGESTED if scn is None or scn.pending else PROPOSED
+
+
 class StoryboardError(ValueError):
     """The storyboards are wrong; the message says where."""
 
@@ -260,8 +271,8 @@ def check(spec: dict[str, Any], suite, *, complete: bool = True) -> None:
     for key in ("title", "intro", "principles", "decisions_intro", "applies_if", "footer"):
         if not page.get(key):
             raise StoryboardError(f"page.yaml: page.{key} is required")
-    if unplayed and not {"badge", "text", "option_label"} <= set(page.get("unplayed") or {}):
-        raise StoryboardError("page.yaml: page.unplayed needs a badge, a text and an option_label (there are groups that suite.yaml does not play)")
+    if unplayed and not {"badge", "text"} <= set(page.get("unplayed") or {}):
+        raise StoryboardError("page.yaml: page.unplayed needs a badge and a text (there are groups that suite.yaml does not play)")
     for feature in {f for s in suite.scenarios.values() for f in s.requires}:
         if not {"badge", "text"} <= set(page["applies_if"].get(feature) or {}):
             raise StoryboardError(f"page.yaml: page.applies_if needs a badge and a text for the feature {feature!r}")
@@ -432,7 +443,7 @@ def _board(sid: str, sb: dict) -> str:
     return "".join(out)
 
 
-def _decision(sb: dict, proposed_label: str = "Proposed") -> str:
+def _decision(sb: dict, proposed_label: str = PROPOSED) -> str:
     d = sb["decision"]
     options = []
     for o in d["options"]:
@@ -469,7 +480,7 @@ def _card(sid: str, sb: dict, scn, page: dict[str, Any]) -> str:
     if sb.get("risk"):
         body.append(f'<p class="risk"><b>Why it matters</b> {_e(sb["risk"])}</p>')
     if open_:
-        body.append(_decision(sb, page["unplayed"]["option_label"] if scn is None else "Proposed"))
+        body.append(_decision(sb, _answer_label(scn)))
     body.append("</article>")
     return "".join(body)
 
@@ -646,7 +657,8 @@ def _decisions_table(spec: dict, suite) -> str:
                 continue
             d = sb["decision"]
             proposed = next(o for o in d["options"] if o.get("proposed"))
-            tag = "" if sid in suite.scenarios else f'<span class="tag">{_e(spec["page"]["unplayed"]["option_label"].lower())}</span>'
+            label = _answer_label(suite.scenarios.get(sid))
+            tag = "" if label == PROPOSED else f'<span class="tag">{_e(label.lower())}</span>'
             rows.append(
                 f'<tr><td><a href="#{_e(sid)}"><b>{_e(sid)}</b></a></td><td>{_e(sb["title"])}</td>'
                 f'<td>{_e(d["question"])}</td><td>{_e(proposed["label"])}{tag}</td></tr>'

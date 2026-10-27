@@ -1,0 +1,948 @@
+# The acceptance suite: what every scenario must end with, and what each kind of tree does today.
+#
+# This file is the policy. The Python code only plays the stories (scenarios/*.py) and reads this file
+# (suite.py). To change what is expected, edit this file and run
+#
+#     python -m jupyter_server_documents.tests.acceptance.render
+#
+# to regenerate SCENARIOS.md and CATALOGUE.md (a test fails if they are out of date). See README.md.
+#
+# A scenario is judged at three levels: `none` (the floor does not hold), `floor` (nothing that must never
+# happen happened, but the story does not end the way it should) and `reference` (how it should end). `floor`
+# and `reference` are lists of clauses over the verdict the scenario returns (the clauses are described in
+# suite.py). `floor` is optional; without it, nothing short of the reference is acceptable.
+#
+# `expect` says which level a scenario reaches on each kind of tree (a profile), `reference` unless stated.
+# Anything else needs a `why`. A tree that does worse than expected is a regression; one that does better is an
+# improvement, and then this file has to be updated, so that progress is not lost unnoticed.
+#
+# `policy` says whether the way a story must end is settled. Without it the answer is decided. `best_effort` is
+# a decision taken provisionally: enforced like any other, with `decision` saying what was chosen, and listed in
+# SCENARIOS.md so that it is easy to find and change. `pending` is a question nobody has answered: the reference
+# is a proposal that is reported and never enforced (the floor still is).
+#
+# The best-effort answers follow one rule of thumb. Where two people's intentions conflict (a deletion against typing,
+# two rewrites of one text) the merge decides, as it does between two people who are online: coming back from offline
+# is not treated differently. Where the machinery loses or duplicates something nobody meant to (a move, an outside
+# change, a missing cell id) nothing may be lost or duplicated. The file is the source of truth for what it carries,
+# and what was never saved is not promised.
+version: 1
+
+features:
+  persisted_lineage: >-
+    The room keeps its Yjs history across rebuilds (a checkpoint next to the notebook) and tells every client
+    which history it holds, so that a returning tab merges instead of being repaired.
+  healing: >-
+    When a tab has to repair its copy, the client puts back what the user typed or created while disconnected,
+    keeps their place in the notebook, and tells them only if something had to be set aside.
+
+# The kinds of tree the expectations are written for, by the features the tree has.
+profiles:
+  stopgap:
+    features: []
+    about: "Upstream 0.4.x: the idempotent repair (#333), clocks as well as presence (#334), the late SyncStep2 reply (#329)."
+  healing:
+    features: [healing]
+    about: The stopgap plus the client-side healing.
+  lineage:
+    features: [persisted_lineage]
+    about: The stopgap plus the persisted lineage, without the healing.
+  lineage+healing:
+    features: [persisted_lineage, healing]
+    about: The stopgap plus the persisted lineage and the healing.
+
+groups:
+  handshake: "The handshake of upstream #305: a lost or late reply, a new tab, two stale tabs, and the controls"
+  edges: "More edges of the handshake: a bare client, a read-only client, a departed client, late replies with offline work"
+  rebuild: "Edits made while disconnected, across a rebuilt room"
+  crash: "A server that dies before it saved"
+  files: "The file changes under the room"
+  lineage: "The persisted lineage itself: its checkpoint, its limits and its upgrade paths"
+  outputs: "Notebook outputs across a free and a rebuild"
+  stop: "What YRoom.stop() does with queued work"
+  residual: "What still goes wrong when everything is new (answers decided as a best effort)"
+  ai: "An AI agent (such as Claude Code) edits the server's live copy while the server holds the notebook, the file when it does not"
+
+# Clause lists that several scenarios share (YAML anchors).
+shared:
+  cells3: &cells3
+    - equals: {client_cells: 3, server_cells: 3, disk_cells: 3}
+
+scenarios:
+  # ------------------------------------------------------------------------------------------------------------
+  # handshake: the table of upstream #305
+  # ------------------------------------------------------------------------------------------------------------
+  A:
+    group: handshake
+    says: "Control. The tab gets its reply through and ends with the rebuilt room's 3 cells everywhere."
+    reference: *cells3
+
+  B:
+    group: handshake
+    says: "The failure of issue 70. The reply is lost, the tab reconnects, and nothing is deleted: 3 cells everywhere, at every step."
+    reference:
+      - equals: {client_cells: 3, server_cells: 3, disk_cells: 3, client_cells_after_hs2: 3, server_cells_after_hs2: 3}
+
+  G:
+    group: handshake
+    says: "The reply arrives after the server's deadline. It is applied, the tab is not disconnected, the next handshake is not divergent."
+    floor: *cells3
+    reference:
+      - equals:
+          client_cells: 3
+          server_cells: 3
+          disk_cells: 3
+          hs3_divergent: false
+          server_closed_client_at_deadline: false
+          server_knew_all_client_ids_after_late_reply: true
+
+  D1:
+    group: handshake
+    says: "A new tab loses its first reply and its document_id update, and reconnects: 3 cells everywhere."
+    reference: *cells3
+
+  D2:
+    group: handshake
+    says: "A new tab loses only its reply (its document_id update arrives) and reconnects: 3 cells everywhere."
+    reference: *cells3
+
+  C3:
+    group: handshake
+    says: "A second tab types into an existing cell while offline: 3 cells everywhere, and the typing reaches the server."
+    reference:
+      - equals: {tab2_cells: 3, server_cells: 3, disk_cells: 3, typing_reached_server: true}
+
+  C2:
+    group: handshake
+    says: "A second tab adds a cell while offline: the cell is kept, 4 cells everywhere, and the first tab is not touched."
+    floor:
+      - same: [tab2_cells, tab1_cells_after_broadcast, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {tab2_cells: 4, tab1_cells_after_broadcast: 4, server_cells: 4, disk_cells: 4}
+    expect:
+      stopgap: floor
+    why: >-
+      The cell added offline is dropped: the repair deletes what the room does not know, and cannot tell the cell
+      from a stranger's. Upstream #305 names this class ("offline edits are still dropped"). The healing puts the
+      cell back; the persisted lineage avoids the repair.
+
+  H2:
+    group: handshake
+    says: "Two stale tabs with unequal history: 5 cells everywhere and none twice."
+    reference:
+      - equals: {tabA_cells: 5, tabB_cells: 5, server_cells: 5, disk_cells: 5}
+      - empty: [duplicated_cells]
+
+  C1:
+    group: handshake
+    says: "Control. The first tab adds a cell while offline: 4 cells everywhere."
+    reference:
+      - equals: {client_cells: 4, server_cells: 4, disk_cells: 4}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # edges of the handshake
+  # ------------------------------------------------------------------------------------------------------------
+  C:
+    group: edges
+    says: "A bare client (it has authored nothing yet) adds a cell while offline: the cell is kept, 4 cells everywhere."
+    floor:
+      - same: [client_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {client_cells: 4, server_cells: 4, disk_cells: 4}
+    expect:
+      stopgap: floor
+    why: >-
+      The cell added offline is dropped: the repair cannot tell it from a stranger's. The healing puts it back; the
+      persisted lineage avoids the repair.
+
+  E:
+    group: edges
+    says: "A read-only client reconnects: it still shows the 3 cells, as the server and the file do."
+    reference:
+      - equals: {client_cells_after_reconnect: 3, server_cells: 3, disk_cells: 3}
+
+  F:
+    group: edges
+    says: "A queued update from a departed client does not freeze the room: the loop lives, a newcomer is served."
+    reference:
+      - equals: {room_message_loop_alive: true, second_client_synced_3_cells: true}
+
+  G2:
+    group: edges
+    says: "A late reply after offline typing: the notebook is intact, the reply is applied, and the typing is kept."
+    floor: *cells3
+    reference:
+      - equals:
+          client_cells: 3
+          server_cells: 3
+          disk_cells: 3
+          offline_typing_kept: true
+          server_closed_client_at_deadline: false
+          server_closed_client_after_late_reply: false
+    expect:
+      stopgap: floor
+    why: >-
+      The typing made offline is dropped by the repair. The healing puts it back by cell id; the persisted lineage
+      avoids the repair.
+
+  G3:
+    group: edges
+    says: "A second tab types offline and its reply is late: the typing reaches the server and nobody is disconnected."
+    reference:
+      - equals:
+          tab2_cells: 3
+          server_cells: 3
+          disk_cells: 3
+          typing_reached_server: true
+          server_closed_client_at_deadline: false
+          server_closed_client_after_late_reply: false
+
+  H3:
+    group: edges
+    says: "Two stale tabs, one also holding an unknown author's work: 6 cells everywhere and none twice."
+    reference:
+      - equals: {tabA_cells: 6, tabB_cells: 6, server_cells: 6, disk_cells: 6}
+      - empty: [duplicated_cells]
+
+  H4:
+    group: edges
+    says: "Two stale tabs with the history lost and an offline edit: 5 cells everywhere, none twice, the tab with the edit repairs."
+    reference:
+      - equals: {tabA_cells: 5, tabB_cells: 5, server_cells: 5, disk_cells: 5}
+      - empty: [duplicated, tabB_duplicated]
+
+  K:
+    group: edges
+    says: "A cell created offline under a clientID the room knows only as a prefix is kept: 5 cells, none twice."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 4}
+      - empty: [duplicated_cells]
+    reference:
+      - equals: {server_cells: 5, disk_cells: 5, offline_cell_kept: true}
+      - empty: [duplicated_cells]
+    expect:
+      stopgap: floor
+    why: >-
+      The cell created offline is dropped by the repair, because the room knows its author's clientID only as a
+      prefix. The healing puts it back; the persisted lineage avoids the repair.
+
+  K2:
+    group: edges
+    says: "A cell that was already saved, under a prefix-known clientID, is not duplicated: 5 cells."
+    reference:
+      - equals: {server_cells: 5, disk_cells: 5}
+      - empty: [duplicated_cells]
+
+  M1:
+    group: edges
+    says: "A second tab moves a cell while offline: the moved cell survives, 3 cells everywhere."
+    floor:
+      - same: [tab2_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 2}
+    reference:
+      - equals: {tab2_cells: 3, server_cells: 3, disk_cells: 3, moved_cell_survives: true}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # edits made while disconnected, across a rebuilt room
+  # ------------------------------------------------------------------------------------------------------------
+    expect:
+      stopgap: floor
+    why: >-
+      A move is a deletion plus an insertion, and the insertion made offline is dropped by the repair. The healing
+      inserts the cell again; the persisted lineage avoids the repair.
+  N1:
+    group: rebuild
+    says: "The room is rebuilt, then the tab types offline into an existing cell: the typing is kept."
+    floor:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3}
+    reference:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3, typing_kept: true}
+    expect:
+      stopgap: floor
+    why: The typing made offline is dropped by the repair. The healing puts it back by cell id; the persisted lineage avoids the repair.
+
+  M2:
+    group: rebuild
+    says: "A cell moved while offline stays moved after the room is rebuilt, and exists once."
+    floor:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3, copies_of_moved_cell: 1}
+    reference:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3, copies_of_moved_cell: 1, moved_once_at_the_end: true}
+    expect:
+      stopgap: floor
+      healing: floor
+    why: >-
+      Yjs has no move. After a repair the deletion at the old position cannot be expressed, so the move is undone;
+      only a continued history can carry it.
+
+  R1:
+    group: rebuild
+    says: "A cell deleted while offline stays deleted after the room is rebuilt: 2 cells everywhere."
+    floor:
+      - same: [tab_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 2}
+    reference:
+      - equals: {tab_cells: 2, server_cells: 2, disk_cells: 2, deleted_cell_stays_deleted: true}
+    expect:
+      stopgap: floor
+      healing: floor
+    why: A deletion is not visible in the text, so the repair cannot give it back and the rebuilt room's copy of the cell returns.
+
+  W1:
+    group: rebuild
+    says: "Two people type into one cell, one of them offline across a rebuild: both typings are kept."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {a_typing_kept: true, b_typing_kept: true}
+    expect:
+      stopgap: floor
+    why: >-
+      The typing of the tab that was offline is dropped by the repair. The healing keeps it as a recovered copy; the
+      persisted lineage merges it into the cell.
+
+  W2:
+    group: rebuild
+    says: "Two stale tabs both type offline: both typings are kept."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {a_typing_kept: true, b_typing_kept: true}
+    expect:
+      stopgap: floor
+      healing: floor
+    why: After the first tab's repair the room knows the second tab's ids, so the second tab is not recognised as stale.
+
+  W3:
+    group: rebuild
+    says: "Two stale tabs both type offline and the checkpoint store is lost: both typings are kept."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {a_typing_kept: true, b_typing_kept: true}
+    expect:
+      stopgap: floor
+      healing:
+        level: floor
+        why: >-
+          After the first tab's repair the room knows the second tab's ids, so the second tab is not recognised as stale
+          and loses its typing.
+      lineage:
+        level: floor
+        why: >-
+          The new lineage token makes both tabs repair, and nothing gives their typing back; that is the healing's part.
+    why: The typing made offline is dropped by the repair.
+
+  S1:
+    group: rebuild
+    says: "A stale tab reconnects after a rebuild: its online edits and its offline typing are all kept, nothing is doubled."
+    floor:
+      - equals: {online_cell_kept: true, online_typing_kept: true}
+      - empty: [duplicated]
+      - at_least: {server_cells: 4}
+    reference:
+      - equals: {online_cell_kept: true, online_typing_kept: true, offline_typing_kept: true}
+      - empty: [duplicated]
+      - at_least: {server_cells: 4}
+    expect:
+      stopgap: floor
+    why: The typing made offline is dropped by the repair. The healing puts it back by cell id.
+
+  S5:
+    group: rebuild
+    says: "The checkpoint store is lost: the room starts a new history, and the stale tab's offline typing is kept."
+    floor:
+      - equals: {notebook_wiped: false}
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {notebook_wiped: false, offline_typing_kept: true}
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    expect:
+      stopgap: floor
+      lineage: floor
+    why: With no checkpoint to continue, the tab has to repair, and the typing made offline is dropped unless the healing puts it back.
+
+  S7:
+    group: rebuild
+    says: "The checkpoint is corrupt: the room starts a new history and never crashes, and the offline typing is kept."
+    floor:
+      - equals: {notebook_wiped: false}
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {notebook_wiped: false, offline_typing_kept: true}
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    expect:
+      stopgap: floor
+      lineage: floor
+    why: With no usable checkpoint, the tab has to repair, and the typing made offline is dropped unless the healing puts it back.
+
+  # ------------------------------------------------------------------------------------------------------------
+  # a server that dies before it saved
+  # ------------------------------------------------------------------------------------------------------------
+  S2:
+    group: crash
+    says: "The server dies before saving; the returning tab brings back its newer online edits."
+    floor:
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {online_cell_kept: true, online_typing_kept: true}
+      - empty: [duplicated]
+      - at_least: {server_cells: 4}
+    expect:
+      stopgap: floor
+    why: >-
+      The edits the server lost are written under ids the rebuilt room does not have, so the repair drops them. The
+      healing puts back what it can see by cell id; the persisted lineage avoids the repair.
+
+  S3:
+    group: crash
+    says: "An edit made on the server's own document, seen live by a tab, survives a crash before the save."
+    floor:
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {server_side_edit_kept: true}
+      - empty: [duplicated]
+    expect:
+      stopgap: floor
+      healing: floor
+    why: Healing gives back what the user did, and the user did not make this edit; only a continued history can take it back.
+
+  Q1:
+    group: crash
+    says: "A cell that two tabs hold, lost by the server in a crash, is kept: 4 cells everywhere."
+    floor:
+      - same: [tab1_cells, tab2_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {cell_kept: true, tab1_cells: 4, tab2_cells: 4, server_cells: 4, disk_cells: 4}
+    expect:
+      stopgap: floor
+      healing: floor
+    why: The first tab to reconnect deletes the cell the other tab still holds; only a continued history keeps it.
+
+  P1:
+    group: crash
+    says: "The file was put back to an older copy: the room follows the file, and a tab's newer content does not undo the restore."
+    floor:
+      - same: [tab_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {online_cell_kept: false, typing_kept: false}
+    expect:
+      healing: floor
+    why: >-
+      A client-side healing alone brings the newer content back from the tab, which undoes the restore.
+    policy:
+      status: best_effort
+      question: >-
+        When the file is older than what a tab still holds (a restore from backup, a stale sync), does the file win
+        (restoring a backup must work) or does the newer content come back (no work is lost)?
+      decision: >-
+        The file wins. A restore from a backup, or a sync that put an older copy on disk, has to hold even against a tab
+        that still has newer content, or nothing could ever be restored. The newer content is the price.
+      today: The room follows the file; a client-side healing alone would bring the newer content back.
+
+  S6:
+    group: crash
+    requires: [persisted_lineage]
+    says: "The server dies between writing the checkpoint and writing the file: the save is completed on restart."
+    floor:
+      - empty: [duplicated]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals:
+          interrupted_save_completed_on_disk: true
+          online_cell_kept: true
+          online_typing_kept: true
+          online_cell_restored_without_any_client: true
+          lineage_continued: true
+      - at_least: {server_cells: 4}
+      - empty: [duplicated]
+
+  # ------------------------------------------------------------------------------------------------------------
+  # the file changes under the room
+  # ------------------------------------------------------------------------------------------------------------
+  S4:
+    group: files
+    says: "The file is edited outside while the room is freed: the outside edit is applied, and the stale tab's typing is kept."
+    floor:
+      - equals: {external_edit_applied: true, external_cell_added: true, external_delete_applied: true}
+      - empty: [duplicated]
+    reference:
+      - equals: {external_edit_applied: true, external_cell_added: true, external_delete_applied: true, offline_typing_kept: true}
+      - empty: [duplicated]
+    expect:
+      stopgap: floor
+    why: The file is the source of truth, so the outside edit always applies; the typing made offline is dropped by the repair unless it is put back.
+
+  S8:
+    group: files
+    says: "An outside edit that preserves the file's mtime is still applied when the room is rebuilt."
+    reference:
+      - equals: {external_edit_applied: true, external_cell_added: true, disk_keeps_external_edit: true, server_cells: 4}
+
+  S9:
+    group: files
+    says: "An outside edit reloaded in place, then a crash before any save: the new cell exists once, 4 cells everywhere."
+    reference:
+      - equals: {reloaded_in_place: true, external_cell_copies: 1, tab_cells: 4, server_cells: 4, disk_cells: 4}
+      - empty: [duplicated_ids]
+
+  S10:
+    group: files
+    requires: [persisted_lineage]
+    says: "The notebook is deleted: the room stops and its checkpoint files go."
+    reference:
+      - equals: {room_stopped: true, checkpoint_files_after: 0}
+      - at_least: {checkpoint_files_before: 1}
+
+  S11:
+    group: files
+    requires: [persisted_lineage]
+    says: "The notebook is deleted behind the server's back: the room stops and its checkpoint files go."
+    reference:
+      - equals: {room_stopped: true, checkpoint_files_after: 0}
+      - at_least: {checkpoint_files_before: 1}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # the persisted lineage itself
+  # ------------------------------------------------------------------------------------------------------------
+  S12:
+    group: lineage
+    requires: [persisted_lineage]
+    says: "A room whose Yjs state is over the limit is no longer persisted or announced."
+    reference:
+      - equals:
+          lineage_id_after_open: null
+          checkpoint_files_after_free: 0
+          token_announced_after_rebuild: false
+          server_cells: 3
+      - empty: [checkpoint_files]
+
+  S13:
+    group: lineage
+    requires: [persisted_lineage]
+    says: "A checkpoint from an older pycrdt is restored; one from a newer pycrdt, another format or another jupyter_ydoc is ignored."
+    reference:
+      - equals:
+          same_pycrdt/lineage_continued: true
+          older_pycrdt_0.12.29/lineage_continued: true
+          newer_pycrdt_99.0.0/lineage_continued: false
+          other_format/lineage_continued: false
+          other_jupyter_ydoc_major/lineage_continued: false
+          same_pycrdt/server_cells: 3
+          older_pycrdt_0.12.29/server_cells: 3
+          newer_pycrdt_99.0.0/server_cells: 3
+          other_format/server_cells: 3
+          other_jupyter_ydoc_major/server_cells: 3
+
+  S14:
+    group: lineage
+    requires: [persisted_lineage]
+    says: "A notebook with empty metadata is restored from its checkpoint without a reconcile."
+    reference:
+      - equals: {lineage_continued: true, spurious_reconcile: false, divergent: false, server_cells: 3}
+      - empty: [duplicated]
+
+  T1:
+    group: lineage
+    requires: [persisted_lineage]
+    says: "A tab that synced with a server that announced nothing repairs when the server starts announcing a history."
+    reference:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3, divergent: true}
+      - empty: [duplicated]
+
+  X5:
+    group: lineage
+    requires: [persisted_lineage]
+    says: "An update queued at stop() is drained into the checkpoint: the rebuilt room continues the history and holds the edit."
+    reference:
+      - equals: {edit_in_rebuilt_room: true, lineage_continued: true, tab_divergent: false, server_cells: 3}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # notebook outputs
+  # ------------------------------------------------------------------------------------------------------------
+  O1:
+    group: outputs
+    says: "A notebook without cell ids keeps its outputs through a free, a rebuild and a save."
+    reference:
+      - equals: {outputs_kept: true, outputs_per_cell_in_saved_file: [1, 1, 1], server_cells: 3}
+
+  O2:
+    group: outputs
+    says: "Control. A notebook with cell ids keeps its outputs through a free, a rebuild and a save."
+    reference:
+      - equals: {outputs_kept: true, outputs_per_cell_in_saved_file: [1, 1, 1], server_cells: 3}
+
+  O3:
+    group: outputs
+    says: "A notebook without cell ids keeps its outputs although the runtime output store is wiped in between."
+    reference:
+      - equals: {outputs_kept: true, outputs_per_cell_in_saved_file: [1, 1, 1], server_cells: 3}
+
+  O4:
+    group: outputs
+    says: "A notebook with cell ids keeps its outputs although the runtime output store is wiped in between."
+    reference:
+      - equals: {outputs_kept: true, outputs_per_cell_in_saved_file: [1, 1, 1], server_cells: 3}
+
+  O5:
+    group: outputs
+    says: "With the optimized outputs (outputs only in the runtime store) a rebuild leaves no dangling placeholder."
+    reference:
+      - equals: {outputs_kept: true, dangling_placeholders: false}
+
+  O6:
+    group: outputs
+    says: "With the optimized outputs and the runtime store wiped, a rebuild leaves no dangling placeholder."
+    reference:
+      - equals: {outputs_kept: true, dangling_placeholders: false}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # YRoom.stop()
+  # ------------------------------------------------------------------------------------------------------------
+  X1:
+    group: stop
+    says: "stop() with an update queued by a connected client: the update is applied and saved, and stop() completes."
+    reference:
+      - equals: {room_stopped: true, edit_in_doc: true, edit_on_disk: true, stop_raised: null}
+
+  X2:
+    group: stop
+    says: "stop() with an undecodable update queued before a valid one: the valid one is applied and saved."
+    reference:
+      - equals: {room_stopped: true, valid_edit_in_doc: true, valid_edit_on_disk: true, stop_raised: null}
+
+  X3:
+    group: stop
+    says: "until_saved waits for a Task that an on_stop callback returned."
+    floor:
+      - equals: {task_finished_eventually: true}
+    reference:
+      - equals: {task_finished_eventually: true, task_finished_before_until_saved: true}
+    expect:
+      stopgap: floor
+      healing: floor
+      lineage: floor
+      lineage+healing: floor
+    why: "Known, not caused by any of this work (upstream #330, second commit); no candidate addresses it yet."
+
+  X4:
+    group: stop
+    says: "stop() with an update queued by a client that has left: the update is dropped and stop() completes."
+    reference:
+      - equals: {room_stopped: true, stop_raised: null, edit_in_doc: false}
+
+  # ------------------------------------------------------------------------------------------------------------
+  # what still goes wrong when everything is new (answers decided as a best effort)
+  # ------------------------------------------------------------------------------------------------------------
+  Z1:
+    group: residual
+    says: "One tab moves a cell while another types into it: the move is kept and so is the typing."
+    floor:
+      - same: [tab1_cells, tab2_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {move_kept: true, typing_kept: true}
+    expect:
+      stopgap:
+        level: floor
+        why: >-
+          In Yjs a move is a deletion plus an insertion, so typing made in the cell while it moved is merged into the
+          deleted original, which nobody sees, and is lost silently.
+      lineage:
+        level: floor
+        why: >-
+          Nothing is repaired, so nothing runs after the merge to give the typing back; a rescue after the merge would.
+      lineage+healing:
+        level: floor
+        why: >-
+          Nothing is repaired, so nothing runs after the merge to give the typing back; a rescue after the merge would.
+    policy:
+      status: best_effort
+      question: >-
+        A move is a deletion and an insertion, so typing made in the cell while it was being moved is merged into a cell
+        nobody sees. Should the client give such typing back (a rescue after the merge), or is the CRDT outcome the rule?
+      decision: >-
+        The typing is never discarded because its cell moved at the same moment: the move and the typing both survive.
+        Whoever moves a cell does not mean to throw away what somebody else is typing in it.
+      today: The move is kept and the typing is lost, silently.
+
+  Z2:
+    group: residual
+    says: "Two tabs move the same cell at the same time: the cell exists once, in the notebook and in the file."
+    floor:
+      - same: [tab1_cells, server_cells, disk_cells]
+    reference:
+      - equals: {copies_of_the_moved_cell_in_the_document: 1, copies_of_the_moved_cell_on_disk: 1, server_cells: 3, disk_cells: 3}
+    expect:
+      lineage: floor
+      lineage+healing: floor
+    why: >-
+      The two insertions are two cells; jupyter_ydoc gives the second one a new id when it reads the document and
+      nothing removes it. A deduplication after every merge in the room would.
+    policy:
+      status: best_effort
+      question: Two concurrent moves leave the cell twice. Should the room remove the later copy after every merge?
+      decision: A cell exists once. After two concurrent moves of the same cell the later copy is removed.
+      today: The cell is in the live notebook twice and in the saved file once.
+
+  Z3:
+    group: residual
+    says: "One tab deletes a cell while another types into it offline: the deletion wins, as it does between two tabs that are online."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 2}
+    reference:
+      - equals: {cell_deleted: true, typing_kept: false, recovered_copy: false, server_cells: 2, disk_cells: 2}
+    expect:
+      healing:
+        level: floor
+        why: >-
+          The healing puts the typing back as a copy marked as recovered, for everyone, so the cell the other person
+          deleted appears again.
+    policy:
+      status: best_effort
+      question: >-
+        In a CRDT a deletion wins over a concurrent edit. Who is to be protected: the person who typed (the cell comes
+        back as a recovered copy, for everyone), or the person who deleted (it goes with its typing)?
+      decision: >-
+        The deletion wins, as it does between two people who are online: the cell stays deleted and the typing goes with
+        it. Whoever deleted the cell may have meant its content to go too, and bringing it back as a recovered copy
+        would show it again to everyone, the person who deleted it included.
+      today: The cell is deleted and the typing is lost, silently (what two online tabs get too).
+
+  Z4:
+    group: residual
+    says: "Two tabs rewrite the same cell at the same time: the merge decides, as it does online; both rewrites are kept and nothing is lost."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {both_rewrites_present: true}
+    policy:
+      status: best_effort
+      question: >-
+        Both rewrites are kept by the merge, one after the other, which reads as garbage. Should one rewrite win whole,
+        or should the second be kept as a separate cell?
+      decision: >-
+        The merge decides, as it does between two people who are online: both rewrites are kept, one after the other, and
+        nothing either person typed is lost. Choosing a winner, or splitting the second rewrite into a cell of its own,
+        would treat an offline return differently from online editing; that is a change of product, not a repair.
+      today: The cell holds both texts, one after the other.
+
+  Z5:
+    group: residual
+    says: "The file changes from outside while a tab has unsaved typing: the outside change applies and the typing survives."
+    floor:
+      - equals: {external_edit_applied: true}
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {external_edit_applied: true, typing_kept: true}
+    expect:
+      stopgap: floor
+      healing: floor
+      lineage: floor
+      lineage+healing: floor
+    why: >-
+      The room loads a changed file wholesale into the live document, so unsaved typing is reverted in every cell, not
+      only in the cell the outside change touched. A three-way merge (the last saved text, the live document, the new
+      file) would keep both.
+    policy:
+      status: best_effort
+      question: >-
+        The room loads a changed file wholesale, so unsaved typing is reverted in every cell. Should the room merge the
+        change with the typing (a three-way merge against the last saved text)?
+      decision: >-
+        An outside change is merged with the unsaved typing, not applied over it: both survive. The file stays the
+        source of truth for what it carries, but it does not erase what it has not seen.
+      today: The outside change applies; the unsaved typing is lost, in every cell.
+
+  Z6:
+    group: residual
+    says: "The server dies before it saved typing and no tab that held it is left: the notebook is the last saved state, whole."
+    reference:
+      - equals: {server_cells: 3, disk_cells: 3, tab2_cells: 3}
+    policy:
+      status: best_effort
+      question: >-
+        An acknowledged edit is not yet a saved edit. Is that acceptable, or should every update be written to disk
+        before it is relayed (a disk write per update or batch)?
+      decision: >-
+        The bound is accepted. A server that dies loses what it had not saved, if no tab still holds it: at most an
+        autosave interval of typing, and nothing else. The notebook is the last saved state, whole. Closing that window
+        would cost a disk write per update; revisit if that cost becomes acceptable.
+      today: The typing is lost; the notebook is the last saved state.
+
+  Z7:
+    group: residual
+    says: "Offline typing in a notebook without cell ids, with the checkpoint lost: the typing is kept."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {typing_kept: true}
+    expect:
+      stopgap: floor
+      lineage: floor
+    why: >-
+      Without cell ids the typing cannot be matched to its cell; the repair drops it, and only the healing keeps it, as
+      a recovered copy.
+    policy:
+      status: best_effort
+      question: >-
+        Without cell ids the typing cannot be matched to its cell. Is a separate cell marked "recovered" enough, or must
+        the typing be merged into the cell it was typed in?
+      decision: >-
+        The typing is kept: merged into its cell when it can be matched, as a cell marked "recovered" when it cannot.
+      today: The typing is kept as a recovered cell, not merged into its cell.
+
+  # ------------------------------------------------------------------------------------------------------------
+  # an AI agent edits the notebook: on the server's live copy while the server holds it, on the file when it does not
+  # (the harness's `World.ai_edit` takes the way at the moment of each edit; the stories are drawn in storyboards/ai.yaml)
+  # ------------------------------------------------------------------------------------------------------------
+  AI1:
+    group: ai
+    says: "An agent rewrites a cell of an open notebook: the tab sees the change as it happens and the file follows, 3 cells everywhere."
+    reference:
+      - equals: {tab_cells: 3, server_cells: 3, disk_cells: 3, edit_on_server: true, edit_seen_by_the_tab: true, edit_in_the_file: true}
+      - empty: [duplicated]
+
+  AI2:
+    group: ai
+    says: "An agent edits a notebook that nobody has open (the file): the next person who opens it finds the changes, 4 cells everywhere."
+    reference:
+      - equals:
+          tab_cells: 4
+          server_cells: 4
+          disk_cells: 4
+          rewrite_seen_by_the_tab: true
+          new_cell_seen_by_the_tab: true
+          changes_in_the_file: true
+      - empty: [duplicated]
+
+  AI3:
+    group: ai
+    says: "A person opens the notebook in the middle of the agent's work: the change made on the file and the one made live both arrive, once each."
+    reference:
+      - equals:
+          tab_cells: 4
+          server_cells: 4
+          disk_cells: 4
+          first_change_kept: true
+          second_change_kept: true
+          both_seen_by_the_tab: true
+          both_in_the_file: true
+      - empty: [duplicated]
+
+  AI4:
+    group: ai
+    says: "The last person leaves in the middle of the agent's work: the live edits, the saving when the server lets go and the edit on the file all arrive, once each."
+    reference:
+      - equals:
+          tab_cells: 5
+          server_cells: 5
+          disk_cells: 5
+          rewrite_kept: true
+          second_change_kept: true
+          third_change_kept: true
+          all_seen_by_the_tab: true
+      - empty: [duplicated]
+
+  AI5:
+    group: ai
+    says: "The agent rewrites a cell while a person types in it: both survive, as between two people online, and the tab agrees with the server."
+    floor:
+      - same: [tab_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {server_cells: 3, disk_cells: 3, agent_rewrite_kept: true, typing_kept: true, tab_agrees_with_the_server: true}
+    policy:
+      status: pending
+      question: >-
+        An agent rewrites a cell while a person is typing in it. Who gives way: are both kept (as between two people who
+        are online), does the agent wait until the cell is quiet, or does the person decide on the agent's rewrite?
+      today: The two edits are merged, as between two people online.
+
+  AI6:
+    group: ai
+    says: "The agent deletes a cell that a person edited while offline: the deletion wins, as it does between two people (Z3), and the typing goes with the cell."
+    floor:
+      - same: [tab_cells, server_cells, disk_cells]
+      - at_least: {server_cells: 2}
+    reference:
+      - equals: {cell_deleted: true, typing_kept: false, recovered_copy: false, server_cells: 2, disk_cells: 2}
+    policy:
+      status: pending
+      question: >-
+        A deletion wins over typing made in the same cell at the same moment (Z3). Does the answer change when the one who
+        deleted the cell is an agent and not a person?
+      today: The deletion wins and the typing is lost, as between two people.
+
+  AI7:
+    group: ai
+    says: "The server dies after the agent's edit, before the next autosave, with no tab left that holds it: the edit survives."
+    floor:
+      - same: [server_cells, disk_cells]
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {edit_survived: true, server_cells: 3, disk_cells: 3}
+    policy:
+      status: pending
+      question: >-
+        An edit that a person types is not saved before it is relayed (Z6). Should an edit made by an agent be saved before the
+        agent is told that it worked?
+      today: The edit is in memory until the next autosave and is lost with the server.
+
+  AI8:
+    group: ai
+    says: "The agent is still writing the file when the server reads it: the half-written file never becomes the notebook, and the finished one is read."
+    floor:
+      - equals: {half_written_file_taken_for_a_notebook: false, agents_work_in_the_file: true}
+    reference:
+      - equals:
+          half_written_file_taken_for_a_notebook: false
+          finished_file_read: true
+          tab_cells: 4
+          server_cells: 4
+          disk_cells: 4
+          agents_work_in_the_file: true
+          agents_work_in_the_tab: true
+      - empty: [duplicated]
+    expect:
+      stopgap: floor
+      healing: floor
+      lineage: floor
+      lineage+healing: floor
+    why: >-
+      A room whose first read of the file fails never reads it again: the notebook stays unavailable until the room is freed,
+      even once the agent has finished writing the file.
+
+  AI9:
+    group: ai
+    says: "The agent writes the file although the server still holds the notebook: its change is applied and the typing the person left behind survives."
+    floor:
+      - equals: {agent_change_applied: true, agent_change_in_the_file: true}
+      - at_least: {server_cells: 3}
+    reference:
+      - equals: {server_cells: 3, disk_cells: 3, agent_change_applied: true, typing_kept: true, agent_change_in_the_file: true, typing_in_the_file: true}
+    expect:
+      stopgap: floor
+      healing: floor
+      lineage: floor
+      lineage+healing: floor
+    why: >-
+      The room loads a changed file wholesale into the live document (as in Z5), so the typing it held and had not saved is
+      reverted; the tab that typed it has left, so nothing can bring it back.

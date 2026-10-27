@@ -17,8 +17,18 @@ from . import render, storyboard, suite
 
 SUITE = suite.get()
 SPEC = storyboard.load()
-#: the stories that no scenario of the suite plays (today, the ones about AI agents)
-UNPLAYED = sorted(set(SPEC["scenarios"]) - set(SUITE.scenarios))
+
+
+def _with_a_story_no_scenario_plays() -> dict:
+    """The real storyboards plus one story that suite.yaml does not have, in a group that says so: what the page does for a situation
+    the product has to answer for before any scenario plays it."""
+    spec = copy.deepcopy(SPEC)
+    spec["groups"]["later"] = {"title": "Later", "intro": "Stories that no scenario plays yet.", "played": False}
+    spec["page"]["unplayed"] = {"badge": "Not played yet", "text": "No scenario plays this story yet."}
+    story = copy.deepcopy(spec["scenarios"]["AI5"])           # one that raises a question
+    story["group"] = "later"
+    spec["scenarios"]["LATER1"] = story
+    return spec
 
 
 def _text_of(html: str) -> str:
@@ -42,37 +52,54 @@ def test_exactly_the_scenarios_that_are_not_settled_have_a_decision() -> None:
     assert with_decision == open_in_suite
 
 
-def test_a_decision_proposes_one_option_and_suite_yaml_says_what_was_chosen() -> None:
-    """The storyboard words the options; what was chosen provisionally is `policy.decision` of suite.yaml, which the proposal restates."""
+def test_a_decision_proposes_one_option_and_suite_yaml_has_the_question_or_the_answer() -> None:
+    """The storyboard words the options. suite.yaml has what was chosen for now (best effort) or the question nobody has answered (pending)."""
     for sid, sb in SPEC["scenarios"].items():
         if not sb.get("decision"):
             continue
         if sid in SUITE.scenarios:
-            assert SUITE.scenarios[sid].policy.decision, f"{sid}: suite.yaml says nothing of what was chosen, so there is nothing to propose"
+            policy = SUITE.scenarios[sid].policy
+            assert policy.decision if SUITE.scenarios[sid].best_effort else policy.question, f"{sid}: suite.yaml has neither the answer nor the question"
         assert sum(bool(o.get("proposed")) for o in sb["decision"]["options"]) == 1, sid
 
 
-def test_the_stories_no_scenario_plays_are_apart_and_say_so() -> None:
-    assert UNPLAYED, "the AI agent stories are expected to be here until scenarios are written for them"
-    unplayed_groups = {gid for gid, g in SPEC["groups"].items() if g.get("played") is False}
-    assert unplayed_groups.isdisjoint(SUITE.groups)
-    assert {SPEC["scenarios"][sid]["group"] for sid in UNPLAYED} == unplayed_groups
-    html = storyboard.render_page(SUITE)
-    assert html.count('<span class="badge new"') == len(UNPLAYED)
+def test_every_story_of_the_ai_group_is_a_scenario_of_the_suite() -> None:
+    ai = [sid for sid, sb in SPEC["scenarios"].items() if sb["group"] == "ai"]
+    assert ai and set(ai) <= set(SUITE.scenarios)
+    assert all(SUITE.scenarios[sid].group == "ai" for sid in ai)
 
 
-def test_an_answer_nobody_has_discussed_is_suggested_and_not_proposed() -> None:
+def test_a_story_no_scenario_plays_is_kept_in_a_group_that_says_so() -> None:
+    spec = _with_a_story_no_scenario_plays()
+    storyboard.check(spec, SUITE)
+    html = storyboard.render(spec, SUITE)
+    assert html.count('<span class="badge new"') == 1
+    assert 'id="LATER1"' in html and 'id="g-later"' in html
+    assert html.count("<article class=") == len(SPEC["scenarios"]) + 1
+
+
+def test_the_real_page_has_no_story_that_no_scenario_plays() -> None:
+    """When a story gets a scenario it moves into the suite; the machinery for the others stays for the next situation."""
+    assert set(SPEC["scenarios"]) == set(SUITE.scenarios)
+    assert not [gid for gid, g in SPEC["groups"].items() if g.get("played") is False]
+
+
+def test_an_answer_taken_for_now_is_proposed_and_one_nobody_has_discussed_is_suggested() -> None:
+    proposed = sum(1 for sid, scn in SUITE.scenarios.items() if scn.best_effort and SPEC["scenarios"][sid].get("decision"))
+    suggested = sum(1 for sid, scn in SUITE.scenarios.items() if scn.pending and SPEC["scenarios"][sid].get("decision"))
+    assert proposed and suggested, "expected both kinds of answer on the page"
     html = storyboard.render_page(SUITE)
-    in_suite = sum(1 for sid in SUITE.scenarios if SPEC["scenarios"][sid].get("decision"))
-    not_in_suite = sum(1 for sid in UNPLAYED if SPEC["scenarios"][sid].get("decision"))
-    assert not_in_suite, "the AI agent stories are expected to raise questions"
-    assert html.count('<span class="flag">Proposed</span>') == in_suite
-    assert html.count('<span class="flag">Suggested</span>') == not_in_suite
+    assert html.count('<span class="flag">Proposed</span>') == proposed
+    assert html.count('<span class="flag">Suggested</span>') == suggested
+    # a story that no scenario plays is only ever suggested
+    html = storyboard.render(_with_a_story_no_scenario_plays(), SUITE)
+    assert html.count('<span class="flag">Suggested</span>') == suggested + 1
 
 
 def test_an_ai_agent_is_an_actor_and_holds_no_copy_of_the_notebook() -> None:
-    for sid in UNPLAYED:
-        sb = SPEC["scenarios"][sid]
+    for sid, sb in SPEC["scenarios"].items():
+        if sb["group"] != "ai":
+            continue
         assert any("ai" in storyboard._lanes_of(step) for step in sb["steps"]), f"{sid} is in the AI group but no step is the agent's"
         assert "ai" not in sb["ends"], sid
 
@@ -200,11 +227,10 @@ def _broken(edit) -> dict:
         (lambda s: s["groups"].update(zzz=dict(title="t", intro="i")), "does not have"),
         (lambda s: s["page"].pop("principles"), "principles is required"),
         (lambda s: s["page"]["applies_if"].update(persisted_lineage={"badge": "only"}), "needs a badge and a text"),
-        (lambda s: s["scenarios"]["AI1"].update(group="handshake"), "does not have"),
+        (lambda s: s["scenarios"]["AI1"].update(group="handshake"), "is in the group"),
         (lambda s: s["scenarios"]["A"].update(group="ai"), "is in the group"),
-        (lambda s: s["groups"].pop("ai"), "does not have"),
+        (lambda s: s["groups"].pop("ai"), "needs a title and an intro"),
         (lambda s: s["groups"]["handshake"].update(played=False), "unplayed"),
-        (lambda s: s["page"].pop("unplayed"), "page.unplayed needs"),
         (lambda s: s["scenarios"]["AI1"]["steps"][1].update(cells=["c0"]), "holds no copy"),
         (lambda s: s["scenarios"]["AI1"]["ends"].update(ai=["c0"]), "holds no copy"),
     ],
@@ -212,3 +238,19 @@ def _broken(edit) -> dict:
 def test_a_malformed_storyboard_is_refused(edit, message: str) -> None:
     with pytest.raises(storyboard.StoryboardError, match=message):
         storyboard.check(_broken(edit), SUITE)
+
+
+@pytest.mark.parametrize(
+    ("edit", "message"),
+    [
+        (lambda s: s["page"].pop("unplayed"), "page.unplayed needs"),
+        (lambda s: s["scenarios"]["LATER1"].update(group="handshake"), "does not have"),
+        (lambda s: s["groups"].pop("later"), "does not have"),
+        (lambda s: s["scenarios"]["LATER1"]["steps"][0].update(kind="dance"), "not one of"),
+    ],
+)
+def test_a_malformed_story_that_no_scenario_plays_is_refused(edit, message: str) -> None:
+    spec = _with_a_story_no_scenario_plays()
+    edit(spec)
+    with pytest.raises(storyboard.StoryboardError, match=message):
+        storyboard.check(spec, SUITE)

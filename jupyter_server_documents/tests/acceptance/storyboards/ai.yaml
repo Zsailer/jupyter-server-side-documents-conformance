@@ -1,5 +1,5 @@
-# AI agents (such as Claude Code) edit the notebook. These stories are not in suite.yaml: no scenario plays them yet (see `played: false`
-# for this group in page.yaml), so nothing has checked them, and the answers marked `proposed` are shown as "Suggested".
+# AI agents (such as Claude Code) edit the notebook. Played by the scenarios AI1 to AI9 of suite.yaml. The three that raise a question
+# (AI5, AI6, AI7) have a pending policy there, so the answer marked `proposed` is shown as "Suggested": nobody has discussed it.
 #
 # The two paths of an agent, as the product defines them: while the server holds the notebook (from the first tab until a few minutes after
 # the last one has left) the agent edits the server's live copy; while it does not, the agent edits the file directly.

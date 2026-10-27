@@ -1,14 +1,15 @@
 # Acceptance suite for the divergent-sync handshake
 
-Sixty stories of a browser tab and a server room, played with the **real room code of this checkout** and the **real client
+Sixty-nine stories of a browser tab, an AI agent and a server room, played with the **real room code of this checkout** and the **real client
 sync code** (cut out of `src/docprovider/yprovider.ts` and run on real Yjs), and judged against what each is _supposed_ to
 end with. It exists to qualify changes: run it on a tree, and it says which stories end as they should, which are known gaps,
 which wait for a decision, and whether the change made anything better or worse.
 
 It is the scenario matrix of upstream issue #305 grown to everything we have identified: the lost and the late reply, new tabs,
 two stale tabs, offline edits across a rebuilt room, crashes, files that change under the room, outputs, `stop()`, and the
-persisted lineage's own corners. On a tree that has only the stopgap (upstream 0.4.x), 22 of the 52 that can be played do not end as they
-should; `suite.yaml` records exactly which, and why.
+persisted lineage's own corners, and an AI agent such as Claude Code editing the notebook, on the server's live copy or on the file. On a tree
+that has only the stopgap (upstream 0.4.x), 25 of the 61 that can be played do not end as they should (24 known gaps and one that waits for a
+decision); `suite.yaml` records exactly which, and why.
 
 |                                                                           |                                                                                                                      |
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -73,14 +74,16 @@ B    handshake  reference  reference  ok      3/3/3
 C2   handshake  floor      floor      gap     3/3/3 (tab 1: 3)
 N1   rebuild    floor      floor      gap     typing LOST
 ...
-30 of the 52 scenarios that can be played on a tree of kind 'stopgap' (features: none) end as they should; 22 do not.
-  22 known gaps, recorded in suite.yaml: C2 C G2 K M1 N1 M2 R1 W1 W2 W3 S1 S5 S7 S2 S3 Q1 S4 X3 Z1 Z5 Z7
-  5 of the 30 that end as they should do so under a best-effort answer, not yet confirmed: P1 Z2 Z3 Z4 Z6
+36 of the 61 scenarios that can be played on a tree of kind 'stopgap' (features: none) end as they should; 25 do not.
+  24 known gaps, recorded in suite.yaml: C2 C G2 K M1 N1 M2 R1 W1 W2 W3 S1 S5 S7 S2 S3 Q1 S4 X3 Z1 Z5 Z7 AI8 AI9
+  1 pending a policy decision: AI7
+  5 of the 36 that end as they should do so under a best-effort answer, not yet confirmed: P1 Z2 Z3 Z4 Z6
+  2 of the 36 that end as they should do so under a suggestion nobody has answered yet: AI5 AI6
   8 cannot be played on this tree (needs persisted_lineage): S6 S10 S11 S12 S13 S14 T1 X5
 Against what suite.yaml expects of this kind of tree: 0 regressions, 0 improvements.
 That judges the change, not the tree: a run without a regression still has the scenarios above that do not end as they should.
 
-30 passed, 8 skipped, 22 known gaps in 163.70s (0:02:43)
+36 passed, 8 skipped, 24 known gaps, 1 pending a policy in 188.80s (0:03:08)
 ```
 
 **A green run is not a fixed tree.** Two questions are answered apart:
@@ -179,13 +182,12 @@ behavior next to the alternatives. It knows nothing of which tree gets each stor
 words (Yjs, client ids, checkpoints, the names of the kinds of tree) off the page.
 
 The pictures are written by hand in [`storyboards/`](storyboards): `page.yaml` has the text of the page and one file per group of
-`suite.yaml` has the stories of that group. A group of `page.yaml` marked `played: false` holds stories that no scenario plays yet
-(today, the AI agent stories of `ai.yaml`: an agent such as Claude Code edits the server's live copy while the server holds the notebook, and
-the file when it does not). They are drawn with a "not played" badge so that nobody takes them for verified, and their decisions say
-"Suggested" instead of "Proposed", because nobody has discussed them. When a scenario is written for one, move the story into the file of
-its group. The format is documented at the top of `storyboard.py`, which checks the files against
-`suite.yaml` (every scenario has a storyboard; exactly the ones whose policy is not decided have a `decision`) and draws the page; the page
-is regenerated with the other documents by `render`. To see how a new story looks without drawing all of them:
+`suite.yaml` has the stories of that group. A group of `page.yaml` marked `played: false` holds stories that no scenario plays yet (none
+today: the AI agent stories were the first, and have scenarios `AI1` to `AI9` now). They are drawn with a "not played" badge so that nobody
+takes them for verified, and their decisions say "Suggested" instead of "Proposed", as do those of a `pending` policy: nobody has discussed
+them. When a scenario is written for one, move the story into the file of its group. The format is documented at the top of `storyboard.py`,
+which checks the files against `suite.yaml` (every scenario has a storyboard; exactly the ones whose policy is not decided have a `decision`)
+and draws the page; the page is regenerated with the other documents by `render`. To see how a new story looks without drawing all of them:
 
 ```bash
 python -m jupyter_server_documents.tests.acceptance.storyboard --only B Z3 -o /tmp/storyboards.html
