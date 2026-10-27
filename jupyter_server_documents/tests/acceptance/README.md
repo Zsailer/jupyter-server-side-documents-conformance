@@ -179,7 +179,11 @@ behavior next to the alternatives. It knows nothing of which tree gets each stor
 words (Yjs, client ids, checkpoints, the names of the kinds of tree) off the page.
 
 The pictures are written by hand in [`storyboards/`](storyboards): `page.yaml` has the text of the page and one file per group of
-`suite.yaml` has the stories of that group. The format is documented at the top of `storyboard.py`, which checks the files against
+`suite.yaml` has the stories of that group. A group of `page.yaml` marked `played: false` holds stories that no scenario plays yet
+(today, the AI agent stories of `ai.yaml`: an agent such as Claude Code edits the server's live copy while the server holds the notebook, and
+the file when it does not). They are drawn with a "not played" badge so that nobody takes them for verified, and their decisions say
+"Suggested" instead of "Proposed", because nobody has discussed them. When a scenario is written for one, move the story into the file of
+its group. The format is documented at the top of `storyboard.py`, which checks the files against
 `suite.yaml` (every scenario has a storyboard; exactly the ones whose policy is not decided have a `decision`) and draws the page; the page
 is regenerated with the other documents by `render`. To see how a new story looks without drawing all of them:
 

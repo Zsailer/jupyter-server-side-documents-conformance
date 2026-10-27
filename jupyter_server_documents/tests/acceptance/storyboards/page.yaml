@@ -3,14 +3,16 @@
 #
 # This is a description of the PRODUCT. It says what a user must be able to count on; it knows nothing of how any version of the
 # code gets there, and a test keeps implementation words off the page.
-# {stories} and {open} stand for the number of stories and the number that still need alignment.
+# {stories}, {open} and {unplayed} stand for the number of stories, the number that still need alignment and the number that no scenario of
+# the acceptance suite plays yet (the groups below with `played: false`).
 page:
   title: "Notebooks in more than one tab: what Jupyter does when things go wrong"
   intro: >-
     {stories} stories about one notebook that is open in one or more browser tabs while connections drop, the server lets go of the
     notebook or dies, or the file changes underneath. Each is drawn step by step and ends with what every copy of the notebook must
     hold. This page says what the product should do, whatever the code does today. Where that is not settled, the story is marked
-    “Needs alignment” and shows the proposed answer next to the alternatives.
+    “Needs alignment” and shows the proposed answer next to the alternatives. The last group, {unplayed} stories, is about AI agents such as
+    Claude Code: it is new, and no scenario of the acceptance suite plays those stories yet.
   principles:
     - name: "Coming back is not special"
       text: >-
@@ -32,6 +34,11 @@ page:
       text: >-
         A tab that answers late is still served. A stray message from a tab that is gone never stops the notebook for the people
         who are still there.
+    - name: "An AI agent is one more editor"
+      text: >-
+        An AI agent such as Claude Code edits the server's live copy of the notebook while the server holds it, and the file when the
+        server does not. Either way its changes are merged by the same rules as anyone else's, and none is lost because the notebook
+        changed state in the middle of its work.
     - name: "Everyone ends with the same notebook"
       text: >-
         When a story is over, every tab, the server and the file hold the same cells.
@@ -39,13 +46,20 @@ page:
     {open} of the stories do not have a settled answer yet. Each shows, below its picture, the proposed behavior and the alternatives.
     The proposals follow one rule of thumb: where two people's intentions conflict (a deletion against typing, two rewrites of one text)
     the merge decides, as it does between two people who are online; where the machinery could lose or duplicate something that nobody
-    meant to, nothing may be lost or duplicated.
+    meant to, nothing may be lost or duplicated. The answers marked “Suggested” belong to the stories about AI agents: they are new, and nobody
+    has discussed them yet.
   applies_if:
     persisted_lineage:
       badge: "Applies only if the server keeps a history record"
       text: >-
         The server keeps a record of each notebook's editing history next to the file, so that a tab that comes back can pick up where
         it left off.
+  unplayed:
+    badge: "Not played by the acceptance suite yet"
+    text: >-
+      This story describes behavior the product has to have, but no scenario of the acceptance suite plays it yet, so nothing has checked
+      it. Where it has a decision, the answer marked “Suggested” is new and has not been discussed.
+    option_label: "Suggested"
   footer: >-
     Generated from the files in storyboards/ by python -m jupyter_server_documents.tests.acceptance.render. Each story is also a test of the
     acceptance suite (SCENARIOS.md), which says which versions of the code already do what the page describes (CATALOGUE.md). The page
@@ -94,3 +108,12 @@ groups:
     intro: >-
       Situations in which two people's intentions conflict, or in which the machinery could lose something. Each has a proposed answer
       and the alternatives to align on.
+  ai:
+    title: "AI agents edit the notebook"
+    played: false
+    intro: >-
+      An AI agent such as Claude Code can change a notebook in two ways. While the server holds the notebook, the agent edits the server's
+      live copy, the way a tab does, and everybody sees the change as it happens. While the server does not hold it, the agent edits the
+      file directly. The server holds a notebook from the moment the first tab opens it until a few minutes after the last tab has left.
+      These stories are about the two paths and the moments in between. The suite already plays some of the ground: S3 (an edit on the
+      server's live copy), S4, S8 and S9 (the file edited outside) and Z5 (an outside change against unsaved typing).

@@ -151,7 +151,7 @@ scenarios:
     title: "The file changes from outside while a tab has unsaved typing"
     story: >-
       A tab types into c0 and the server has not saved it yet. Before it does, the file is edited outside Jupyter (git, a sync tool, an
-      editor): only c2 changes.
+      editor, an AI agent): only c2 changes.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}
       - {at: tab, kind: type, text: "types “+TYPED” at the end of c0; the server has not saved it yet", cells: ["c0=+TYPED", c1, c2]}

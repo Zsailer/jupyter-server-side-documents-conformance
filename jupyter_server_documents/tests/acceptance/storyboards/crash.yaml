@@ -29,11 +29,11 @@ scenarios:
   S3:
     title: "An edit made on the server itself survives a crash"
     story: >-
-      Code running on the server edits the notebook directly. A connected tab sees the edit live. The server then dies before it saved
-      it, and starts again from the file.
+      Code running on the server, such as an AI agent, edits the notebook directly. A connected tab sees the edit live. The server then dies
+      before it saved it, and starts again from the file.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: server, kind: type, text: "code on the server appends “+SERVER” to c0", cells: *server_edit}
+      - {at: server, kind: type, text: "code on the server (for example an AI agent) appends “+SERVER” to c0", cells: *server_edit}
       - {at: tab, kind: note, text: "sees the edit live", cells: *server_edit}
       - {at: tab, kind: offline, text: "loses its connection"}
       - {at: server, kind: crash, text: "dies before it saved: the file still has the old c0"}

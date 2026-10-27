@@ -1,0 +1,223 @@
+# AI agents (such as Claude Code) edit the notebook. These stories are not in suite.yaml: no scenario plays them yet (see `played: false`
+# for this group in page.yaml), so nothing has checked them, and the answers marked `proposed` are shown as "Suggested".
+#
+# The two paths of an agent, as the product defines them: while the server holds the notebook (from the first tab until a few minutes after
+# the last one has left) the agent edits the server's live copy; while it does not, the agent edits the file directly.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  fixed: &fixed [c0, "c1=fixed", c2]
+  fixed_tests: &fixed_tests [c0, "c1=fixed", c2, "tests"]
+  fixed_tests_new: &fixed_tests_new [c0, "c1=fixed", c2, "+tests"]
+  all_three_changes: &all_three_changes [c0, "c1=fixed", c2, tests, docs]
+
+scenarios:
+  AI1:
+    title: "An AI agent edits a notebook that is open"
+    story: >-
+      A person has the notebook open in a tab, so the server holds it. The agent does not touch the file: it edits the server's live copy,
+      and everybody who has the notebook sees the change as it happens.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: ai, kind: type, to: server, text: "rewrites c1 as “fixed” through the server, which holds the notebook"}
+      - {at: server, kind: note, text: "applies the edit to its live copy", cells: *fixed}
+      - {at: tab, kind: note, text: "sees the edit as it happens; nothing to reload", cells: *fixed}
+      - {at: file, kind: save, text: "autosave", cells: *fixed}
+    result: "The person sees the change as it happens and the file follows with the next autosave: three cells everywhere, and c1 reads “fixed”."
+    ends: {tab: *fixed, server: *fixed, file: *fixed}
+    risk: "An agent that wrote the file instead would change the notebook under the person's hands."
+
+  AI2:
+    title: "An AI agent edits a notebook that nobody has open"
+    story: >-
+      No tab has the notebook and the server does not hold it. The agent edits the file directly. The next person who opens the notebook
+      finds the agent's work.
+    steps:
+      - {at: ai, kind: outside, to: file, text: "edits the file directly: rewrites c1 as “fixed” and adds a cell “tests”"}
+      - {at: file, kind: outside, text: "now holds the agent's changes", cells: *fixed_tests_new}
+      - {at: tab, kind: open, text: "later, a person opens the notebook"}
+      - {at: server, kind: rebuild, text: "builds the notebook from the file, with the agent's changes", cells: *fixed_tests}
+      - {at: tab, kind: note, text: "sees the agent's changes", cells: *fixed_tests}
+    result: "The person opens the notebook and finds the agent's work: four cells everywhere."
+    ends: {all: *fixed_tests}
+    risk: "Work done on a closed notebook is only worth something if it is there when the notebook is opened."
+
+  AI3:
+    title: "A person opens the notebook in the middle of the agent's work"
+    story: >-
+      The agent starts while nobody has the notebook open, so it edits the file. Then a person opens the notebook, and the agent's next
+      edit goes through the server, which now holds it.
+    steps:
+      - {at: ai, kind: outside, to: file, text: "edits the file directly: rewrites c1 as “fixed”"}
+      - {at: file, kind: outside, text: "now holds the first change", cells: *fixed}
+      - {at: tab, kind: open, text: "a person opens the notebook"}
+      - {at: server, kind: rebuild, text: "builds the notebook from the file, with the first change; it now holds the notebook", cells: *fixed}
+      - {at: tab, kind: note, text: "sees the notebook with the first change", cells: *fixed}
+      - {at: ai, kind: add, to: server, text: "adds a cell “tests” through the server, which now holds the notebook"}
+      - {at: server, kind: note, text: "applies the edit to its live copy", cells: *fixed_tests}
+      - {at: tab, kind: note, text: "sees the new cell as it happens", cells: *fixed_tests}
+      - {at: file, kind: save, text: "autosave", cells: *fixed_tests}
+    result: "Both changes arrive, the first through the file and the second live: four cells everywhere, nothing lost or doubled."
+    ends: {all: *fixed_tests}
+    risk: "An agent that changes path in the middle of its work must not lose the part that went the old way."
+
+  AI4:
+    title: "The last person leaves in the middle of the agent's work"
+    story: >-
+      The agent edits the live copy while a person has the notebook open. The person closes the tab, but the server keeps holding the
+      notebook for a few minutes, so the agent's next edit still goes through the server. Later the server lets go of the notebook, and the
+      agent's last edit goes to the file. When the person comes back, all three changes are there.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: ai, kind: type, to: server, text: "rewrites c1 as “fixed” through the server"}
+      - {at: server, kind: note, text: "applies the edit; the tab sees it", cells: *fixed}
+      - {at: tab, kind: leave, text: "the person closes the tab"}
+      - {at: ai, kind: add, to: server, text: "a minute later the server still holds the notebook, so the agent adds a cell “tests” through it"}
+      - {at: server, kind: note, text: "applies the edit to its live copy", cells: *fixed_tests_new}
+      - {at: server, kind: free, text: "lets go of the notebook, saving it"}
+      - {at: file, kind: save, text: "holds both changes", cells: *fixed_tests}
+      - {at: ai, kind: outside, to: file, text: "now the server does not hold the notebook, so the agent edits the file: adds a cell “docs”"}
+      - {at: file, kind: outside, text: "holds the third change", cells: [c0, "c1=fixed", c2, tests, "+docs"]}
+      - {at: tab, kind: open, text: "the person opens the notebook again"}
+      - {at: server, kind: rebuild, text: "builds the notebook from the file: all three changes are there", cells: *all_three_changes}
+    result: "Every change survives, whichever way it travelled: five cells everywhere, once each."
+    ends: {tab: *all_three_changes, server: *all_three_changes, file: *all_three_changes}
+    risk: "The agent never has to know when the person leaves: the notebook is held for a while, then let go, and no edit falls between the two."
+
+  AI5:
+    title: "The agent rewrites a cell while a person is typing in it"
+    story: >-
+      A person is typing at the end of c1 in a tab. At the same moment the agent, through the server, rewrites c1 as “fixed”.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “# check” at the end of c1", cells: [c0, "c1=+# check", c2]}
+      - {at: ai, kind: type, to: server, text: "at the same moment rewrites c1 as “fixed” through the server"}
+      - {at: server, kind: note, text: "merges the two edits", cells: [c0, "c1=fixed + # check", c2]}
+      - {at: tab, kind: note, text: "sees the merged cell", cells: [c0, "c1=fixed + # check", c2]}
+      - {at: file, kind: save, text: "autosave", cells: [c0, "c1=fixed + # check", c2]}
+    result: "Both survive, as between two people who are online: the cell holds the agent's rewrite and the person's typing."
+    ends: {tab: [c0, "c1=fixed + # check", c2], server: [c0, "c1=fixed + # check", c2], file: [c0, "c1=fixed + # check", c2]}
+    risk: "A person who is typing must not have their words wiped by an agent, and the agent's rewrite must not be thrown away silently either."
+    decision:
+      question: >-
+        An AI agent rewrites a cell while a person is typing in it. Who gives way?
+      options:
+        - label: "Both are kept"
+          proposed: true
+          detail: >-
+            As between two people who are online (see Z4): the merge keeps both, one after the other, and the cell may need a human look.
+            Nothing is lost and nobody is blocked.
+          ends: [c0, "c1=fixed + # check", c2]
+        - label: "The agent waits"
+          detail: >-
+            The server refuses the agent's edit to a cell someone is typing in. The agent tries again when the cell has been quiet for a
+            moment. The person is never interrupted, and the agent has to be able to retry.
+          ends: [c0, "c1=+# check", c2, "*the agent's rewrite is applied later"]
+        - label: "The person decides"
+          detail: >-
+            The agent's rewrite is shown to the person as a suggestion, and nothing changes until they accept it. Nothing is ever merged
+            without a person, at the price of a person who must always answer.
+          ends: [c0, "c1=+# check", c2, "*the agent's rewrite waits for the person"]
+
+  AI6:
+    title: "The agent deletes a cell that a person edited while offline"
+    story: >-
+      A person's tab loses its connection and they type into c1. Meanwhile the agent, through the server, deletes c1. Then the tab
+      reconnects. This is the story Z3 with an agent as the one who deletes.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: type, text: "types “+B-TYPED” at the end of c1", cells: [c0, "c1=+B-TYPED", c2]}
+      - {at: ai, kind: delete, to: server, text: "meanwhile deletes c1 through the server"}
+      - {at: server, kind: note, text: "applies the deletion", cells: [c0, c2]}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: [c0, c2]}
+      - {at: file, kind: save, text: "autosave", cells: [c0, c2]}
+    result: "The deletion wins, as it does between two people: the cell stays deleted and the typing goes with it."
+    ends: {tab: [c0, c2], server: [c0, c2], file: [c0, c2]}
+    risk: "A person who was offline would lose their typing because of an edit they never saw, made by a program."
+    decision:
+      question: >-
+        A deletion wins over typing made in the same cell at the same moment (see Z3). Does the answer change when the one who deleted the
+        cell is an AI agent and not a person?
+      options:
+        - label: "The deletion wins, as for a person"
+          proposed: true
+          detail: >-
+            One rule for everyone keeps the product simple: the agent was asked to change the notebook, and the merge treats its edits like
+            anyone else's.
+          ends: [c0, c2]
+        - label: "The typing is kept as a recovered copy"
+          detail: >-
+            The person did not delete the cell themselves, so what they typed is set aside as a copy marked recovered, for everyone.
+            Nothing a person typed is ever lost to a program.
+          ends: [c0, "?c1 +B-TYPED=recovered", c2]
+
+  AI7:
+    title: "The server dies after the agent's edit, before the next autosave"
+    story: >-
+      Nobody has the notebook open, but the server still holds it, so the agent edits the live copy and is told that it worked. The server
+      then dies before the next autosave. When the server starts again, the agent's edit is either in the file or gone.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: leave, text: "the person closes the tab; the server still holds the notebook"}
+      - {at: ai, kind: type, to: server, text: "rewrites c1 as “fixed” through the server"}
+      - {at: server, kind: note, text: "applies the edit and saves it to the file before telling the agent that it worked", cells: *fixed}
+      - {at: file, kind: save, text: "holds the edit", cells: *fixed}
+      - {at: server, kind: crash, text: "dies before the next autosave"}
+      - {at: server, kind: rebuild, text: "starts again from the file", cells: *fixed}
+      - {at: tab, kind: open, text: "later, a person opens the notebook", cells: *fixed}
+    result: "The agent's edit survives: it was saved before the agent was told that it worked."
+    ends: {tab: *fixed, server: *fixed, file: *fixed}
+    risk: "An agent that is told “done” for work that can still vanish cannot be trusted to report what it did."
+    decision:
+      question: >-
+        An edit that a person types is not saved before it is relayed (see Z6). Should an edit made by an AI agent be saved before the agent
+        is told that it worked?
+      options:
+        - label: "The agent is told after the edit is saved"
+          proposed: true
+          detail: >-
+            An agent's edits are few compared with keystrokes, so writing them to the file before answering costs little. The agent never
+            reports success for work that can vanish.
+          ends: *fixed
+        - label: "The same bound as typing"
+          detail: >-
+            The edit is saved with the next autosave, like anything typed. If the server dies in between and no tab holds the edit, it is
+            lost, although the agent was told that it worked. An agent that needs to be sure has to check the file afterwards.
+          ends: *three
+
+  AI8:
+    title: "The agent is still writing the file when the server reads it"
+    story: >-
+      The agent rewrites the file directly while nobody has the notebook open. Before the write is finished, a person opens the notebook
+      and the server reads the file.
+    steps:
+      - {at: ai, kind: outside, to: file, text: "starts to rewrite the file; the write is not finished"}
+      - {at: file, kind: outside, text: "is half written: it cannot be read yet", cells: "half written"}
+      - {at: tab, kind: open, text: "a person opens the notebook"}
+      - {at: server, kind: deadline, text: "finds a file it cannot read yet, and waits instead of showing an empty or broken notebook"}
+      - {at: ai, kind: outside, to: file, text: "finishes writing the file: c1 is “fixed” and a cell “tests” is added"}
+      - {at: file, kind: outside, text: "holds the agent's finished work", cells: *fixed_tests_new}
+      - {at: server, kind: rebuild, text: "reads the finished file", cells: *fixed_tests}
+      - {at: tab, kind: note, text: "receives the notebook", cells: *fixed_tests}
+    result: "The person never sees an empty or broken notebook: once the file is complete they get the agent's finished work, four cells everywhere."
+    ends: {all: *fixed_tests}
+    risk: "A half-written file must not become the notebook, and must never be saved over the agent's work."
+
+  AI9:
+    title: "The agent writes the file although the server still holds the notebook"
+    story: >-
+      A person types and closes the tab a moment later. The server still holds the notebook, with typing it has not saved yet. The agent
+      takes the notebook for closed and edits the file directly. This depends on the answer to Z5, the same question while the tab is still open.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+TYPED” at the end of c0; the server has not saved it yet", cells: ["c0=+TYPED", c1, c2]}
+      - {at: tab, kind: leave, text: "the person closes the tab; the server still holds the notebook and the typing"}
+      - {at: ai, kind: outside, to: file, text: "takes the notebook for closed and edits the file directly: rewrites c2 as “fixed”"}
+      - {at: file, kind: outside, text: "is changed", cells: [c0, c1, "c2=fixed"]}
+      - {at: server, kind: note, text: "notices the change before it saves, and merges it with the typing it holds", cells: ["c0=+TYPED", c1, "c2=fixed"]}
+      - {at: file, kind: save, text: "holds both", cells: ["c0=+TYPED", c1, "c2=fixed"]}
+      - {at: tab, kind: open, text: "later, a person opens the notebook", cells: ["c0=+TYPED", c1, "c2=fixed"]}
+    result: "The agent's change is applied and the person's last typing survives: both are in the file."
+    ends: {tab: ["c0=+TYPED", c1, "c2=fixed"], server: ["c0=+TYPED", c1, "c2=fixed"], file: ["c0=+TYPED", c1, "c2=fixed"]}
+    risk: "An agent that picks the wrong path must not erase what a person typed just before closing the tab, with nobody left to hold it."

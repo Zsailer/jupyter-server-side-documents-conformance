@@ -2,7 +2,8 @@
 
 The storyboards are the one part of the generated documents that people write by hand, so they are checked against what is
 written elsewhere: every scenario of ``suite.yaml`` has one, the ones whose answer is not settled have a decision and only those,
-and the page says nothing of any implementation: it is about the product.
+the stories that no scenario plays yet are kept apart and say so, and the page says nothing of any implementation: it is about the
+product.
 """
 from __future__ import annotations
 
@@ -16,6 +17,8 @@ from . import render, storyboard, suite
 
 SUITE = suite.get()
 SPEC = storyboard.load()
+#: the stories that no scenario of the suite plays (today, the ones about AI agents)
+UNPLAYED = sorted(set(SPEC["scenarios"]) - set(SUITE.scenarios))
 
 
 def _text_of(html: str) -> str:
@@ -25,17 +28,17 @@ def _text_of(html: str) -> str:
 
 def test_every_scenario_has_a_storyboard_and_every_storyboard_is_well_formed() -> None:
     storyboard.check(SPEC, SUITE)
-    assert set(SPEC["scenarios"]) == set(SUITE.scenarios)
+    assert set(SUITE.scenarios) <= set(SPEC["scenarios"])
 
 
 def test_a_storyboard_is_in_the_file_of_its_group() -> None:
-    for sid, sb in SPEC["scenarios"].items():
-        assert sb["group"] == SUITE.scenarios[sid].group, sid
+    for sid, scn in SUITE.scenarios.items():
+        assert SPEC["scenarios"][sid]["group"] == scn.group, sid
 
 
 def test_exactly_the_scenarios_that_are_not_settled_have_a_decision() -> None:
     open_in_suite = {sid for sid, scn in SUITE.scenarios.items() if scn.best_effort or scn.pending}
-    with_decision = {sid for sid, sb in SPEC["scenarios"].items() if sb.get("decision")}
+    with_decision = {sid for sid in SUITE.scenarios if SPEC["scenarios"][sid].get("decision")}
     assert with_decision == open_in_suite
 
 
@@ -44,8 +47,34 @@ def test_a_decision_proposes_one_option_and_suite_yaml_says_what_was_chosen() ->
     for sid, sb in SPEC["scenarios"].items():
         if not sb.get("decision"):
             continue
-        assert SUITE.scenarios[sid].policy.decision, f"{sid}: suite.yaml says nothing of what was chosen, so there is nothing to propose"
+        if sid in SUITE.scenarios:
+            assert SUITE.scenarios[sid].policy.decision, f"{sid}: suite.yaml says nothing of what was chosen, so there is nothing to propose"
         assert sum(bool(o.get("proposed")) for o in sb["decision"]["options"]) == 1, sid
+
+
+def test_the_stories_no_scenario_plays_are_apart_and_say_so() -> None:
+    assert UNPLAYED, "the AI agent stories are expected to be here until scenarios are written for them"
+    unplayed_groups = {gid for gid, g in SPEC["groups"].items() if g.get("played") is False}
+    assert unplayed_groups.isdisjoint(SUITE.groups)
+    assert {SPEC["scenarios"][sid]["group"] for sid in UNPLAYED} == unplayed_groups
+    html = storyboard.render_page(SUITE)
+    assert html.count('<span class="badge new"') == len(UNPLAYED)
+
+
+def test_an_answer_nobody_has_discussed_is_suggested_and_not_proposed() -> None:
+    html = storyboard.render_page(SUITE)
+    in_suite = sum(1 for sid in SUITE.scenarios if SPEC["scenarios"][sid].get("decision"))
+    not_in_suite = sum(1 for sid in UNPLAYED if SPEC["scenarios"][sid].get("decision"))
+    assert not_in_suite, "the AI agent stories are expected to raise questions"
+    assert html.count('<span class="flag">Proposed</span>') == in_suite
+    assert html.count('<span class="flag">Suggested</span>') == not_in_suite
+
+
+def test_an_ai_agent_is_an_actor_and_holds_no_copy_of_the_notebook() -> None:
+    for sid in UNPLAYED:
+        sb = SPEC["scenarios"][sid]
+        assert any("ai" in storyboard._lanes_of(step) for step in sb["steps"]), f"{sid} is in the AI group but no step is the agent's"
+        assert "ai" not in sb["ends"], sid
 
 
 def test_a_tab_opens_the_notebook_before_it_does_anything_else() -> None:
@@ -103,7 +132,7 @@ def test_the_page_is_deterministic_and_self_contained() -> None:
     assert html == storyboard.render_page(SUITE)
     assert html.startswith("<!doctype html>")
     assert not re.search(r"""(?:src|href)=["'](?:https?:)?//""", html), "the page must not need the network"
-    assert html.count("<article class=") == len(SUITE.scenarios)
+    assert html.count("<article class=") == len(SPEC["scenarios"])
 
 
 def test_the_page_is_part_of_the_generated_documents() -> None:
@@ -171,6 +200,13 @@ def _broken(edit) -> dict:
         (lambda s: s["groups"].update(zzz=dict(title="t", intro="i")), "does not have"),
         (lambda s: s["page"].pop("principles"), "principles is required"),
         (lambda s: s["page"]["applies_if"].update(persisted_lineage={"badge": "only"}), "needs a badge and a text"),
+        (lambda s: s["scenarios"]["AI1"].update(group="handshake"), "does not have"),
+        (lambda s: s["scenarios"]["A"].update(group="ai"), "is in the group"),
+        (lambda s: s["groups"].pop("ai"), "does not have"),
+        (lambda s: s["groups"]["handshake"].update(played=False), "unplayed"),
+        (lambda s: s["page"].pop("unplayed"), "page.unplayed needs"),
+        (lambda s: s["scenarios"]["AI1"]["steps"][1].update(cells=["c0"]), "holds no copy"),
+        (lambda s: s["scenarios"]["AI1"]["ends"].update(ai=["c0"]), "holds no copy"),
     ],
 )
 def test_a_malformed_storyboard_is_refused(edit, message: str) -> None:

@@ -12,7 +12,7 @@ scenarios:
   S4:
     title: "The file is edited outside Jupyter while a tab is offline"
     story: >-
-      While a tab is offline, the server lets go of the notebook and someone edits the file outside Jupyter (git, another editor): one
+      While a tab is offline, the server lets go of the notebook and someone edits the file outside Jupyter (git, another editor, an AI agent): one
       cell is changed, one is added and one is deleted. The user also typed into a cell in the offline tab.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}
@@ -46,7 +46,7 @@ scenarios:
   S9:
     title: "The file is edited outside while a tab is connected, then the server dies"
     story: >-
-      The file is edited outside Jupyter while a tab is connected: the server reloads it in place and the tab receives the new cell. Then
+      The file is edited outside Jupyter (for example by an AI agent that wrote it directly) while a tab is connected: the server reloads it in place and the tab receives the new cell. Then
       the server dies before it saved anything and starts again from the file; the tab reconnects.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}

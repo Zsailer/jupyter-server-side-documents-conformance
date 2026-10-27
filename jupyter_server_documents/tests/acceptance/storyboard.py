@@ -44,6 +44,11 @@ A cell is a short string. The first character is a mark, ``=`` starts a note::
 
 A scenario whose answer is not settled (``policy`` of ``suite.yaml`` is ``best_effort`` or ``pending``) has a ``decision``: the
 question, and options of which exactly one is ``proposed``. A scenario that is settled has none.
+
+A group of ``page.yaml`` with ``played: false`` holds stories that ``suite.yaml`` does not have: situations the product has to answer
+for that no scenario plays yet (today, the ones with an AI agent). They are drawn like the others, marked as not played so that nobody
+takes them for verified, and their decisions are "suggested" rather than "proposed", because nobody has discussed them yet. A story
+there may have a ``decision`` or not. A story moves out of such a group when a scenario is written for it.
 """
 from __future__ import annotations
 
@@ -64,11 +69,15 @@ LANES = {
     "tab2": "Second tab",
     "tab3": "Third tab",
     "tab4": "Fourth tab",
+    "ai": "AI agent",
     "server": "Server",
     "record": "History record",
     "store": "Output store",
     "file": "File on disk",
 }
+
+#: lanes that act on the notebook but hold no copy of it: no cells are drawn for them
+NO_COPY = frozenset({"ai"})
 
 #: kind of step -> icon. An icon is only a help: every step says what it is in words.
 KINDS = {
@@ -198,6 +207,23 @@ def _check_cells(cells: Any, where: str) -> None:
             raise StoryboardError(f"{where}: {c!r} is not a cell (see the top of storyboard.py)")
 
 
+def _unplayed_groups(spec: dict[str, Any]) -> list[str]:
+    """The groups of stories that suite.yaml does not play (``played: false`` in page.yaml), in page order."""
+    return [gid for gid, g in spec["groups"].items() if g.get("played") is False]
+
+
+def _group_order(spec: dict[str, Any], suite) -> list[str]:
+    """The groups of the suite, then the ones it does not play."""
+    return list(suite.groups) + [gid for gid in spec["groups"] if gid not in suite.groups]
+
+
+def _group_ids(spec: dict[str, Any], suite, gid: str) -> list[str]:
+    """The stories of a group in the order they are drawn: the suite's order for its groups, the file's for the others."""
+    if gid in suite.groups:
+        return [sid for sid, s in suite.scenarios.items() if s.group == gid and sid in spec["scenarios"]]
+    return [sid for sid, sb in spec["scenarios"].items() if sb["group"] == gid]
+
+
 def _lanes_of(step: dict) -> list[str]:
     at = step["at"]
     return list(at) if isinstance(at, list) else [at]
@@ -211,30 +237,38 @@ def _check_lane(lane: Any, where: str) -> None:
 def check(spec: dict[str, Any], suite, *, complete: bool = True) -> None:
     """Every scenario of the suite has a storyboard (unless ``complete`` is false), and every storyboard is well formed."""
     scenarios = spec["scenarios"]
-    extra = sorted(set(scenarios) - set(suite.scenarios))
+    unplayed = set(_unplayed_groups(spec))
+    played_and_unplayed = sorted(unplayed & set(suite.groups))
+    if played_and_unplayed:
+        raise StoryboardError(f"page.yaml calls {played_and_unplayed} unplayed, but suite.yaml has those groups")
+    extra = sorted(sid for sid in set(scenarios) - set(suite.scenarios) if scenarios[sid]["group"] not in unplayed)
     if extra:
-        raise StoryboardError(f"storyboards for scenarios that suite.yaml does not have: {extra}")
+        raise StoryboardError(
+            f"storyboards for scenarios that suite.yaml does not have: {extra} (stories that no scenario plays yet go in a group with `played: false`)"
+        )
     if complete:
         missing = sorted(set(suite.scenarios) - set(scenarios))
         if missing:
             raise StoryboardError(f"no storyboard for {missing}")
-    for gid in suite.groups:
+    for gid in list(suite.groups) + sorted(unplayed):
         if gid not in spec["groups"] or not {"title", "intro"} <= set(spec["groups"][gid]):
             raise StoryboardError(f"group {gid}: page.yaml needs a title and an intro for it")
     for gid in spec["groups"]:
-        if gid not in suite.groups:
-            raise StoryboardError(f"page.yaml describes a group {gid!r} that suite.yaml does not have")
+        if gid not in suite.groups and gid not in unplayed:
+            raise StoryboardError(f"page.yaml describes a group {gid!r} that suite.yaml does not have (say `played: false` if it is meant)")
     page = spec["page"]
     for key in ("title", "intro", "principles", "decisions_intro", "applies_if", "footer"):
         if not page.get(key):
             raise StoryboardError(f"page.yaml: page.{key} is required")
+    if unplayed and not {"badge", "text", "option_label"} <= set(page.get("unplayed") or {}):
+        raise StoryboardError("page.yaml: page.unplayed needs a badge, a text and an option_label (there are groups that suite.yaml does not play)")
     for feature in {f for s in suite.scenarios.values() for f in s.requires}:
         if not {"badge", "text"} <= set(page["applies_if"].get(feature) or {}):
             raise StoryboardError(f"page.yaml: page.applies_if needs a badge and a text for the feature {feature!r}")
     for sid, sb in scenarios.items():
-        where = f"scenario {sid}"
-        scn = suite.scenarios[sid]
-        if sb["group"] != scn.group:
+        where = f"scenario {sid}" if sid in suite.scenarios else f"story {sid}"
+        scn = suite.scenarios.get(sid)
+        if scn is not None and sb["group"] != scn.group:
             raise StoryboardError(f"{where} is in the group {scn.group!r} of suite.yaml but its storyboard is in {sb['group']}.yaml")
         unknown = set(sb) - {"group", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision"}
         if unknown:
@@ -257,6 +291,8 @@ def check(spec: dict[str, Any], suite, *, complete: bool = True) -> None:
                 used.add(lane)
             if "cells" in step:
                 _check_cells(step["cells"], w)
+                if set(_lanes_of(step)) <= NO_COPY:
+                    raise StoryboardError(f"{w}: {_lanes_of(step)} holds no copy of the notebook, so the step has no cells")
         if lanes and used - set(lanes):
             raise StoryboardError(f"{where}: the steps use {sorted(used - set(lanes))}, which `lanes` does not list")
         for lane, cells in (sb.get("start") or {}).items():
@@ -266,17 +302,21 @@ def check(spec: dict[str, Any], suite, *, complete: bool = True) -> None:
             if lane != "all":
                 _check_lane(lane, f"{where}, ends")
             _check_cells(cells, f"{where}, ends.{lane}")
+        for what, mapping in (("start", sb.get("start") or {}), ("ends", sb["ends"])):
+            if set(mapping) & NO_COPY:
+                raise StoryboardError(f"{where}: {what} names {sorted(set(mapping) & NO_COPY)}, which holds no copy of the notebook")
         drawn = set(_lane_labels(sb))
         for what, mapping in (("start", sb.get("start") or {}), ("ends", sb["ends"])):
             hidden = set(mapping) - {"all"} - drawn
             if hidden:
                 raise StoryboardError(f"{where}: {what} holds {sorted(hidden)}, which is not drawn (see `lanes`)")
         decision = sb.get("decision")
-        settled = not (scn.best_effort or scn.pending)
-        if decision and settled:
-            raise StoryboardError(f"{where} is settled in suite.yaml (policy: decided) but its storyboard has a decision")
-        if not decision and not settled:
-            raise StoryboardError(f"{where} is not settled in suite.yaml (policy: {scn.policy.status}) and needs a decision in its storyboard")
+        if scn is not None:
+            settled = not (scn.best_effort or scn.pending)
+            if decision and settled:
+                raise StoryboardError(f"{where} is settled in suite.yaml (policy: decided) but its storyboard has a decision")
+            if not decision and not settled:
+                raise StoryboardError(f"{where} is not settled in suite.yaml (policy: {scn.policy.status}) and needs a decision in its storyboard")
         if decision:
             if not decision.get("question") or len(decision.get("options") or []) < 2:
                 raise StoryboardError(f"{where}: a decision has a question and at least two options")
@@ -384,7 +424,7 @@ def _board(sid: str, sb: dict) -> str:
     out.append(
         '<div class="no end">end</div>'
         + "".join(
-            f'<div class="cell end l-{l}">{_strip(ends[l] if l in ends else ends["all"]) if (l in ends or "all" in ends) else ""}</div>'
+            f'<div class="cell end l-{l}">{_strip(ends[l] if l in ends else ends["all"]) if (l in ends or "all" in ends) and l not in NO_COPY else ""}</div>'
             for l in lanes
         )
     )
@@ -392,11 +432,11 @@ def _board(sid: str, sb: dict) -> str:
     return "".join(out)
 
 
-def _decision(sb: dict) -> str:
+def _decision(sb: dict, proposed_label: str = "Proposed") -> str:
     d = sb["decision"]
     options = []
     for o in d["options"]:
-        flag = '<span class="flag">Proposed</span>' if o.get("proposed") else ""
+        flag = f'<span class="flag">{_e(proposed_label)}</span>' if o.get("proposed") else ""
         strip = _strip(o["ends"], "small") if o.get("ends") is not None else ""
         options.append(
             f'<div class="option{" proposed" if o.get("proposed") else ""}"><div class="olabel">{flag}{_e(o["label"])}</div>'
@@ -408,13 +448,17 @@ def _decision(sb: dict) -> str:
     )
 
 
-def _card(sid: str, sb: dict, scn, applies_if: dict[str, dict[str, str]]) -> str:
+def _card(sid: str, sb: dict, scn, page: dict[str, Any]) -> str:
+    """One story. ``scn`` is its scenario in the suite, or None for a story that no scenario plays yet."""
     open_ = bool(sb.get("decision"))
     badges = ""
     if open_:
         badges += '<span class="badge need">Needs alignment</span>'
-    for feature in sorted(scn.requires):
-        badges += f'<span class="badge cond" title="{_e(applies_if[feature]["text"])}">{_e(applies_if[feature]["badge"])}</span>'
+    if scn is None:
+        badges += f'<span class="badge new" title="{_e(page["unplayed"]["text"])}">{_e(page["unplayed"]["badge"])}</span>'
+    else:
+        for feature in sorted(scn.requires):
+            badges += f'<span class="badge cond" title="{_e(page["applies_if"][feature]["text"])}">{_e(page["applies_if"][feature]["badge"])}</span>'
     body = [
         f'<article class="scn{" has-decision" if open_ else ""}" id="{_e(sid)}">',
         f'<header><span class="id">{_e(sid)}</span><h3>{_e(sb["title"])}</h3>{badges}</header>',
@@ -425,7 +469,7 @@ def _card(sid: str, sb: dict, scn, applies_if: dict[str, dict[str, str]]) -> str
     if sb.get("risk"):
         body.append(f'<p class="risk"><b>Why it matters</b> {_e(sb["risk"])}</p>')
     if open_:
-        body.append(_decision(sb))
+        body.append(_decision(sb, page["unplayed"]["option_label"] if scn is None else "Proposed"))
     body.append("</article>")
     return "".join(body)
 
@@ -463,6 +507,7 @@ h2+p.intro{margin:0 0 14px;color:var(--muted);max-width:60rem}
 .index .g b{width:100%;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
 .index a{font:600 .78rem ui-monospace,Menlo,monospace;text-decoration:none;color:#0f172a;background:#eef2f7;border:1px solid var(--soft);border-radius:6px;padding:2px 7px}
 .index a.need{background:#fff3d6;border-color:#f59e0b}
+.index a.new{border-style:dashed;border-color:#64748b}
 .index a:hover{outline:2px solid #93c5fd}
 table.decisions{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 table.decisions th,table.decisions td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--soft);vertical-align:top;font-size:.9rem}
@@ -475,6 +520,8 @@ table.decisions th{background:#f1f5f9;font-size:.76rem;text-transform:uppercase;
 .badge{font-size:.72rem;font-weight:700;border-radius:10px;padding:3px 9px}
 .badge.need{background:#f59e0b;color:#fff}
 .badge.cond{background:#e0e7ff;color:#3730a3}
+.badge.new{background:#e2e8f0;color:#334155;border:1px dashed #64748b}
+.tag{font-size:.68rem;font-weight:700;background:#e2e8f0;color:#334155;border-radius:8px;padding:1px 7px;margin-left:6px;white-space:nowrap}
 .story{margin:8px 0 12px;color:var(--muted)}
 .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
 .board{display:grid;grid-template-columns:3.2rem repeat(var(--n),minmax(8.5rem,1fr));background:#fff;min-width:min-content}
@@ -488,7 +535,7 @@ table.decisions th{background:#f1f5f9;font-size:.76rem;text-transform:uppercase;
 .cell.end{background:var(--okbg);border-top:2px solid #86efac}
 .cell.shared{--c:#475569;--bg:#f8fafc}
 .l-tab{--c:#2563eb;--bg:#f3f7ff}.l-tab2{--c:#047857;--bg:#f1fbf6}.l-tab3{--c:#7c3aed;--bg:#f7f3ff}.l-tab4{--c:#db2777;--bg:#fff3f9}
-.l-server{--c:#b45309;--bg:#fff8ee}.l-record{--c:#0f766e;--bg:#effaf8}.l-store{--c:#0e7490;--bg:#eef9fc}.l-file{--c:#475569;--bg:#f4f6f9}
+.l-ai{--c:#111827;--bg:#f3f4f6}.l-server{--c:#b45309;--bg:#fff8ee}.l-record{--c:#0f766e;--bg:#effaf8}.l-store{--c:#0e7490;--bg:#eef9fc}.l-file{--c:#475569;--bg:#f4f6f9}
 .pill{display:flex;gap:7px;align-items:flex-start;background:#fff;border:1px solid var(--c);border-left-width:4px;border-radius:8px;padding:5px 8px;font-size:.82rem;line-height:1.3;box-shadow:0 1px 1px rgba(15,23,42,.05)}
 .pill .ic{flex:none;width:15px;height:15px;margin-top:1px;fill:none;stroke:var(--c);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .pill .ic .f{fill:var(--c);stroke:none}
@@ -567,7 +614,7 @@ def _legend() -> str:
     return (
         '<div class="legend">'
         "<div><h4>How to read a storyboard</h4>"
-        "<p>Each column is someone or something: a tab, the server, the file. The steps happen in the order of their numbers. "
+        "<p>Each column is someone or something: a tab, an AI agent, the server, the file. The steps happen in the order of their numbers. "
         "A hatched column means that tab is offline or gone. <b>c0, c1, c2</b> are the three cells of the notebook the stories start with, "
         "and the line of boxes under a step is what that column's copy of the notebook holds after it.</p>"
         f'<div class="keys">{keys}</div></div>'
@@ -579,12 +626,11 @@ def _legend() -> str:
 
 def _index(spec: dict, suite) -> str:
     rows = []
-    for gid in suite.groups:
+    for gid in _group_order(spec, suite):
         links = "".join(
-            f'<a href="#{_e(sid)}" class="{"need" if spec["scenarios"][sid].get("decision") else ""}" '
+            f'<a href="#{_e(sid)}" class="{"need " if spec["scenarios"][sid].get("decision") else ""}{"new" if sid not in suite.scenarios else ""}" '
             f'title="{_e(spec["scenarios"][sid]["title"])}">{_e(sid)}</a>'
-            for sid, scn in suite.scenarios.items()
-            if scn.group == gid and sid in spec["scenarios"]
+            for sid in _group_ids(spec, suite, gid)
         )
         if links:
             rows.append(f'<div class="g"><b>{_e(spec["groups"][gid]["title"])}</b>{links}</div>')
@@ -593,18 +639,20 @@ def _index(spec: dict, suite) -> str:
 
 def _decisions_table(spec: dict, suite) -> str:
     rows = []
-    for sid in suite.scenarios:
-        sb = spec["scenarios"].get(sid)
-        if not sb or not sb.get("decision"):
-            continue
-        d = sb["decision"]
-        proposed = next(o for o in d["options"] if o.get("proposed"))
-        rows.append(
-            f'<tr><td><a href="#{_e(sid)}"><b>{_e(sid)}</b></a></td><td>{_e(sb["title"])}</td>'
-            f'<td>{_e(d["question"])}</td><td>{_e(proposed["label"])}</td></tr>'
-        )
+    for gid in _group_order(spec, suite):
+        for sid in _group_ids(spec, suite, gid):
+            sb = spec["scenarios"][sid]
+            if not sb.get("decision"):
+                continue
+            d = sb["decision"]
+            proposed = next(o for o in d["options"] if o.get("proposed"))
+            tag = "" if sid in suite.scenarios else f'<span class="tag">{_e(spec["page"]["unplayed"]["option_label"].lower())}</span>'
+            rows.append(
+                f'<tr><td><a href="#{_e(sid)}"><b>{_e(sid)}</b></a></td><td>{_e(sb["title"])}</td>'
+                f'<td>{_e(d["question"])}</td><td>{_e(proposed["label"])}{tag}</td></tr>'
+            )
     return (
-        '<table class="decisions"><thead><tr><th>Story</th><th>Situation</th><th>The question</th><th>Proposed answer</th></tr></thead><tbody>'
+        '<table class="decisions"><thead><tr><th>Story</th><th>Situation</th><th>The question</th><th>Proposed (or suggested) answer</th></tr></thead><tbody>'
         + "".join(rows)
         + "</tbody></table>"
     )
@@ -620,6 +668,7 @@ def render(spec: dict[str, Any], suite, *, complete: bool = True, only: tuple[st
     scenarios = spec["scenarios"]
     n_stories = len(scenarios)
     n_open = sum(1 for sb in scenarios.values() if sb.get("decision"))
+    n_unplayed = sum(1 for sid in scenarios if sid not in suite.scenarios)
     if only:
         unknown = [sid for sid in only if sid not in scenarios]
         if unknown:
@@ -628,23 +677,23 @@ def render(spec: dict[str, Any], suite, *, complete: bool = True, only: tuple[st
         spec = dict(spec, scenarios=scenarios)
     nav = "".join(
         f'<a href="#g-{_e(g)}">{_e(spec["groups"][g]["title"])}</a>'
-        for g in suite.groups
-        if any(s.group == g and sid in scenarios for sid, s in suite.scenarios.items())
+        for g in _group_order(spec, suite)
+        if _group_ids(spec, suite, g)
     )
     sections = []
-    for gid in suite.groups:
-        sids = [sid for sid, s in suite.scenarios.items() if s.group == gid and sid in scenarios]
+    for gid in _group_order(spec, suite):
+        sids = _group_ids(spec, suite, gid)
         if not sids:
             continue
         g = spec["groups"][gid]
-        cards = "".join(_card(sid, scenarios[sid], suite.scenarios[sid], page["applies_if"]) for sid in sids)
+        cards = "".join(_card(sid, scenarios[sid], suite.scenarios.get(sid), page) for sid in sids)
         sections.append(
             f'<section class="group" id="g-{_e(gid)}"><h2>{_e(g["title"])}</h2><p class="intro">{_e(g["intro"])}</p>{cards}</section>'
         )
     principles = "".join(f'<div><b>{_e(p["name"])}</b>{_e(p["text"])}</div>' for p in page["principles"])
 
     def counted(text: str) -> str:
-        return _e(text.replace("{stories}", str(n_stories)).replace("{open}", str(n_open)))
+        return _e(text.replace("{stories}", str(n_stories)).replace("{open}", str(n_open)).replace("{unplayed}", str(n_unplayed)))
 
     return (
         "<!doctype html>\n"
