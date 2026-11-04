@@ -231,3 +231,53 @@ test('a message is drawn as an envelope that gets lost on the way when the story
   ctrl.seek(lostAt);
   assert.equal(el.querySelectorAll('.nbs-lostx').length, 1, 'a cross where it was lost');
 });
+
+test('the list of stories can be hidden, and that is remembered', async () => {
+  const { doc, win } = open();
+  const layout = doc.querySelector('.layout');
+  const toggle = doc.getElementById('sideToggle');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.ok(!layout.classList.contains('side-collapsed'));
+  toggle.click();
+  assert.ok(layout.classList.contains('side-collapsed'));
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(win.localStorage.getItem('nbs-side'), 'false');
+  toggle.click();
+  assert.ok(!layout.classList.contains('side-collapsed'));
+  assert.equal(win.localStorage.getItem('nbs-side'), 'true');
+});
+
+test('each group of the list can be folded, and all of them at once', async () => {
+  const { doc, win } = open();
+  const group = doc.querySelector('.nav-group');
+  const chev = group.querySelector('.nav-chev');
+  assert.ok(!group.classList.contains('folded'));
+  chev.click();
+  assert.ok(group.classList.contains('folded'));
+  assert.equal(chev.getAttribute('aria-expanded'), 'false');
+  assert.ok(JSON.parse(win.localStorage.getItem('nbs-nav-folded')).includes(group.dataset.group));
+  chev.click();
+  assert.ok(!group.classList.contains('folded'));
+  const groups = [...doc.querySelectorAll('.nav-group')];
+  doc.getElementById('foldAll').click();
+  assert.ok(groups.every(g => g.classList.contains('folded')));
+  doc.getElementById('unfoldAll').click();
+  assert.ok(groups.every(g => !g.classList.contains('folded')));
+});
+
+test('searching shows every match even in a folded group; going to a story opens its group', async () => {
+  const { doc, win } = open();
+  doc.getElementById('foldAll').click();
+  const q = doc.getElementById('q');
+  q.value = 'move';
+  q.dispatchEvent(new win.Event('input'));
+  assert.ok(doc.getElementById('side').classList.contains('filtering'), 'folds do not hide search results');
+  q.value = '';
+  q.dispatchEvent(new win.Event('input'));
+  assert.ok(!doc.getElementById('side').classList.contains('filtering'));
+  const z3 = doc.querySelector('.nav-story[data-id="Z3"]').closest('.nav-group');
+  assert.ok(z3.classList.contains('folded'));
+  win.location.hash = '#Z3';
+  win.dispatchEvent(new win.HashChangeEvent('hashchange'));
+  assert.ok(!z3.classList.contains('folded'), 'the group of the story you went to is open');
+});

@@ -147,12 +147,15 @@ def build(data: Path, out: Path) -> dict:
         g = src["groups"][gid]
         ids = stories_of(src, gid)
         nav.append(
-            f'<div class="nav-group" data-group="{e(gid)}"><a class="nav-gtitle" href="#g-{e(gid)}">{e(g["title"])}</a>'
+            f'<div class="nav-group" data-group="{e(gid)}"><div class="nav-ghead">'
+            f'<button type="button" class="nav-chev" aria-expanded="true" aria-label="Fold {e(g["title"])}"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>'
+            f'<a class="nav-gtitle" href="#g-{e(gid)}">{e(g["title"])}</a><span class="nav-gcount">{len(ids)}</span></div>'
+            '<div class="nav-stories">'
             + "".join(
                 f'<a class="nav-story{" need" if all_stories[s].get("decision") else ""}" data-id="{e(s)}" href="#{e(s)}"><span class="nav-id">{e(s)}</span>{e(all_stories[s]["title"])}</a>'
                 for s in ids
             )
-            + "</div>"
+            + "</div></div>"
         )
         cards = "".join(
             f'<article class="story-card{" has-decision" if all_stories[s].get("decision") else ""}" id="{e(s)}" data-search="{e(" ".join([s, all_stories[s]["title"], all_stories[s]["story"], all_stories[s]["result"]]).lower())}" data-need="{int(bool(all_stories[s].get("decision")))}" data-features="{e(" ".join(b["feature"] for b in all_stories[s]["badges"] if b.get("feature")))}" data-nbs>{static_card(all_stories[s])}</article>'
