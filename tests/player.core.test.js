@@ -148,3 +148,25 @@ test('a tab that opens the notebook shows what it loaded, not what it held befor
   assert.equal(open.lanes.tab.cells.length, 5);
   assert.deepEqual(open.lanes.tab.cells.map(c => c.code), open.lanes.server.cells.map(c => c.code));
 });
+
+test('a reconnect or rebuild that leaves a copy as it was says so: the non-event is shown', () => {
+  const tl = NB.buildTimeline(data.stories.A, cfg);
+  const rebuild = tl.frames.find(f => f.kind === 'rebuild');
+  assert.equal(rebuild.lanes.server.unchanged, true);
+  assert.match(NB.boardHTML(tl, rebuild), /nothing lost/);
+  const reconnect = tl.frames.find(f => f.kind === 'reconnect');
+  assert.equal(reconnect.lanes.tab.unchanged, true);
+  assert.equal(reconnect.lanes.server.unchanged, true, 'the server that heard from the tab as well');
+  assert.match(NB.boardHTML(tl, reconnect), /receives/);
+});
+
+test('it does not claim nothing was lost where the tab differs from the server', () => {
+  const tl = NB.buildTimeline(data.stories.Z1, cfg);
+  const reconnect = tl.frames.find(f => f.kind === 'reconnect');
+  assert.ok(!NB.boardHTML(tl, reconnect).includes('nothing lost'));
+});
+
+test('every window says how many cells it holds', () => {
+  const tl = NB.buildTimeline(data.stories.A, cfg);
+  assert.match(NB.boardHTML(tl, tl.frames[1]), /3 cells/);
+});

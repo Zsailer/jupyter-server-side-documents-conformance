@@ -297,6 +297,10 @@
   color: var(--nbs-bad);
   background: var(--nbs-bad-bg);
 }
+.nbs-act.nbs-k-receive {
+  color: var(--nbs-fg2);
+  background: var(--nbs-mute-bg);
+}
 .nbs-act.nbs-k-reconnect,
 .nbs-act.nbs-k-rebuild,
 .nbs-act.nbs-k-late,
@@ -590,14 +594,26 @@
 }
 .nbs-dot {
   position: absolute;
-  left: -7px;
-  top: -7px;
-  width: 14px;
-  height: 14px;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
-  background: var(--nbs-brand);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--nbs-brand) 30%, transparent);
+  background: var(--nbs-brand-strong);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 4px color-mix(in srgb, var(--nbs-brand) 28%, transparent);
   opacity: 0;
+}
+.nbs-dot .nbs-ic {
+  width: 15px;
+  height: 15px;
+}
+.nbs-dot.nbs-lostx {
+  background: var(--nbs-bad);
+  font: 700 14px var(--nbs-font);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 4px color-mix(in srgb, var(--nbs-bad) 28%, transparent);
 }
 
 /* ---- controls ---- */
@@ -914,4 +930,35 @@
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* the notebook kept its promise: said once, where it happened */
+.nbs-actrow {
+  gap: 6px;
+}
+.nbs-keep {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nbs-ok);
+  background: var(--nbs-ok-bg);
+  animation: nbs-enter 0.45s ease-out 0.35s both;
+}
+.nbs-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--nbs-fg3);
+  white-space: nowrap;
+}
+.nbs-same {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nbs-ok);
+  background: var(--nbs-ok-bg);
+  border-radius: 999px;
+  padding: 2px 12px;
 }

@@ -207,3 +207,27 @@ test('the stories page has no explainer above the stories, only a way to it', as
   assert.ok(links.every(h => h.startsWith('about.html')));
   assert.ok(doc.querySelector('.hero').nextElementSibling.id === 'stories', 'the stories come straight after the title');
 });
+
+test('the end says whether every copy holds the same cells', async () => {
+  const { doc } = open();
+  const a = doc.getElementById('A');
+  a.querySelectorAll('.nbs-seg')[a.querySelectorAll('.nbs-seg').length - 1].click();
+  assert.match(a.querySelector('.nbs-caption').textContent, /every copy holds the same 3 cells/);
+});
+
+test('a message is drawn as an envelope that gets lost on the way when the story says it is lost', async () => {
+  const { win, doc } = open();
+  win.Element.prototype.animate = function () { return { pause() {}, currentTime: 0 }; };
+  const el = doc.createElement('div');
+  doc.body.appendChild(el);
+  const st = JSON.parse(doc.getElementById('data').textContent).stories.B;
+  const ctrl = win.NbScenario.mount(el, st, { autoplay: false });
+  const frames = [...st.steps.keys()].map(i => i + 1);
+  const lostAt = frames.find(i => st.steps[i - 1].kind === 'fault');
+  const normalAt = frames.find(i => st.steps[i - 1].kind === 'reconnect');
+  ctrl.seek(normalAt);
+  assert.equal(el.querySelectorAll('.nbs-dot').length, 1);
+  assert.equal(el.querySelectorAll('.nbs-lostx').length, 0);
+  ctrl.seek(lostAt);
+  assert.equal(el.querySelectorAll('.nbs-lostx').length, 1, 'a cross where it was lost');
+});
