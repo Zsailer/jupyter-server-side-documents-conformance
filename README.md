@@ -16,6 +16,9 @@ holds after every step, and how the story ends.
  ▶ ━━━━━━━●━━━━━━━⚡━━━━━━━━━━━━━  3 · types “+OFFLINE” into c1
 ```
 
+**Live:** https://zsailer.github.io/jupyter-server-side-documents-conformance/
+**Repo:** https://github.com/Zsailer/jupyter-server-side-documents-conformance
+
 ## What is here
 
 | | |
@@ -40,6 +43,14 @@ npm install                                # jsdom, for the tests only
 npm run build                              # writes examples/storyboards/site/index.html
 npm test
 ```
+
+To publish the storyboards page, after `npm install`:
+
+```sh
+npm run deploy                             # builds, runs every test, and publishes nothing
+```
+
+The built page is the folder `examples/storyboards/site/`, which `npm run build` writes.
 
 ## The idea in four moves
 
