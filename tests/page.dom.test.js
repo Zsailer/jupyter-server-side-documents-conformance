@@ -182,3 +182,28 @@ test('what a lane does is said above its window, in a row every lane has, so no 
   assert.equal(pill.closest('.nbs-panel'), null, 'outside the window');
   assert.match(pill.textContent, /goes offline|opens|types/);
 });
+
+test('the reading guide is its own page: the picture, the key to the cells, the principles', async () => {
+  const errors = [];
+  const vc = new VirtualConsole();
+  vc.on('jsdomError', e => errors.push(String(e.stack || e)));
+  const dom = await JSDOM.fromFile(path.join(path.dirname(SITE), 'about.html'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/', virtualConsole: vc });
+  opened.push(dom.window);
+  const doc = dom.window.document;
+  assert.equal(doc.querySelectorAll('#hero-trip .nbs-panel').length, 3);
+  assert.equal(doc.querySelectorAll('#legend .row').length, 6);
+  assert.ok(doc.querySelectorAll('.principle').length >= 5);
+  assert.ok(doc.querySelectorAll('.need-list a').length >= 8);
+  doc.querySelector('[data-theme-set="dark"]').click();
+  assert.equal(doc.documentElement.dataset.theme, 'dark');
+  assert.deepEqual(errors, []);
+});
+
+test('the stories page has no explainer above the stories, only a way to it', async () => {
+  const { doc } = open();
+  assert.equal(doc.getElementById('principles'), null);
+  assert.equal(doc.getElementById('how'), null);
+  const links = [...doc.querySelectorAll('.hero a')].map(a => a.getAttribute('href'));
+  assert.ok(links.every(h => h.startsWith('about.html')));
+  assert.ok(doc.querySelector('.hero').nextElementSibling.id === 'stories', 'the stories come straight after the title');
+});

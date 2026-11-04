@@ -109,3 +109,10 @@ a { color: var(--nbs-brand-strong); }
   .main { padding: 0 16px 60px; }
   .how { grid-template-columns: 1fr; }
 }
+
+/* ---- the second page, and the way to it ---- */
+.topnav a { font-size: 14px; color: var(--nbs-fg2); text-decoration: none; padding: 5px 10px; border-radius: 6px; }
+.topnav a:hover { background: var(--nbs-mute-bg); color: var(--nbs-fg); }
+.hero-links { margin: 14px 0 0; font-size: 14.5px; color: var(--nbs-fg3); }
+.doc { max-width: 1180px; margin: 0 auto; padding: 0 32px 80px; }
+@media (max-width: 1000px) { .doc { padding: 0 16px 60px; } }

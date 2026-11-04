@@ -41,10 +41,17 @@ Mount every story up front. Unmounted cards would be a different height from mou
 a reader follows a link. Each player only animates while it is at least a third on screen, so sixty-nine of them cost
 nothing while you read one.
 
+## Keep the top of the stories page light
+
+A reader came to see stories. Put a title, one paragraph and a link to the guide above them, and move everything that
+explains how to read them to a second page: the problem in one picture, the key to the cells, the principles, the list
+of open questions. `examples/storyboards` does this (`index.html` and `about.html`, one `build.py`). The guide is for
+the first visit; the stories are for every visit after.
+
 ## The pieces worth copying
 
-- **The problem in one picture**, once, near the top: `NbScenario.triptych`. Say the point of the whole page in three frames.
-- **A key to the cells**: the marks (`+ - ^ ? !`) drawn with `NbScenario.miniHTML`. Readers should never have to guess
+- **The problem in one picture**, once, on the guide page: `NbScenario.triptych`. Say the point of the whole page in three frames.
+- **A key to the cells**, on the guide page: the marks (`+ - ^ ? !`) drawn with `NbScenario.miniHTML`. Readers should never have to guess
   what an amber cell means.
 - **Search and filters** over the stories' text, with a filter for the ones that need a decision.
 - **A side list** that follows where you are, and opens over the page on small screens.

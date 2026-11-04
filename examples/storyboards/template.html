@@ -12,15 +12,12 @@
 
 <header class="topbar">
   <a class="brand" href="#top" aria-label="Top of the page">
-    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M3.2 10.2a9.4 4.4 0 0 0 17.6 0" fill="none" stroke="#f37726" stroke-width="2.2" stroke-linecap="round"/><path d="M3.2 13.8a9.4 4.4 0 0 1 17.6 0" fill="none" stroke="#f37726" stroke-width="2.2" stroke-linecap="round"/><circle cx="18.6" cy="3.6" r="1.4" fill="#767677"/><circle cx="5.4" cy="20.6" r="1.7" fill="#767677"/><circle cx="4.6" cy="4.4" r="1" fill="#9e9e9e"/></svg>
+    {{LOGO}}
     <span class="brand-name">Jupyter</span><span class="brand-sep">/</span><span class="brand-page">Notebook stories</span>
   </a>
   <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="side">Stories</button>
-  <div class="theme" role="group" aria-label="Theme">
-    <button type="button" data-theme-set="auto" aria-pressed="false">Auto</button>
-    <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
-    <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
-  </div>
+  <nav class="topnav" aria-label="Pages"><a href="about.html">How to read these</a></nav>
+  {{THEME_CONTROL}}
 </header>
 
 <div class="layout" id="top">
@@ -39,52 +36,7 @@
     <section class="hero">
       <h1>{{HEADING}}</h1>
       <p class="lead">{{INTRO}}</p>
-    </section>
-
-    <section class="block" id="picture">
-      <h2>What every story checks</h2>
-      <p class="block-intro">A person is editing. The connection drops and they keep going. When it comes back, their work must still be there. Each story below is a variation: another tab, the server letting go of the notebook, a file changed underneath, an AI agent. You watch what each copy of the notebook holds, step by step.</p>
-      <div id="hero-trip"></div>
-    </section>
-
-    <section class="block" id="how">
-      <h2>How to read a story</h2>
-      <div class="how">
-        <div>
-          <h3>The windows</h3>
-          <ul class="legend-list">
-            <li><b>Tabs</b> are browser tabs with the notebook open. The blue bar marks the active cell; green means someone is typing in it.</li>
-            <li><b>Server</b> holds a live copy of the notebook for as long as someone has it open.</li>
-            <li><b>File on disk</b> is the saved notebook.</li>
-            <li><b>AI agent</b> acts through the server while it holds the notebook, and on the file when it does not.</li>
-            <li>A hatched window is away: offline, closed, or stopped.</li>
-          </ul>
-        </div>
-        <div>
-          <h3>The cells</h3>
-          <div id="legend" class="legend-cells"></div>
-        </div>
-        <div>
-          <h3>The player</h3>
-          <ul class="legend-list">
-            <li><b>Play / pause</b> and the numbered bar: click a step to jump to it.</li>
-            <li>Amber steps (a reconnect, a rebuild, a crash) are over in a moment in real life. The bar does not fill for them: you see what differs, then the result appears at once.</li>
-            <li>Typing is shown as it is typed. Changes made by the system, not by a person, simply appear.</li>
-            <li>Every story also has its steps as plain text.</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="block" id="principles">
-      <h2>What every story must respect</h2>
-      <div class="principles">{{PRINCIPLES}}</div>
-    </section>
-
-    <section class="block" id="need">
-      <h2>Needs alignment <span class="count-pill">{{NEED_COUNT}}</span></h2>
-      <p class="block-intro">{{DECISIONS_INTRO}}</p>
-      <div class="need-list">{{NEED_LIST}}</div>
+      <p class="hero-links"><a href="about.html">How to read a story</a> · <a href="about.html#principles">What every story must respect</a> · <a href="about.html#need">The {{NEED_COUNT}} that need alignment</a></p>
     </section>
 
     <div id="stories">{{BODY}}</div>
@@ -98,6 +50,7 @@
 
 <script id="data" type="application/json">{{DATA}}</script>
 <script>{{PLAYER_JS}}</script>
+<script>{{THEME_JS}}</script>
 <script>{{PAGE_JS}}</script>
 </body>
 </html>
