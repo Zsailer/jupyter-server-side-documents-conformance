@@ -190,6 +190,9 @@
   align-items: start;
 }
 .nbs-panel {
+  display: flex;
+  flex-direction: column;
+  height: var(--nbs-h, auto); /* every window of a story is as tall as the tallest: set by the player */
   background: var(--nbs-bg-panel);
   border: 1px solid var(--nbs-border);
   border-radius: 8px;
@@ -290,7 +293,13 @@
   background: var(--nbs-warn-bg);
 }
 .nbs-pbody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   padding: 8px 6px 10px;
+}
+.nbs-probe .nbs-panel {
+  height: auto;
 }
 .nbs-panel.nbs-acting {
   border-color: var(--nbs-brand);

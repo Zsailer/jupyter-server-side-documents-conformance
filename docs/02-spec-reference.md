@@ -131,6 +131,11 @@ By comparing each lane's cells before and after a step:
 
 You never write any of this.
 
+**The windows keep one height.** Before it plays, the player measures every frame of the story (and the alternative
+endings of a decision) and makes every window as tall as the tallest one needs, up to 560 px. Nothing grows or shrinks
+as cells come and go, so the windows can be compared side by side. A window that holds more than fits scrolls inside
+itself. It measures again if the page is resized.
+
 ## Ends and decisions
 
 `ends` is what every copy must hold when the story is over. `{all: [...]}` for every lane that holds a copy, or one

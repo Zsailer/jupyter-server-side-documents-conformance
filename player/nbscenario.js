@@ -814,6 +814,7 @@
       destroy() {
         players.delete(ctrl);
         io && io.disconnect();
+        ro && ro.disconnect();
       }
     };
 
@@ -841,6 +842,41 @@
       });
     }
 
+    /**
+     * Every window of a story is as tall as the tallest any frame needs, so that nothing grows or shrinks while the
+     * story plays and the windows can be compared side by side. Measured off screen, at the width they have now.
+     */
+    function measure() {
+      const w = board.offsetWidth;
+      if (!w) return; // not on screen (a filtered-out story, say): measured when it appears
+      const probe = document.createElement('div');
+      probe.className = 'nbs-board nbs-probe';
+      probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;width:' + w + 'px;--n:' + n;
+      stage.appendChild(probe);
+      const timelines = [baseTl].concat((spec.decision ? spec.decision.options : []).filter(o => o.ends && !o.proposed).map(o => withEnding(baseTl, spec, o.ends)));
+      let tallest = 0;
+      timelines.forEach(t => t.frames.forEach(f => {
+        probe.innerHTML = boardHTML(t, f, {});
+        probe.querySelectorAll('.nbs-panel').forEach(pn => {
+          tallest = Math.max(tallest, pn.offsetHeight);
+        });
+      }));
+      probe.remove();
+      if (tallest > 0) board.style.setProperty('--nbs-h', Math.min(Math.ceil(tallest), 560) + 'px');
+    }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(measure);
+    let ro = null;
+    if (typeof ResizeObserver === 'function') {
+      let lastW = 0;
+      ro = new ResizeObserver(() => {
+        if (board.offsetWidth !== lastW) {
+          lastW = board.offsetWidth;
+          measure();
+        }
+      });
+      ro.observe(stage);
+    }
+
     players.add(ctrl);
     let io = null;
     if (typeof IntersectionObserver === 'function' && opts.autoplay !== false && !reduced) {
@@ -855,6 +891,7 @@
       visible = opts.autoplay !== false;
     }
     paint();
+    ctrl.measure = measure;
     return ctrl;
   }
 
