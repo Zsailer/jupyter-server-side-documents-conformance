@@ -11,7 +11,7 @@ Two self-contained files, linked to each other: **`index.html`** has the stories
 
 ## The list on the left
 
-The list of stories can be hidden altogether (the **Stories** button in the top bar) to give the windows the full
+The list of stories can be hidden altogether (the hamburger button at the left of the top bar) to give the windows the full
 width, and each group can be folded with its arrow, or all at once (*Fold all* / *Open all*). Both are remembered in the
 browser. Searching or filtering shows every match, folded or not, and following a link to a story opens its group. On a
 narrow screen the list opens over the page and starts closed.
