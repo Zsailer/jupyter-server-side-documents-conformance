@@ -27,6 +27,7 @@ holds after every step, and how the story ends.
 | [`docs/`](docs/) | How to write a good scenario page. Start with [the guide](docs/01-why-and-when.md). |
 | [`examples/minimal/`](examples/minimal/) | The smallest useful page: one picture and one live scenario. **Start here.** |
 | [`examples/storyboards/`](examples/storyboards/) | A real page: the 69 stories of the multi-tab acceptance suite, built from YAML. |
+| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. |
 | [`tools/`](tools/) | The scenario grammar as a validator (`nbscenario_spec.py`). |
 | [`tests/`](tests/) | Tests of the core, of the built page in a simulated browser, and of the spec. |
 
