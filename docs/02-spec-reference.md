@@ -131,6 +131,10 @@ By comparing each lane's cells before and after a step:
 
 You never write any of this.
 
+**What a lane does is said above its window.** *opens*, *goes offline*, *types* appears in a row above the window, which
+every lane has whether or not it is acting. The cells inside the windows never move, so the same cell in two tabs stays
+at the same height.
+
 **The windows keep one height.** Before it plays, the player measures every frame of the story (and the alternative
 endings of a decision) and makes every window as tall as the tallest one needs, up to 560 px. Nothing grows or shrinks
 as cells come and go, so the windows can be compared side by side. A window that holds more than fits scrolls inside

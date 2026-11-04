@@ -164,3 +164,21 @@ test('every window of a story gets the height of the tallest, so nothing grows o
   assert.ok(h >= 60 + 40 * 3, 'tall enough for the fullest window, got ' + h);
   assert.ok(h <= 560);
 });
+
+test('what a lane does is said above its window, in a row every lane has, so no window\'s cells move', async () => {
+  const { doc } = open();
+  const card = doc.getElementById('Z1');
+  const segs = card.querySelectorAll('.nbs-seg');
+  segs[3].click(); // a step in which a tab goes offline
+  const board = card.querySelector('.nbs-board');
+  const lanes = board.querySelectorAll('.nbs-col-lane');
+  assert.equal(lanes.length, board.querySelectorAll('.nbs-panel').length);
+  lanes.forEach(l => {
+    assert.equal(l.querySelectorAll(':scope > .nbs-actrow').length, 1, 'one row above every window');
+    assert.ok(l.firstElementChild.classList.contains('nbs-actrow'), 'and it comes first');
+  });
+  const pill = board.querySelector('.nbs-act');
+  assert.ok(pill, 'the acting lane says what it does');
+  assert.equal(pill.closest('.nbs-panel'), null, 'outside the window');
+  assert.match(pill.textContent, /goes offline|opens|types/);
+});
