@@ -266,16 +266,29 @@
   background: var(--nbs-warn-bg);
   color: var(--nbs-warn);
 }
-.nbs-act {
+.nbs-col-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.nbs-actrow {
+  flex: none;
+  height: 28px;
   display: flex;
   align-items: center;
+}
+.nbs-act {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 3px 12px;
+  border-radius: 999px;
   font-size: 12.5px;
   font-weight: 600;
   color: var(--nbs-brand-strong);
   background: var(--nbs-brand-bg);
-  border-bottom: 1px solid var(--nbs-border);
+  animation: nbs-enter 0.35s ease-out;
 }
 .nbs-act.nbs-k-offline,
 .nbs-act.nbs-k-crash,

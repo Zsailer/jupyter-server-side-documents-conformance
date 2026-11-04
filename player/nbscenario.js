@@ -543,8 +543,10 @@
     const fam = family(lane.id);
     const head = (chip, extra) =>
       '<header class="nbs-phead">' + icon(LANE_ICON[fam] || 'box') + '<span class="nbs-ptitle">' + esc(title) + '</span>' + chip + '</header>' + (extra || '');
+    // what the lane does in this step is said above its window, in a row that is always there, so that no window's cells move
+    const lift = (actHtml, windowHtml) => (o.bare ? windowHtml : '<div class="nbs-col-lane"><div class="nbs-actrow">' + actHtml + '</div>' + windowHtml + '</div>');
     if (!lane.visible) {
-      return '<section class="nbs-panel nbs-dormant nbs-lane-' + fam + '" data-lane="' + lane.id + '">' + head('<span class="nbs-chip nbs-mute">not yet</span>', '<div class="nbs-pbody"><div class="nbs-empty">—</div></div>') + '</section>';
+      return lift('', '<section class="nbs-panel nbs-dormant nbs-lane-' + fam + '" data-lane="' + lane.id + '">' + head('<span class="nbs-chip nbs-mute">not yet</span>', '<div class="nbs-pbody"><div class="nbs-empty">—</div></div>') + '</section>');
     }
     const st = (STATUS[fam] || {})[lane.status];
     const chip = st ? '<span class="nbs-chip nbs-' + st[1] + '">' + esc(st[0]) + '</span>' : '';
@@ -556,10 +558,10 @@
     } else {
       body = cellsHTML(lane, o);
     }
-    return (
+    return lift(act, (
       '<section class="nbs-panel nbs-lane-' + fam + (lane.acting ? ' nbs-acting' : '') + (lane.receiving ? ' nbs-receiving' : '') + snap + (lane.status === 'offline' || lane.status === 'closed' || lane.status === 'stopped' ? ' nbs-away' : '') + '" data-lane="' + lane.id + '">' +
-      head(chip, act) + '<div class="nbs-pbody">' + body + '</div></section>'
-    );
+      head(chip) + '<div class="nbs-pbody">' + body + '</div></section>'
+    ));
   }
 
   /** The notebook windows of one frame. */
@@ -594,7 +596,7 @@
         used.add(c.key);
       });
       return '<figure class="nbs-fig"><div class="nbs-figstep">' + (i + 1) + '</div>' +
-        panelHTML(lane, p.title, { static: true }) +
+        panelHTML(lane, p.title, { static: true, bare: true }) +
         (p.caption ? '<figcaption>' + p.caption + '</figcaption>' : '') + '</figure>';
     }).join('<div class="nbs-figarrow" aria-hidden="true">→</div>') + '</div>';
   }
@@ -738,7 +740,7 @@
       const b = to.getBoundingClientRect();
       const ax = a.left + a.width / 2 - base.left;
       const bx = b.left + b.width / 2 - base.left;
-      const y = 44;
+      const y = 24;
       const dot = document.createElement('div');
       dot.className = 'nbs-dot';
       flights.appendChild(dot);
