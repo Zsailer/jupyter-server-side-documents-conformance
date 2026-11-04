@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the storyboards page: every story of the storyboard files as a live, side-by-side notebook demo.
 
-    python3 -I examples/storyboards/build.py                 # writes examples/storyboards/site/index.html
+    python3 -I examples/storyboards/build.py                 # writes examples/storyboards/site/index.html and about.html
     python3 -I examples/storyboards/build.py --data DIR -o out.html
 
 DIR holds page.yaml and one <group>.yaml per group of stories (the layout of `storyboards/` in
@@ -22,6 +22,18 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 import nbscenario_spec as spec  # noqa: E402
+
+LOGO = (
+    '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M3.2 10.2a9.4 4.4 0 0 0 17.6 0" fill="none" stroke="#f37726" stroke-width="2.2" stroke-linecap="round"/>'
+    '<path d="M3.2 13.8a9.4 4.4 0 0 1 17.6 0" fill="none" stroke="#f37726" stroke-width="2.2" stroke-linecap="round"/>'
+    '<circle cx="18.6" cy="3.6" r="1.4" fill="#767677"/><circle cx="5.4" cy="20.6" r="1.7" fill="#767677"/><circle cx="4.6" cy="4.4" r="1" fill="#9e9e9e"/></svg>'
+)
+THEME_CONTROL = (
+    '<div class="theme" role="group" aria-label="Theme">'
+    '<button type="button" data-theme-set="auto" aria-pressed="false">Auto</button>'
+    '<button type="button" data-theme-set="light" aria-pressed="false">Light</button>'
+    '<button type="button" data-theme-set="dark" aria-pressed="false">Dark</button></div>'
+)
 
 PROPOSED = "Proposed"
 SUGGESTED = "Suggested"
@@ -152,33 +164,53 @@ def build(data: Path, out: Path) -> dict:
 
     principles = "".join(f'<div class="principle"><h3>{e(p["name"])}</h3><p>{e(fill(p["text"]))}</p></div>' for p in page["principles"])
     need_list = "".join(
-        f'<a href="#{e(s)}"><span class="nav-id">{e(s)}</span>{e(all_stories[s]["title"])}</a>' for s in open_ids
+        f'<a href="index.html#{e(s)}"><span class="nav-id">{e(s)}</span>{e(all_stories[s]["title"])}</a>' for s in open_ids
     )
-    template = (HERE / "template.html").read_text()
     data_json = json.dumps({"stories": all_stories, "config": config}, ensure_ascii=False).replace("</", "<\\/")
-    html_out = (
-        template.replace("{{TITLE}}", e(page["title"]))
-        .replace("{{HEADING}}", e(page["title"]))
-        .replace("{{INTRO}}", e(fill(page["intro"])))
-        .replace("{{PRINCIPLES}}", principles)
-        .replace("{{DECISIONS_INTRO}}", e(fill(page["decisions_intro"])))
-        .replace("{{NEED_LIST}}", need_list)
-        .replace("{{NEED_COUNT}}", str(counts["open"]))
-        .replace("{{STORY_COUNT}}", str(counts["stories"]))
-        .replace("{{NAV}}", "".join(nav))
-        .replace("{{BODY}}", "".join(body))
-        .replace("{{FEATURE_FILTERS}}", "".join(
+    shared = {
+        "{{LOGO}}": LOGO,
+        "{{THEME_CONTROL}}": THEME_CONTROL,
+        "{{NEED_COUNT}}": str(counts["open"]),
+        "{{STORY_COUNT}}": str(counts["stories"]),
+    }
+    assets = {
+        "{{DATA}}": data_json,
+        "{{PLAYER_CSS}}": (ROOT / "player" / "nbscenario.css").read_text(),
+        "{{PAGE_CSS}}": (HERE / "page.css").read_text(),
+        "{{PLAYER_JS}}": (ROOT / "player" / "nbscenario.js").read_text().replace("</script", "<\\/script"),
+        "{{THEME_JS}}": (HERE / "theme.js").read_text(),
+        "{{PAGE_JS}}": (HERE / "page.js").read_text(),
+        "{{ABOUT_JS}}": (HERE / "about.js").read_text(),
+    }
+
+    def render(template: str, content: dict) -> str:
+        text = (HERE / template).read_text()
+        for key, value in {**shared, **content}.items():
+            text = text.replace(key, value)
+        for key, value in assets.items():  # last: the scripts must not be searched for placeholders
+            text = text.replace(key, value)
+        return text
+
+    index = render("template.html", {
+        "{{TITLE}}": e(page["title"]),
+        "{{HEADING}}": e(page["title"]),
+        "{{INTRO}}": e(fill(page["intro"])),
+        "{{NAV}}": "".join(nav),
+        "{{BODY}}": "".join(body),
+        "{{FEATURE_FILTERS}}": "".join(
             f'<button type="button" class="chip-filter" data-filter="feature:{e(k)}">{e(v["badge"])}</button>'
             for k, v in page["applies_if"].items()
-        ))
-        .replace("{{DATA}}", data_json)
-        .replace("{{PLAYER_CSS}}", (ROOT / "player" / "nbscenario.css").read_text())
-        .replace("{{PAGE_CSS}}", (HERE / "page.css").read_text())
-        .replace("{{PLAYER_JS}}", (ROOT / "player" / "nbscenario.js").read_text().replace("</script", "<\\/script"))
-        .replace("{{PAGE_JS}}", (HERE / "page.js").read_text())
-    )
+        ),
+    })
+    about = render("about.template.html", {
+        "{{INTRO}}": e(fill(page["intro"])),
+        "{{PRINCIPLES}}": principles,
+        "{{DECISIONS_INTRO}}": e(fill(page["decisions_intro"])),
+        "{{NEED_LIST}}": need_list,
+    })
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(html_out)
+    out.write_text(index)
+    out.with_name("about.html").write_text(about)
     return {"stories": all_stories, "counts": counts, "groups": order}
 
 

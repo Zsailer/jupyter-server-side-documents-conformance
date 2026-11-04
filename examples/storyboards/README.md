@@ -3,11 +3,11 @@
 Every story of the multi-tab storyboard, as a live demo on Jupyter-style notebook windows, with light and dark themes.
 
 ```sh
-npm run build          # from the repository root: writes examples/storyboards/site/index.html
+npm run build          # from the repository root: writes examples/storyboards/site/index.html and about.html
 open examples/storyboards/site/index.html
 ```
 
-It is one self-contained file: no network, no build step to read it. Host it as it is.
+Two self-contained files, linked to each other: **`index.html`** has the stories, straight after a title and one paragraph; **`about.html`** has everything that explains them (the problem in one picture, how to read a story and the key to the cells, the principles every story must respect, and the list of stories that need alignment). No network, no build step to read them. Host them together, as they are.
 
 ## Where the stories come from
 
@@ -49,9 +49,12 @@ asserts the second one for this snapshot.
 
 | | |
 |---|---|
-| `build.py` | Loads, validates and builds. |
-| `template.html` | The page, with placeholders. |
-| `page.css`, `page.js` | The page around the stories: top bar, side list, search, filters, theme switch. |
+| `build.py` | Loads, validates and builds both pages. |
+| `template.html`, `about.template.html` | The stories page and the reading guide, with placeholders. |
+| `page.css` | Styles for both pages. |
+| `page.js` | The stories page: search, filters, the side list. |
+| `about.js` | The reading guide: the picture and the key to the cells. |
+| `theme.js` | The Auto / Light / Dark switch, shared by both pages. |
 | `cells.yaml` | What cell names stand for. |
 | `data/` | The snapshot above. |
 | `site/` | The built page (ignored by version control). |

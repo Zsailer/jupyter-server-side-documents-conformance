@@ -1,41 +1,8 @@
-/* The page around the stories: theme, search and filter, navigation. The stories are mounted by player/nbscenario.js. */
+/* The page around the stories: search and filter, navigation. The stories are mounted by player/nbscenario.js. */
 (function () {
   'use strict';
   var data = JSON.parse(document.getElementById('data').textContent);
   var NB = window.NbScenario;
-  var root = document.documentElement;
-
-  /* ---- theme: auto follows the system; light and dark are remembered ---- */
-  var themeButtons = document.querySelectorAll('[data-theme-set]');
-  function setTheme(mode) {
-    if (mode === 'light' || mode === 'dark') root.dataset.theme = mode;
-    else delete root.dataset.theme;
-    try { if (mode === 'auto') localStorage.removeItem('nbs-theme'); else localStorage.setItem('nbs-theme', mode); } catch (e) { /* private mode */ }
-    themeButtons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.themeSet === mode)); });
-  }
-  var saved = 'auto';
-  try { saved = localStorage.getItem('nbs-theme') || 'auto'; } catch (e) { /* private mode */ }
-  setTheme(saved);
-  themeButtons.forEach(function (b) { b.addEventListener('click', function () { setTheme(b.dataset.themeSet); }); });
-
-  /* ---- "the problem in one picture" and the key to the cells ---- */
-  NB.triptych(document.getElementById('hero-trip'), [
-    { title: 'Your tab', status: 'online', cells: ['c0', 'c1', 'c2'], active: 'c1', caption: 'You are editing the notebook.' },
-    { title: 'Your tab', status: 'offline', cells: ['c0', 'c1=+OFFLINE', 'c2'], active: 'c1', editing: true, caption: 'The connection drops. You keep typing.' },
-    { title: 'Your tab', status: 'online', cells: ['c0', 'c1=+OFFLINE', 'c2'], active: 'c1', caption: 'You reconnect. Your typing is still there.' }
-  ], data.config);
-
-  var legend = [
-    ['+NEW-B', 'A cell that was added'],
-    ['c1=+B-TYPED', 'A cell that was edited, with what changed'],
-    ['^c1', 'A cell that was moved'],
-    ['?c1=recovered', 'A copy set aside for the user'],
-    ['-c2', 'A cell that was removed'],
-    ['!c1=twice', 'Something that must never happen']
-  ];
-  document.getElementById('legend').innerHTML = legend.map(function (l) {
-    return '<div class="row">' + NB.miniHTML([l[0]], data.config) + '<span>' + l[1] + '</span></div>';
-  }).join('');
 
   /* ---- the stories: mounted up front, so the page does not jump; each plays only while it is on screen ---- */
   var cards = Array.prototype.slice.call(document.querySelectorAll('.story-card'));

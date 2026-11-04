@@ -76,13 +76,29 @@ class BuildTest(unittest.TestCase):
             a, b = Path(d) / "a.html", Path(d) / "b.html"
             build.build(DATA, a)
             build.build(DATA, b)
+            for name in ("a.html", "b.html", "about.html"):
+                self.assertTrue((Path(d) / name).exists(), name)
             self.assertEqual(a.read_bytes(), b.read_bytes())
-            page = a.read_text()
-        self.assertNotRegex(page, r"<script[^>]+src=", "no external script")
-        self.assertNotRegex(page, r"<link[^>]+href=", "no external stylesheet")
-        self.assertNotRegex(page, r"url\(\s*['\"]?https?:", "no external resource in the styles")
-        self.assertIn("prefers-color-scheme: dark", page)
-        self.assertIn('data-theme-set="dark"', page)
+            pages = {"index": a.read_text(), "about": (Path(d) / "about.html").read_text()}
+        for name, page in pages.items():
+            with self.subTest(name):
+                self.assertNotRegex(page, r"<script[^>]+src=", "no external script")
+                self.assertNotRegex(page, r"<link[^>]+href=", "no external stylesheet")
+                self.assertNotRegex(page, r"url\(\s*['\"]?https?:", "no external resource in the styles")
+                self.assertIn("prefers-color-scheme: dark", page)
+                self.assertIn('data-theme-set="dark"', page)
+
+    def test_the_stories_page_is_light_and_the_explanation_is_on_its_own_page(self):
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d) / "index.html"
+            build.build(DATA, out)
+            index, about = out.read_text(), (Path(d) / "about.html").read_text()
+        for section in ('id="picture"', 'id="how"', 'id="principles"', 'id="need"'):
+            self.assertNotIn(section, index, "moved to about.html: " + section)
+            self.assertIn(section, about)
+        self.assertIn('href="about.html"', index, "the stories page says where the explanation is")
+        self.assertIn('href="index.html#Z3"', about, "the explanation links back to the stories")
+        self.assertIn('href="index.html"', about)
 
     def test_the_page_has_every_story_once_with_a_text_version(self):
         with tempfile.TemporaryDirectory() as d:
