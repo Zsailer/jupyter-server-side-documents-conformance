@@ -116,11 +116,13 @@ a { color: var(--nbs-brand-strong); }
 
 /* ---- the list of stories can be hidden, and each group folded ---- */
 .side-toggle {
-  display: inline-flex; align-items: center; gap: 7px;
-  font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--nbs-border-strong); background: transparent; color: var(--nbs-fg);
+  flex: none; width: 36px; height: 36px; margin-left: -6px; padding: 0;
+  display: inline-grid; place-items: center; border: 0; border-radius: 8px; cursor: pointer;
+  background: transparent; color: var(--nbs-fg);
 }
-.side-toggle svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.side-toggle:hover { background: var(--nbs-mute-bg); }
+.side-toggle:focus-visible { outline: 2px solid var(--nbs-brand); outline-offset: 1px; }
+.side-toggle svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 .side-toggle[aria-expanded='true'] { background: var(--nbs-mute-bg); }
 .layout.side-collapsed { grid-template-columns: minmax(0, 1fr); }
 .layout.side-collapsed .side { display: none; }

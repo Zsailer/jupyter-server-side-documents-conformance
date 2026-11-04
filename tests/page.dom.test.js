@@ -281,3 +281,13 @@ test('searching shows every match even in a folded group; going to a story opens
   win.dispatchEvent(new win.HashChangeEvent('hashchange'));
   assert.ok(!z3.classList.contains('folded'), 'the group of the story you went to is open');
 });
+
+test('the button that hides the list is a hamburger icon, first in the bar, on the left', async () => {
+  const { doc } = open();
+  const toggle = doc.getElementById('sideToggle');
+  assert.equal(doc.querySelector('.topbar').firstElementChild, toggle);
+  assert.ok(toggle.querySelector('svg'));
+  assert.equal(toggle.textContent.trim(), '', 'an icon, no word');
+  assert.match(toggle.getAttribute('aria-label'), /list of stories/);
+  assert.equal(toggle.querySelectorAll('path').length, 1);
+});
