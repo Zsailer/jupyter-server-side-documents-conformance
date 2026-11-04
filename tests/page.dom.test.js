@@ -143,3 +143,24 @@ test('the minimal example draws its picture and plays its story', async () => {
   assert.match(doc.querySelector('#picture').textContent, /Your typing is still there/);
   assert.deepEqual(errors, []);
 });
+
+test('every window of a story gets the height of the tallest, so nothing grows or shrinks while it plays', async () => {
+  const { win, doc } = open();
+  // jsdom does no layout: say that a window is taller the more cells it holds
+  Object.defineProperty(win.HTMLElement.prototype, 'offsetWidth', { configurable: true, get() { return 900; } });
+  Object.defineProperty(win.HTMLElement.prototype, 'offsetHeight', {
+    configurable: true,
+    get() {
+      return this.classList && this.classList.contains('nbs-panel') ? 60 + 40 * this.querySelectorAll('.nbs-cell').length : 20;
+    }
+  });
+  const el = doc.createElement('div');
+  doc.body.appendChild(el);
+  const st = JSON.parse(doc.getElementById('data').textContent).stories.Z3;
+  const ctrl = win.NbScenario.mount(el, st, { autoplay: false });
+  ctrl.measure();
+  const h = parseInt(el.querySelector('.nbs-board').style.getPropertyValue('--nbs-h'), 10);
+  // the most any frame of Z3 holds in a window is four cells (two tabs typing and deleting, plus the recovered copy of an option)
+  assert.ok(h >= 60 + 40 * 3, 'tall enough for the fullest window, got ' + h);
+  assert.ok(h <= 560);
+});
