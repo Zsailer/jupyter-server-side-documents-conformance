@@ -115,3 +115,36 @@ test('when a story is over the file is saved again, whatever changed it on the w
   assert.equal(before, 'changed');
   assert.equal(tl.frames[tl.frames.length - 1].lanes.file.status, 'saved');
 });
+
+test('the server holds nothing until a tab opens the notebook, then what the file holds', () => {
+  const tl = NB.buildTimeline(data.stories.Z3, cfg);
+  const server = f => f.lanes.server;
+  assert.equal(server(tl.frames[0]).status, 'idle');
+  assert.equal(server(tl.frames[0]).cells.length, 0);
+  assert.equal(server(tl.frames[1]).status, 'holding');
+  assert.deepEqual(server(tl.frames[1]).cells.map(c => c.code), tl.frames[1].lanes.file.cells.map(c => c.code), 'it loaded the notebook from the file');
+});
+
+test('a server that holds the notebook never shows a blank notebook; one that let go or died does', () => {
+  for (const id of Object.keys(data.stories)) {
+    const tl = NB.buildTimeline(data.stories[id], cfg);
+    if (!tl.lanes.some(l => l.id === 'server')) continue;
+    tl.frames.forEach(f => {
+      const sv = f.lanes.server;
+      if (sv.status === 'holding') assert.ok(sv.cells.length > 0, id + ' frame ' + f.index + ': holds the notebook but shows none');
+      if (sv.status === 'idle' || sv.status === 'stopped') assert.equal(sv.cells.filter(c => !c.remark).length, 0, id + ' frame ' + f.index + ': is not holding it but shows cells');
+    });
+  }
+});
+
+test('an empty server window says why', () => {
+  const tl = NB.buildTimeline(data.stories.Z3, cfg);
+  assert.match(NB.boardHTML(tl, tl.frames[0]), /Not holding the notebook/);
+});
+
+test('a tab that opens the notebook shows what it loaded, not what it held before it closed', () => {
+  const tl = NB.buildTimeline(data.stories.AI4, cfg);
+  const open = tl.frames.find(f => f.kind === 'open' && f.index > 5);
+  assert.equal(open.lanes.tab.cells.length, 5);
+  assert.deepEqual(open.lanes.tab.cells.map(c => c.code), open.lanes.server.cells.map(c => c.code));
+});

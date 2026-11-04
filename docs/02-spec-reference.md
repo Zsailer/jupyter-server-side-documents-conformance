@@ -126,6 +126,11 @@ By comparing each lane's cells before and after a step:
 - the same change made by the system (`note`, `rebuild`, `reconnect`, …) simply **appears**, with a flash;
 - a **removed cell** is shown struck through for a moment, then goes;
 - a **moved cell** flashes where it lands;
+- the **server** holds nothing until a tab opens the notebook, then loads it from the file (or, with no file drawn, from
+  the tab), so it is never a blank notebook while the file and a tab hold cells. It shows *Not holding the notebook*
+  before that, and again after a `free` or a `crash`, when its live copy is gone. A server step that gives the server
+  cells (it loaded the notebook, say) also means it holds it;
+- a **tab that opens** with no `cells` shows what it loaded from the server, not what it held before it closed;
 - on a **reconnect**, the cells that differ between the tab and the server (or, if the server holds nothing yet, a tab
   that is still connected) are outlined in amber, then the result **jumps** in.
 
