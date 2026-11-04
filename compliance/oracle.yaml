@@ -1,0 +1,17 @@
+# What the storyboards do not say, said once, so that a story can be a check.
+#
+# A story that needs an entry here is listed under "Checked loosely" in COVERAGE.md until it has one.
+
+# A cell the storyboard describes in words. The key is the cell exactly as the storyboard writes it.
+cells:
+  Z4:
+    # two people rewrite one cell; the merge keeps both, one after the other
+    "c0=both rewrites, one after the other":
+      contains: ["total = a - b", "total = a * b"]
+    # the alternative where the second rewrite becomes a cell of its own
+    "?c0 total = a - b=recovered":
+      contains: ["total = a - b"]
+
+# Stories whose cells may end in either order (the storyboard says "stands at one of the two places").
+ordered:
+  Z2: false

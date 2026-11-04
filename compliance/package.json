@@ -1,0 +1,20 @@
+{
+  "name": "notebook-compliance-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compliance tests for real-time collaboration backends in JupyterLab, generated from the storyboards.",
+  "scripts": {
+    "generate": "python3 -I generate.py",
+    "generate:check": "python3 -I generate.py --check",
+    "typecheck": "tsc --noEmit",
+    "list": "playwright test --list",
+    "test": "playwright test",
+    "test:unit": "node --test \"unit/*.test.ts\""
+  },
+  "devDependencies": {
+    "@jupyterlab/galata": "^5.6.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0"
+  }
+}
