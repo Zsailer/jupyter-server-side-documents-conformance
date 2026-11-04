@@ -1,0 +1,169 @@
+# Edits made while disconnected, across a rebuilt room.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  typed: &typed ["c0=+TYPED", c1, c2]
+  moved: &moved [c1, c2, "^c0"]
+  AB: &AB ["c0=+A-OFFLINE +B-ONLINE", c1, c2]
+  both_ab: &both_ab ["c0=+A-OFFLINE", "c1=+B-OFFLINE", c2]
+
+scenarios:
+  N1:
+    title: "Typing while offline, across a rebuilt notebook"
+    story: >-
+      The tab loses its connection, the server builds the notebook again from the file, and the user types into a cell before the tab
+      reconnects.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
+      - {at: tab, kind: type, text: "types “+TYPED” at the end of c0", cells: *typed}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *typed}
+      - {at: server, kind: note, text: "receives the typing", cells: *typed}
+      - {at: file, kind: save, text: "autosave", cells: *typed}
+    result: "The typing is kept: three cells everywhere, and c0 has the new text."
+    ends: {all: *typed}
+    risk: "Typing is the most common thing a user does offline. If it is dropped, the work is lost without a word."
+
+  M2:
+    title: "Moving a cell while offline, across a rebuilt notebook"
+    story: >-
+      The user moves a cell while the tab is offline, and the server builds the notebook again from the file meanwhile. The rebuilt
+      notebook still has the cell where it was.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: move, text: "moves c0 to the end of the notebook", cells: *moved}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *moved}
+      - {at: server, kind: note, text: "keeps the move: c0 is at the end, once", cells: *moved}
+      - {at: file, kind: save, text: "autosave", cells: *moved}
+    result: "The cell stays moved and exists once: three cells everywhere, with c0 at the end."
+    ends: {all: *moved}
+    risk: "A move that is undone, or that leaves the cell twice, changes the notebook behind the user's back."
+
+  R1:
+    title: "Deleting a cell while offline, across a rebuilt notebook"
+    story: >-
+      The user deletes a cell while the tab is offline, and the server builds the notebook again from the file meanwhile. The rebuilt
+      notebook still has the cell.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - {at: tab, kind: delete, text: "deletes c1", cells: [c0, "-c1", c2]}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: [c0, c2]}
+      - {at: server, kind: note, text: "keeps the deletion", cells: [c0, c2]}
+      - {at: file, kind: save, text: "autosave", cells: [c0, c2]}
+    result: "The cell stays deleted: two cells everywhere."
+    ends: {all: [c0, c2]}
+    risk: "A cell the user deleted comes back, as if they had never deleted it."
+
+  W1:
+    title: "Two people type into one cell; one was offline across a rebuild"
+    lanes: {tab: "Tab A", tab2: "Tab B (a colleague)", server: "Server", file: "File on disk"}
+    story: >-
+      A types into a cell while offline. The server builds the notebook again from the file. Then a colleague opens the notebook in tab B
+      and types into the same cell. Then A comes back. Both typed into the same cell, so there is nothing to choose between.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: type, text: "types “+A-OFFLINE” at the end of c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
+      - {at: tab2, kind: open, text: "a colleague opens the rebuilt notebook", cells: *three}
+      - {at: tab2, kind: type, text: "types “+B-ONLINE” at the end of c0", cells: ["c0=+B-ONLINE", c1, c2]}
+      - {at: server, kind: note, text: "has B's typing", cells: ["c0=+B-ONLINE", c1, c2]}
+      - {at: tab, kind: reconnect, to: server, text: "A comes back and its typing reaches the server", cells: *AB}
+    result: "Both typings are kept: nothing of either person is lost."
+    ends: {all: *AB}
+    risk: "One of the two people would silently lose what they typed."
+
+  W2:
+    title: "Two out-of-date tabs both typed offline"
+    lanes: {tab: "Tab A", tab2: "Tab B", server: "Server", file: "File on disk"}
+    story: >-
+      Two tabs of one notebook lose their connection together (a network drop). The user types into c0 in tab A and into c1 in tab B
+      while they are offline, and the server builds the notebook again meanwhile. B reconnects first, then A.
+    steps:
+      - {at: [tab, tab2], kind: open, text: "A and B open the notebook", cells: *three}
+      - {at: [tab, tab2], kind: offline, text: "the network drops: both tabs lose their connection"}
+      - {at: tab, kind: type, text: "A: types “+A-OFFLINE” into c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: tab2, kind: type, text: "B: types “+B-OFFLINE” into c1", cells: [c0, "c1=+B-OFFLINE", c2]}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
+      - {at: tab2, kind: reconnect, to: server, text: "B reconnects first", cells: [c0, "c1=+B-OFFLINE", c2]}
+      - {at: tab, kind: reconnect, to: server, text: "A reconnects second", cells: *both_ab}
+      - {at: file, kind: save, text: "autosave", cells: *both_ab}
+    result: "Both typings are kept."
+    ends: {all: *both_ab}
+    risk: "The second tab to reconnect must not lose what its user typed because the first one got there before it."
+
+  W3:
+    title: "Two out-of-date tabs both typed offline, and the server forgot the old session"
+    lanes: {tab: "Tab A", tab2: "Tab B", server: "Server", file: "File on disk"}
+    story: >-
+      Like the previous story, but the server has also lost everything it kept about the old session (for instance after a restart on a
+      new machine) when it builds the notebook again.
+    steps:
+      - {at: [tab, tab2], kind: open, text: "A and B open the notebook", cells: *three}
+      - {at: [tab, tab2], kind: offline, text: "the network drops: both tabs lose their connection"}
+      - {at: tab, kind: type, text: "A: types “+A-OFFLINE” into c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: tab2, kind: type, text: "B: types “+B-OFFLINE” into c1", cells: [c0, "c1=+B-OFFLINE", c2]}
+      - {at: server, kind: rebuild, text: "lets go of the notebook and loses everything it kept about the old session; builds the notebook again from the file", cells: *three}
+      - {at: tab2, kind: reconnect, to: server, text: "B reconnects first", cells: [c0, "c1=+B-OFFLINE", c2]}
+      - {at: tab, kind: reconnect, to: server, text: "A reconnects second", cells: *both_ab}
+      - {at: file, kind: save, text: "autosave", cells: *both_ab}
+    result: "Both typings are kept."
+    ends: {all: *both_ab}
+    risk: "Forgetting the old session must make the tabs more careful, not cost them their typing."
+
+  S1:
+    title: "A tab that edited online, then offline, reconnects to a rebuilt notebook"
+    story: >-
+      A tab adds a cell and types while it is online, loses its connection, and the server builds the notebook again from the file. The
+      user types more while the tab is offline. Then it reconnects.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: add, text: "adds a cell “ONLINE CELL” and types “+TYPED” into c0; both reach the server", cells: ["c0=+TYPED", c1, c2, "+ONLINE CELL"]}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: rebuild, text: "lets go of the notebook (saving it) and builds it again from the file", cells: ["c0=+TYPED", c1, c2, ONLINE CELL]}
+      - {at: tab, kind: type, text: "types “+OFFLINE” at the end of c1", cells: ["c0=+TYPED", "c1=+OFFLINE", c2, ONLINE CELL]}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: ["c0=+TYPED", "c1=+OFFLINE", c2, ONLINE CELL]}
+      - {at: file, kind: save, text: "autosave", cells: ["c0=+TYPED", "c1=+OFFLINE", c2, ONLINE CELL]}
+    result: "Everything is kept, once: the online cell, the online typing and the offline typing."
+    ends: {all: ["c0=+TYPED", "c1=+OFFLINE", c2, ONLINE CELL]}
+    risk: "A tab that did everything right must not lose any of it, nor have any of it doubled."
+
+  S5:
+    title: "The server forgot the old session; a tab typed offline"
+    story: >-
+      While a tab is offline the server loses everything it kept about the old session (for instance after a restart on a new
+      machine) and builds the notebook again from the file as if it were new. The tab typed meanwhile.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook, and what it kept about the old session is lost"}
+      - {at: tab, kind: type, text: "types “+A-OFFLINE” at the end of c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file, with a fresh history", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: file, kind: save, text: "autosave", cells: ["c0=+A-OFFLINE", c1, c2]}
+    result: "The notebook is not wiped and nothing is doubled: the typing is kept, three cells everywhere."
+    ends: {all: ["c0=+A-OFFLINE", c1, c2]}
+    risk: "Losing what the server kept must never cost the user the notebook or their typing."
+
+  S7:
+    title: "What the server kept about the old session is damaged"
+    story: >-
+      Like the previous story, but the server still has what it kept about the old session and finds it unreadable (corrupt, or written
+      by an incompatible version). It must not crash.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook; what it kept about the old session is now garbage"}
+      - {at: tab, kind: type, text: "types “+A-OFFLINE” at the end of c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: server, kind: rebuild, text: "does not crash: builds the notebook again from the file, with a fresh history", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: file, kind: save, text: "autosave", cells: ["c0=+A-OFFLINE", c1, c2]}
+    result: "The server starts again from the file and never crashes; the typing is kept, three cells everywhere."
+    ends: {all: ["c0=+A-OFFLINE", c1, c2]}
+    risk: "A damaged leftover must never keep a notebook from opening."

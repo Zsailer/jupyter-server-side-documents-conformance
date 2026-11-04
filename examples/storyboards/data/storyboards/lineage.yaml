@@ -1,0 +1,99 @@
+# The server's history record itself: its limits and its upgrade paths.
+# These stories only apply if the server keeps a record of each notebook's editing history next to the file.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  queued: &queued ["c0=+QUEUED", c1, c2]
+
+scenarios:
+  S12:
+    title: "A notebook too big for the server to keep a history record of"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      The editing history of the notebook is bigger than the size the server is willing to keep a record of. The server then keeps no
+      record, does not pretend to, and the notebook works as it always does.
+    steps:
+      - {at: server, kind: note, text: "loads the notebook: its history is over the size limit, so it keeps no record", cells: *three}
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file; still no record", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *three}
+    result: "The notebook still works: three cells everywhere, and the server keeps no record and does not claim to."
+    ends: {tab: *three, server: *three, record: [], file: *three}
+    risk: "A big notebook must not be slowed down, nor broken, by a record that is not worth keeping."
+
+  S13:
+    title: "A history record written by another version of the software"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      The server finds a history record that was written by another version: an older release of the library that holds the history, a
+      newer one, another format, or another major version of the notebook library. It uses what it can read, ignores what it cannot, and
+      never crashes.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: record, kind: save, text: "the server keeps a record of the notebook's history", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - at: record
+        kind: outside
+        text: "the record is rewritten, as if by another version: five separate cases"
+        cells: ["*case 1, the same release: the record is used", "*case 2, an older release: the record is used", "*case 3, a newer release: the record is ignored", "*case 4, another format: the record is ignored", "*case 5, another major version of the notebook library: the record is ignored"]
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; it uses the record only if it can read it", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *three}
+    result: "Three cells everywhere in every case. A record from the same or an older release is used; one from a newer release, another format or another major version is ignored, and nothing crashes."
+    ends: {tab: *three, server: *three, file: *three}
+    risk: "Upgrading, or downgrading, the software must never keep a notebook from opening."
+
+  S14:
+    title: "A notebook with empty metadata is restored without needless work"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      A notebook whose top-level metadata is empty is restored from the server's record like any other. The server must not mistake the
+      defaults it fills in for a change made to the file.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: record, kind: save, text: "the server keeps a record of the notebook's history", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from its record and compares it with the file: nothing differs, so nothing is flagged as changed", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects: the tab and the server already agree", cells: *three}
+    result: "Three cells everywhere, and no false alarm: nothing is flagged as changed, because nothing changed."
+    ends: {tab: *three, server: *three, record: *three, file: *three}
+    risk: "A false alarm on every restore would fill the logs and do needless work."
+
+  T1:
+    title: "The server starts keeping a history record after a tab met one that kept none"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      A tab syncs with a server that keeps no history record. Later the server starts keeping one (for instance after an upgrade, or when
+      history records are turned on). The notebook is built again from the file with a new history, and the tab, which holds the old one, must not assume
+      that the two are the same history.
+    steps:
+      - {at: server, kind: note, text: "keeps no history record"}
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: rebuild, text: "now keeps a history record: builds the notebook from the file with a new history", cells: *three}
+      - {at: record, kind: save, text: "the new record", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects: it cannot tell that this history continues its own, so it takes the server's copy", cells: *three}
+    result: "Three cells everywhere and none doubled."
+    ends: {tab: *three, server: *three, record: *three, file: *three}
+    risk: "Treating two histories of one notebook as a single history would double every cell."
+
+  X5:
+    title: "An update waiting when the server shuts down is kept in the record"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      A tab types and the server is shut down while the update is still waiting in its queue. The server applies the waiting update and
+      saves it, and when the notebook is built again it holds the edit.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+QUEUED” into c0; the update is on its way to the server", cells: *queued}
+      - {at: tab, kind: offline, text: "loses its connection as the server shuts down"}
+      - {at: server, kind: free, text: "is shut down while the update is still waiting in its queue"}
+      - {at: server, kind: note, text: "applies the waiting update and saves it", cells: *queued}
+      - {at: record, kind: save, text: "holds the edit", cells: *queued}
+      - {at: file, kind: save, text: "holds the edit", cells: *queued}
+      - {at: server, kind: rebuild, text: "builds the notebook again: it holds the edit", cells: *queued}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects: the tab already agrees with the server", cells: *queued}
+    result: "The edit is there after the rebuild and the tab already agrees with the server: three cells everywhere."
+    ends: {all: *queued}
+    risk: "An edit the server had already received must not be lost because it was still in the queue at shutdown."

@@ -1,0 +1,78 @@
+<!doctype html>
+<!--
+  The smallest useful page: "the problem in one picture" and one live scenario.
+  Copy this file and the two player/ files next to it, change the stories, open it in a browser.
+  No build step, no network, no dependencies.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offline typing survives a reconnect</title>
+<link rel="stylesheet" href="../../player/nbscenario.css">
+<style>
+  body { margin: 0; background: var(--nbs-bg-page); color: var(--nbs-fg); font: 16px/1.55 var(--nbs-font); }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { margin: 0 0 6px; }
+  h2 { margin: 40px 0 10px; }
+  .theme { float: right; font: inherit; padding: 4px 12px; border-radius: 8px; border: 1px solid var(--nbs-border-strong); background: var(--nbs-bg-panel); color: var(--nbs-fg); cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <button class="theme" id="theme" type="button">Light / dark</button>
+  <h1>Offline typing survives a reconnect</h1>
+  <p>When a tab loses its connection, what the person types is still there when it comes back.</p>
+
+  <h2>The problem in one picture</h2>
+  <!-- A triptych: a few windows side by side, each a moment in time. Static, no animation. -->
+  <div id="picture"></div>
+
+  <h2>The same thing, step by step</h2>
+  <!-- A live scenario. The spec is JSON in the page; the player draws and plays it. -->
+  <div data-nbs>
+    <script type="application/json">
+    {
+      "id": "A",
+      "title": "Typing made offline is kept",
+      "story": "Two tabs have the notebook open. The first loses its connection and the user types into c1. Meanwhile the second tab adds a cell. Then the first tab reconnects.",
+      "lanes": { "tab": "Your tab", "tab2": "Second tab", "server": "Server" },
+      "steps": [
+        { "at": "tab",    "kind": "open",      "text": "opens the notebook", "cells": ["c0", "c1", "c2"] },
+        { "at": "tab2",   "kind": "open",      "text": "opens the same notebook", "cells": ["c0", "c1", "c2"] },
+        { "at": "tab",    "kind": "offline",   "text": "loses its connection" },
+        { "at": "tab",    "kind": "type",      "text": "types “+OFFLINE” at the end of c1", "cells": ["c0", "c1=+OFFLINE", "c2"] },
+        { "at": "tab2",   "kind": "add",       "text": "meanwhile adds a cell “plot”", "to": "server", "cells": ["c0", "c1", "c2", "+plot"] },
+        { "at": "tab",    "kind": "reconnect", "text": "reconnects and shares its typing", "to": "server", "cells": ["c0", "c1=+OFFLINE", "c2"] },
+        { "at": "server", "kind": "note",      "text": "merges both", "cells": ["c0", "c1=+OFFLINE", "c2", "plot"] },
+        { "at": "tab",    "kind": "note",      "text": "sees the new cell, and its own typing is where it was", "cells": ["c0", "c1=+OFFLINE", "c2", "plot"] }
+      ],
+      "result": "Both changes survive: the typing is in c1, and the new cell is there, in every copy.",
+      "ends": { "all": ["c0", "c1=+OFFLINE", "c2", "plot"] },
+      "risk": "Typing that vanishes after a reconnect is a loss nobody sees."
+    }
+    </script>
+  </div>
+</main>
+
+<script src="../../player/nbscenario.js"></script>
+<script>
+  // What the cell names stand for. Anything not listed is drawn as print("name").
+  var config = { bank: { plot: 'df.plot()' } };
+
+  NbScenario.triptych(document.getElementById('picture'), [
+    { title: 'Your tab', status: 'online',  cells: ['c0', 'c1', 'c2'],              active: 'c1', caption: 'You are editing.' },
+    { title: 'Your tab', status: 'offline', cells: ['c0', 'c1=+OFFLINE', 'c2'],     active: 'c1', editing: true, caption: 'The connection drops. You keep typing.' },
+    { title: 'Your tab', status: 'online',  cells: ['c0', 'c1=+OFFLINE', 'c2'],     active: 'c1', caption: 'You reconnect. Your typing is still there.' }
+  ], config);
+
+  NbScenario.mountAll(document, { config: config });
+
+  document.getElementById('theme').addEventListener('click', function () {
+    var el = document.documentElement;
+    var dark = el.dataset.theme ? el.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    el.dataset.theme = dark ? 'light' : 'dark';
+  });
+</script>
+</body>
+</html>

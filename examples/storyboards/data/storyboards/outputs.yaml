@@ -1,0 +1,117 @@
+# Notebook outputs across a free and a rebuild.
+# The cells of these notebooks have outputs: a chip with a blue edge and a note is a cell with its output.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  outs: &outs ["#c0=1 output", "#c1=1 output", "#c2=1 output"]
+  refs: &refs ["#c0=link", "#c1=link", "#c2=link"]
+  bare: &bare [c0, c1, c2]
+
+scenarios:
+  O1:
+    title: "Outputs survive a rebuild, in a notebook without cell ids"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      An older notebook (written before cell ids existed) has an output in each cell. The server gives its cells new ids every time it
+      loads it, and keeps the outputs in a separate output store. The server lets go of the notebook, builds it again and saves.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook; the cells have no ids, so it gives them ids", cells: *outs}
+      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
+      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; the cells get new ids", cells: *outs}
+      - {at: store, kind: note, text: "is filled again, under the new ids", cells: *outs}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
+    result: "All three outputs are still there in the saved file: nothing is written back empty."
+    ends: {server: *outs, store: *outs, file: *outs}
+    risk: "A user who reopens a notebook after a server restart must still see the results of the cells they ran."
+
+  O2:
+    title: "Control: outputs survive a rebuild, in a notebook with cell ids"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      The same story with a recent notebook, whose cells have ids that stay the same from one load to the next.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook", cells: *outs}
+      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
+      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *outs}
+      - {at: store, kind: note, text: "is filled again", cells: *outs}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
+    result: "All three outputs are still there in the saved file."
+    ends: {server: *outs, store: *outs, file: *outs}
+    risk: "The control: if this fails, nothing about outputs can be trusted."
+
+  O3:
+    title: "Outputs survive a wiped output store, in a notebook without cell ids"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      Like the first story, but the output store (a runtime directory) is wiped between the moment the server lets go of the notebook and
+      the moment it builds it again. The outputs in the file are all that is left.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook; the cells have no ids, so it gives them ids", cells: *outs}
+      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
+      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
+      - {at: store, kind: remove, text: "is wiped: the runtime directory is gone", cells: []}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; the cells get new ids", cells: *outs}
+      - {at: store, kind: note, text: "is filled again from the file", cells: *outs}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
+    result: "All three outputs are still there in the saved file: the file is where they come back from."
+    ends: {server: *outs, store: *outs, file: *outs}
+    risk: "Wiping a cache must never cost the user the results stored in their notebook."
+
+  O4:
+    title: "Outputs survive a wiped output store, in a notebook with cell ids"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      The same story as the previous one, with a recent notebook whose cells have stable ids.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook", cells: *outs}
+      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
+      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
+      - {at: store, kind: remove, text: "is wiped: the runtime directory is gone", cells: []}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *outs}
+      - {at: store, kind: note, text: "is filled again from the file", cells: *outs}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
+    result: "All three outputs are still there in the saved file."
+    ends: {server: *outs, store: *outs, file: *outs}
+    risk: "Wiping a cache must never cost the user the results stored in their notebook."
+
+  O5:
+    title: "Outputs that live only in the store survive a rebuild"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      In one mode the notebook file carries no outputs: they live only in the output store, and the open notebook links each cell to its
+      output. The server saves, lets go of the notebook and builds it again.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook; the outputs move to the store, and each cell links to its output", cells: *refs}
+      - {at: store, kind: note, text: "holds the outputs", cells: *outs}
+      - {at: file, kind: save, text: "the server saves: the file holds no outputs", cells: *bare}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; the store still has the outputs", cells: *refs}
+      - {at: file, kind: save, text: "the server saves again", cells: *bare}
+    result: "Every cell still shows its output after the rebuild, and no cell links to an output that is not there."
+    ends: {server: *refs, store: *outs, file: *bare}
+    risk: "A cell that links to an output that is gone shows an error where the user expects a result."
+
+  O6:
+    title: "Outputs that live only in the store: the store is wiped"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      Like the previous story, but the output store is wiped before the notebook is built again. The outputs are gone, since the store was
+      their only home. What matters is that the rebuilt notebook is consistent: no cell links to an output that is not there.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook; the outputs move to the store, and each cell links to its output", cells: *refs}
+      - {at: store, kind: note, text: "holds the outputs", cells: *outs}
+      - {at: file, kind: save, text: "the server saves: the file holds no outputs", cells: *bare}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - {at: store, kind: remove, text: "is wiped: the runtime directory is gone", cells: []}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; there is nothing in the store to refer to", cells: *bare}
+      - {at: file, kind: save, text: "the server saves again", cells: *bare}
+    result: "The cells show no output, and none links to an output that is not there."
+    ends: {server: *bare, store: [], file: *bare}
+    risk: "A cell that links to an output that is gone shows an error where the user expects a result, or nothing."

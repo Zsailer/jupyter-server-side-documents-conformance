@@ -1,0 +1,5 @@
+node_modules/
+__pycache__/
+*.pyc
+# the built page is an artifact: `npm run build` makes it
+examples/storyboards/site/

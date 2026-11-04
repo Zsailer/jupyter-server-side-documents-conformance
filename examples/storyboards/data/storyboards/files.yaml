@@ -1,0 +1,95 @@
+# The file changes under the room.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  outside: &outside [c0, "c1=EDITED ON DISK", c2, "+x9=ADDED ON DISK"]
+  outside_gone: &outside_gone [c0, "c1=EDITED ON DISK", "-c2", "+x9=ADDED ON DISK"]
+  after_s4: &after_s4 ["c0=+A-OFFLINE", "c1=EDITED ON DISK", "x9=ADDED ON DISK"]
+  ext: &ext [c0, "c1=EXTERNAL EDIT", c2, "+EXTERNAL NEW CELL"]
+  ext_kept: &ext_kept [c0, "c1=EXTERNAL EDIT", c2, EXTERNAL NEW CELL]
+
+scenarios:
+  S4:
+    title: "The file is edited outside Jupyter while a tab is offline"
+    story: >-
+      While a tab is offline, the server lets go of the notebook and someone edits the file outside Jupyter (git, another editor, an AI agent): one
+      cell is changed, one is added and one is deleted. The user also typed into a cell in the offline tab.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - {at: file, kind: outside, text: "is edited outside Jupyter: c1 is changed, x9 is added, c2 is deleted", cells: *outside_gone}
+      - {at: tab, kind: type, text: "types “+A-OFFLINE” at the end of c0", cells: ["c0=+A-OFFLINE", c1, c2]}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the changed file", cells: [c0, "c1=EDITED ON DISK", "x9=ADDED ON DISK"]}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *after_s4}
+      - {at: file, kind: save, text: "autosave", cells: *after_s4}
+    result: "The outside changes are applied (c1 changed, x9 added, c2 gone) and the offline typing in c0 is kept."
+    ends: {all: *after_s4}
+    risk: "The file is the truth for what it carries, but the typing of a tab that never saw the change must not be erased by it."
+
+  S8:
+    title: "An outside edit that keeps the file's modification time"
+    story: >-
+      While a tab is offline, the file is edited outside Jupyter by a tool that puts the modification time back (a copy or sync tool that keeps
+      file dates, or a file system with a coarse clock). The server must still notice that the file differs when it builds the notebook again.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: free, text: "lets go of the notebook"}
+      - {at: file, kind: outside, text: "is edited outside Jupyter (c1 rewritten, a cell added) and its modification time is put back", cells: *ext}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file and sees that it changed", cells: *ext}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *ext_kept}
+    result: "The outside edit is applied: four cells everywhere, as the file has them."
+    ends: {all: *ext_kept}
+    risk: "An edit that looks old to the clock must not be ignored: the user would be working on a notebook that is not the file."
+
+  S9:
+    title: "The file is edited outside while a tab is connected, then the server dies"
+    story: >-
+      The file is edited outside Jupyter (for example by an AI agent that wrote it directly) while a tab is connected: the server reloads it in place and the tab receives the new cell. Then
+      the server dies before it saved anything and starts again from the file; the tab reconnects.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: file, kind: outside, text: "is edited outside Jupyter: c1 is rewritten and “EXTERNAL NEW CELL” is added", cells: *ext}
+      - {at: server, kind: note, text: "reloads the file in place", cells: *ext_kept}
+      - {at: tab, kind: note, text: "receives the changes", cells: *ext_kept}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: server, kind: crash, text: "dies before it saved or recorded anything"}
+      - {at: server, kind: rebuild, text: "starts again from the file", cells: *ext_kept}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects, already holding the new cell", cells: *ext_kept}
+    result: "The new cell exists once: four cells everywhere."
+    ends: {all: *ext_kept}
+    risk: "The cell that came from outside must not come back a second time when the tab, which already received it, reconnects."
+
+  S10:
+    title: "The notebook is deleted through Jupyter"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      The user deletes the notebook through Jupyter. The server stops the notebook and forgets everything it kept about it.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: record, kind: save, text: "the server keeps a record of the notebook's history", cells: *three}
+      - {at: tab, kind: leave, text: "closes the notebook"}
+      - {at: file, kind: remove, text: "the notebook is deleted through Jupyter", cells: []}
+      - {at: server, kind: note, text: "stops the notebook", cells: "stopped"}
+      - {at: record, kind: remove, text: "its record is removed", cells: []}
+    result: "The server stops the notebook and removes its history record: nothing of it is left on the disk."
+    ends: {server: "the notebook is stopped", record: [], file: []}
+    risk: "Leftovers of a deleted notebook would pile up on the disk, and a new notebook with the same name could inherit them."
+
+  S11:
+    title: "The notebook is deleted behind the server's back"
+    lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
+    story: >-
+      The notebook file is deleted from outside Jupyter (a terminal, a sync tool). The server notices, stops the notebook and forgets
+      everything it kept about it.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: record, kind: save, text: "the server keeps a record of the notebook's history", cells: *three}
+      - {at: tab, kind: leave, text: "closes the notebook"}
+      - {at: file, kind: remove, text: "the file is deleted from outside Jupyter", cells: []}
+      - {at: server, kind: note, text: "notices, and stops the notebook", cells: "stopped"}
+      - {at: record, kind: remove, text: "its record is removed", cells: []}
+    result: "The server stops the notebook and removes its history record: nothing of it is left on the disk."
+    ends: {server: "the notebook is stopped", record: [], file: []}
+    risk: "Leftovers of a deleted notebook would pile up on the disk, and a new notebook with the same name could inherit them."

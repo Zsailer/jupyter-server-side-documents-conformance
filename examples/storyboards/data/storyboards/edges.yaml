@@ -1,0 +1,210 @@
+# More edges of the handshake: a bare client, a read-only client, a departed client, late replies with offline work.
+# (How a storyboard is written: storyboard.py.)
+shared:
+  three: &three [c0, c1, c2]
+  one_added: &one_added [c0, c1, c2, "+offline edit"]
+  typed: &typed ["c0=+OFFLINE", c1, c2]
+  edited: &edited ["c0=EDITED OFFLINE", c1, c2]
+  five_k: &five_k [c0, c1, c2, Y-1, NEW-B]
+  five_k_new: &five_k_new [c0, c1, c2, Y-1, "+NEW-B"]
+  five_k2: &five_k2 [c0, c1, c2, B-1, Y-1]
+  six: &six [c0, c1, c2, X-1, X-2, Y-1]
+  moved: &moved [c1, c2, "^c0"]
+
+scenarios:
+  C:
+    title: "A tab that has only been reading adds a cell while offline"
+    story: >-
+      The tab opened the notebook and has not changed anything yet. Its connection drops, the user adds a cell, and the tab reconnects
+      to the same server.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: add, text: "adds a cell “offline edit”", cells: *one_added}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *one_added}
+      - {at: server, kind: note, text: "receives the new cell", cells: *one_added}
+      - {at: file, kind: save, text: "autosave", cells: *one_added}
+    result: "The cell is kept: four cells everywhere."
+    ends: {all: *one_added}
+    risk: "A cell added offline must not vanish when the connection returns, however little the tab had done before."
+
+  E:
+    title: "A view-only user reconnects"
+    lanes: {tab: "View-only tab", server: "Server", file: "File on disk"}
+    story: >-
+      A user who may only read the notebook has it open. The connection drops and comes back. Nothing about the notebook has changed.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook, view only", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects, still view only", cells: *three}
+    result: "The view-only user still sees the three cells, as the server and the file do."
+    ends: {all: *three}
+    risk: "Without this, any connection blip would show a view-only user an empty notebook, although nothing is wrong."
+
+  F:
+    title: "A tab that left does not freeze the notebook for the others"
+    lanes: {tab: "Tab that leaves", tab2: "Newcomer", server: "Server"}
+    story: >-
+      A tab sends one last message and its connection dies. The server must deal with that message without stopping, so that the next
+      person who opens the notebook is served.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: fault, text: "sends a last message, but its answer never arrives"}
+      - {at: server, kind: deadline, text: "waits, then stops waiting for this tab"}
+      - {at: server, kind: note, text: "reaches the tab's last message and deals with it without stopping"}
+      - {at: tab2, kind: open, text: "a newcomer opens the notebook", cells: *three}
+    result: "The server keeps answering: the newcomer gets the three cells."
+    ends: {tab2: *three, server: *three}
+    risk: "A single stray message from a tab that is gone must not stop the notebook for everybody who is still there."
+
+  G2:
+    title: "A late answer after typing offline"
+    story: >-
+      The tab types while it is offline, the server builds the notebook again, and the tab reconnects, but its browser is busy and the
+      answer reaches the server only after the five-second wait.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: type, text: "types “+OFFLINE” into c0", cells: *typed}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects; the browser is busy, so its answer is slow", cells: *typed}
+      - {at: server, kind: deadline, text: "waits five seconds, then carries on; the tab stays connected"}
+      - {at: tab, kind: late, to: server, text: "the answer arrives after the wait"}
+      - {at: server, kind: note, text: "uses it: the typing is in the notebook", cells: *typed}
+      - {at: tab, kind: offline, text: "the connection drops once more"}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects again", cells: *typed}
+    result: "The notebook is intact, the late answer is used and the typing is kept. Nobody is disconnected."
+    ends: {all: *typed}
+    risk: "A slow browser must not turn into lost typing."
+
+  G3:
+    title: "A second tab types offline and its answer is late"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      Like the story of the second tab that types while offline, but its browser is busy and the answer reaches the server only after the
+      five-second wait.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: offline, text: "loses its connection"}
+      - {at: tab2, kind: type, text: "rewrites c0 as “EDITED OFFLINE”", cells: *edited}
+      - {at: tab2, kind: reconnect, to: server, text: "reconnects; the browser is busy, so its answer is slow", cells: *edited}
+      - {at: server, kind: deadline, text: "waits five seconds, then carries on; nobody is disconnected"}
+      - {at: tab2, kind: late, to: server, text: "the answer arrives after the wait"}
+      - {at: server, kind: note, text: "uses it: the typing is in the notebook", cells: *edited}
+      - {at: file, kind: save, text: "autosave", cells: *edited}
+    result: "The typing reaches the server and nobody is disconnected: three cells everywhere."
+    ends: {all: *edited}
+    risk: "A slow browser must not turn into lost typing, nor into a disconnected user."
+
+  H3:
+    title: "Two out-of-date tabs, one also holding the work of a second collaborator"
+    lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator W", tab4: "Collaborator V", server: "Server", file: "File on disk"}
+    story: >-
+      Like the story of two out-of-date tabs, but B also received the work of a second collaborator V, which A never saw. Then the server
+      builds the notebook again, and A comes back first, B second.
+    steps:
+      - {at: [tab, tab2, tab3, tab4], kind: open, text: "A, B, W and V open the notebook", cells: *three}
+      - {at: tab3, kind: add, text: "W adds a cell “X-1”"}
+      - {at: [tab, tab2], kind: note, text: "A and B receive X-1", cells: [c0, c1, c2, X-1]}
+      - {at: tab, kind: offline, text: "A goes away (laptop closed)"}
+      - {at: tab3, kind: add, text: "W adds another cell “X-2”"}
+      - {at: tab4, kind: add, text: "V adds a cell “Y-1”"}
+      - {at: tab2, kind: note, text: "only B receives X-2 and Y-1: B holds work that A never saw", cells: *six}
+      - {at: [tab2, tab3, tab4], kind: leave, text: "B, W and V close their tabs"}
+      - {at: file, kind: save, text: "holds all six cells", cells: *six}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *six}
+      - {at: tab, kind: reconnect, to: server, text: "A comes back first", cells: *six}
+      - {at: tab2, kind: reconnect, to: server, text: "B comes back second", cells: *six}
+    result: "All copies end with the same six cells, and none appears twice."
+    ends: {tab: *six, tab2: *six, server: *six, file: *six}
+    risk: "If B's pieces were merged next to the server's rebuilt copy of the same work, X-2 would appear twice and be saved twice."
+
+  H4:
+    title: "Two out-of-date tabs, the old session forgotten, one of them typed offline"
+    lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator W", server: "Server", file: "File on disk"}
+    story: >-
+      Like the story of two out-of-date tabs, but the server remembers nothing of the old session when it builds the notebook again, and B
+      typed while it was offline. A comes back first, B second.
+    steps:
+      - {at: [tab, tab2, tab3], kind: open, text: "A, B and W open the notebook", cells: *three}
+      - {at: tab3, kind: add, text: "W adds a cell “X-1”"}
+      - {at: [tab, tab2], kind: note, text: "A and B receive X-1", cells: [c0, c1, c2, X-1]}
+      - {at: tab, kind: offline, text: "A goes away (laptop closed)"}
+      - {at: tab3, kind: add, text: "W adds another cell “X-2”"}
+      - {at: tab2, kind: note, text: "only B receives X-2: B holds more of W's work than A", cells: [c0, c1, c2, X-1, X-2]}
+      - {at: tab2, kind: offline, text: "B loses its connection too"}
+      - {at: tab3, kind: leave, text: "W closes its tab"}
+      - {at: tab2, kind: type, text: "B types “+B-OFFLINE” into c0", cells: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]}
+      - {at: file, kind: save, text: "holds all five cells", cells: [c0, c1, c2, X-1, X-2]}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file; it remembers nothing of the old session", cells: [c0, c1, c2, X-1, X-2]}
+      - {at: tab, kind: reconnect, to: server, text: "A comes back first", cells: [c0, c1, c2, X-1, X-2]}
+      - {at: tab2, kind: reconnect, to: server, text: "B comes back second", cells: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]}
+    result: "Five cells in every copy, none twice, and B's typing is kept."
+    ends:
+      tab: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]
+      tab2: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]
+      server: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]
+      file: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]
+    risk: "A tab that typed offline must not merge its old pieces next to the server's copy of the same work: they would appear twice."
+
+  K:
+    title: "A cell created offline by a tab the server only partly remembers"
+    lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator V", server: "Server", file: "File on disk"}
+    story: >-
+      A, B and a collaborator V work in one notebook. A leaves early and V adds a cell that only B receives. The server then builds the
+      notebook again, and B, still offline, adds a cell of its own. A comes back first, B second.
+    steps:
+      - {at: [tab, tab2, tab3], kind: open, text: "A, B and V open the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "A goes away (laptop closed)"}
+      - {at: tab3, kind: add, text: "V adds a cell “Y-1”"}
+      - {at: tab2, kind: note, text: "only B receives Y-1", cells: [c0, c1, c2, Y-1]}
+      - {at: tab2, kind: offline, text: "B loses its connection"}
+      - {at: tab3, kind: leave, text: "V closes its tab"}
+      - {at: file, kind: save, text: "holds four cells", cells: [c0, c1, c2, Y-1]}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: [c0, c1, c2, Y-1]}
+      - {at: tab2, kind: add, text: "B, still offline, adds a cell “NEW-B”", cells: *five_k_new}
+      - {at: tab, kind: reconnect, to: server, text: "A comes back first", cells: [c0, c1, c2, Y-1]}
+      - {at: tab2, kind: reconnect, to: server, text: "B comes back second", cells: *five_k}
+    result: "B's offline cell is kept: five cells in every copy, none twice."
+    ends: {tab: *five_k, tab2: *five_k, server: *five_k, file: *five_k}
+    risk: "A cell the user added while offline must not be dropped just because the server only remembers part of what the tab did earlier."
+
+  K2:
+    title: "A cell that was already saved is not added a second time"
+    lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator V", server: "Server", file: "File on disk"}
+    story: >-
+      The mirror of the previous story. The extra cell that B holds was not typed offline: B typed it online earlier, so the server saved
+      it in the file. When B comes back, that cell must not be added a second time.
+    steps:
+      - {at: [tab, tab2, tab3], kind: open, text: "A, B and V open the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "A goes away (laptop closed)"}
+      - {at: tab2, kind: add, text: "B adds a cell “B-1” while online; it reaches the server", cells: [c0, c1, c2, "+B-1"]}
+      - {at: tab3, kind: add, text: "V adds a cell “Y-1”"}
+      - {at: tab2, kind: note, text: "B receives Y-1", cells: *five_k2}
+      - {at: [tab2, tab3], kind: leave, text: "B and V close their tabs"}
+      - {at: file, kind: save, text: "holds five cells", cells: *five_k2}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *five_k2}
+      - {at: tab, kind: reconnect, to: server, text: "A, which never saw B-1, comes back first", cells: *five_k2}
+      - {at: tab2, kind: reconnect, to: server, text: "B comes back second", cells: *five_k2}
+    result: "Five cells in every copy: B-1 is there once."
+    ends: {tab: *five_k2, tab2: *five_k2, server: *five_k2, file: *five_k2}
+    risk: "Work that was saved must not come back a second time when the tab that typed it returns."
+
+  M1:
+    title: "A second tab moves a cell while offline"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      Two tabs have the notebook open. The second loses its connection, the user moves a cell to the end, and the tab reconnects to the
+      same server.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: offline, text: "loses its connection"}
+      - {at: tab2, kind: move, text: "moves c0 to the end of the notebook", cells: *moved}
+      - {at: tab2, kind: reconnect, to: server, text: "reconnects", cells: *moved}
+      - {at: server, kind: note, text: "keeps the moved cell and shares it", cells: *moved}
+      - {at: file, kind: save, text: "autosave", cells: *moved}
+    result: "The moved cell survives: three cells everywhere, with c0 at the end."
+    ends: {all: *moved}
+    risk: "A move is the easiest edit to get wrong: the cell must neither disappear nor appear twice."
