@@ -9,6 +9,13 @@ open examples/storyboards/site/index.html
 
 Two self-contained files, linked to each other: **`index.html`** has the stories, straight after a title and one paragraph; **`about.html`** has everything that explains them (the problem in one picture, how to read a story and the key to the cells, the principles every story must respect, and the list of stories that need alignment). No network, no build step to read them. Host them together, as they are.
 
+## The list on the left
+
+The list of stories can be hidden altogether (the **Stories** button in the top bar) to give the windows the full
+width, and each group can be folded with its arrow, or all at once (*Fold all* / *Open all*). Both are remembered in the
+browser. Searching or filtering shows every match, folded or not, and following a link to a story opens its group. On a
+narrow screen the list opens over the page and starts closed.
+
 ## Where the stories come from
 
 `data/` is a **snapshot** of the storyboard files of

@@ -15,7 +15,7 @@
     {{LOGO}}
     <span class="brand-name">Jupyter</span><span class="brand-sep">/</span><span class="brand-page">Notebook stories</span>
   </a>
-  <button type="button" class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="side">Stories</button>
+  <button type="button" class="side-toggle" id="sideToggle" aria-expanded="true" aria-controls="side"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg><span>Stories</span></button>
   <nav class="topnav" aria-label="Pages"><a href="about.html">How to read these</a></nav>
   {{THEME_CONTROL}}
 </header>
@@ -28,7 +28,7 @@
       <button type="button" class="chip-filter" data-filter="need">Needs alignment ({{NEED_COUNT}})</button>
       {{FEATURE_FILTERS}}
     </div>
-    <p class="count" id="count" aria-live="polite"></p>
+    <div class="foldall"><p class="count" id="count" aria-live="polite"></p><span><button type="button" id="foldAll">Fold all</button> · <button type="button" id="unfoldAll">Open all</button></span></div>
     <nav id="nav">{{NAV}}</nav>
   </aside>
 

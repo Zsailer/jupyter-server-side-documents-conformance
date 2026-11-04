@@ -36,6 +36,7 @@
       var nav = document.querySelector('.nav-group[data-group="' + g.dataset.group + '"]');
       if (nav) nav.hidden = !any;
     });
+    document.getElementById('side').classList.toggle('filtering', !!state.text || state.filter !== 'all');
     document.getElementById('count').textContent = shown + ' of ' + cards.length + ' stories';
     document.getElementById('empty').hidden = shown > 0;
   }
@@ -60,19 +61,67 @@
         if (current) current.classList.remove('current');
         current = links[en.target.id];
         if (current) current.classList.add('current');
+        groups.forEach(function (g) { g.classList.toggle('has-current', !!current && g.contains(current)); });
       });
     }, { rootMargin: '-30% 0px -60% 0px' });
     cards.forEach(function (c) { io.observe(c); });
   }
 
-  /* ---- small screens: the story list opens over the page ---- */
+  /* ---- the list can be hidden, and each group folded; both are remembered ---- */
+  var layout = document.querySelector('.layout');
   var side = document.getElementById('side');
-  var menu = document.getElementById('menuBtn');
-  menu.addEventListener('click', function () {
-    var open = side.classList.toggle('open');
-    menu.setAttribute('aria-expanded', String(open));
-  });
+  var toggle = document.getElementById('sideToggle');
+  function load(key, fallback) {
+    try { var v = localStorage.getItem(key); return v === null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* private mode */ }
+  }
+  var narrow = window.matchMedia ? window.matchMedia('(max-width: 1000px)') : { matches: false };
+
+  function showList(open, remember) {
+    layout.classList.toggle('side-collapsed', !open);
+    toggle.setAttribute('aria-expanded', String(open));
+    if (remember && !narrow.matches) save('nbs-side', open);
+  }
+  // on a wide screen the list is open unless it was hidden; on a narrow one it opens over the page, and starts shut
+  showList(narrow.matches ? false : load('nbs-side', true), false);
+  toggle.addEventListener('click', function () { showList(layout.classList.contains('side-collapsed'), true); });
   side.addEventListener('click', function (e) {
-    if (e.target.closest('a')) { side.classList.remove('open'); menu.setAttribute('aria-expanded', 'false'); }
+    if (narrow.matches && e.target.closest('a')) showList(false, false);
   });
+
+  var groups = Array.prototype.slice.call(document.querySelectorAll('.nav-group'));
+  var folded = new Set(load('nbs-nav-folded', []));
+  function fold(group, isFolded) {
+    group.classList.toggle('folded', isFolded);
+    group.querySelector('.nav-chev').setAttribute('aria-expanded', String(!isFolded));
+    if (isFolded) folded.add(group.dataset.group); else folded.delete(group.dataset.group);
+  }
+  groups.forEach(function (g) { fold(g, folded.has(g.dataset.group)); });
+  side.addEventListener('click', function (e) {
+    var chev = e.target.closest('.nav-chev');
+    if (!chev) return;
+    var g = chev.closest('.nav-group');
+    fold(g, !g.classList.contains('folded'));
+    save('nbs-nav-folded', Array.from(folded));
+  });
+  document.getElementById('foldAll').addEventListener('click', function () {
+    groups.forEach(function (g) { fold(g, true); });
+    save('nbs-nav-folded', Array.from(folded));
+  });
+  document.getElementById('unfoldAll').addEventListener('click', function () {
+    groups.forEach(function (g) { fold(g, false); });
+    save('nbs-nav-folded', Array.from(folded));
+  });
+  // going to a story, or to a group, opens its group in the list
+  function reveal() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var target = id && document.getElementById(id);
+    var group = target && (target.closest('.group') || target);
+    var navGroup = group && document.querySelector('.nav-group[data-group="' + (group.dataset && group.dataset.group) + '"]');
+    if (navGroup && navGroup.classList.contains('folded')) fold(navGroup, false);
+  }
+  window.addEventListener('hashchange', reveal);
+  reveal();
 })();
