@@ -327,6 +327,38 @@
   }
 
   /**
+   * The server loads the notebook from the file when the first tab opens it (so its window is not blank while the file
+   * and the tab both hold cells), and its live copy is gone when it lets go of the notebook or dies.
+   */
+  function loadOrDrop(frameLanes, step, at, cfg) {
+    const server = frameLanes.server;
+    if (!server) return;
+    const names = at.filter(id => family(id) === 'server');
+    // a step that gives the server cells means it holds the notebook (it loaded it, say)
+    if (names.length && 'cells' in step && step.kind !== 'free' && step.kind !== 'crash' && server.status === 'idle' && server.cells.length) server.status = 'holding';
+    if (step.kind === 'open' && at.some(id => family(id) === 'tab') && server.status !== 'holding' && !names.length) {
+      const opener = frameLanes[at.find(id => family(id) === 'tab')];
+      const from = frameLanes.file && frameLanes.file.visible && frameLanes.file.cells.length ? frameLanes.file : opener;
+      server.visible = true;
+      server.status = 'holding';
+      server.cells = from.cells.map(v => Object.assign({}, v, { fx: 'enter', diff: false, typeAll: false, typeText: '', before: '' }));
+      server.ghosts = [];
+    }
+    // a tab that opens the notebook shows what it loaded, not what it held before it closed
+    if (step.kind === 'open' && !('cells' in step) && server.status === 'holding' && server.cells.length) {
+      at.filter(id => family(id) === 'tab').forEach(id => {
+        frameLanes[id].cells = server.cells.map(v => Object.assign({}, v, { fx: 'enter', diff: false, typeAll: false, typeText: '', before: '' }));
+        frameLanes[id].ghosts = [];
+        frameLanes[id].active = null;
+      });
+    }
+    if ((step.kind === 'free' || step.kind === 'crash') && names.length && !('cells' in step)) {
+      setCells(server, [], false, cfg);
+      server.active = null;
+    }
+  }
+
+  /**
    * On a reconnect, mark what differs between the tab and the others: the pause before the jump. The reference is the
    * server's copy when the story gives it one, else the copy of a tab that is still connected.
    */
@@ -387,6 +419,11 @@
     let cur = {};
     ids.forEach(id => (cur[id] = emptyLane(id)));
     // by default the file holds three cells; a story that does not draw the file just does not show them
+    // a server that is drawn holds nothing until somebody opens the notebook
+    if (cur.server) {
+      cur.server.visible = true;
+      cur.server.status = 'idle';
+    }
     const start = spec.start || (cur.file ? { file: ['c0', 'c1', 'c2'] } : {});
     Object.keys(start).forEach(id => {
       if (!cur[id]) throw new SpecError('start names a lane that is not drawn: ' + id);
@@ -419,6 +456,7 @@
         else if (!l.status && STATUS[family(id)]) l.status = START_STATUS[family(id)];
         if ('cells' in st && !NO_COPY.has(id)) typedChars = Math.max(typedChars, setCells(l, st.cells, !!kind.user, cfg));
       });
+      loadOrDrop(next, st, at, cfg);
       if (st.to) {
         next[st.to].visible = true;
         next[st.to].receiving = true;
@@ -555,6 +593,8 @@
     let body;
     if (NO_COPY.has(lane.id) || ((fam === 'record' || fam === 'store') && !lane.cells.length)) {
       body = '<div class="nbs-note">' + (lane.text ? esc(lane.text) : '—') + '</div>';
+    } else if (fam === 'server' && !lane.cells.length) {
+      body = '<div class="nbs-empty">' + (lane.status === 'stopped' ? 'Stopped: its live copy of the notebook is gone.' : 'Not holding the notebook. It loads it from the file when someone opens it.') + '</div>';
     } else {
       body = cellsHTML(lane, o);
     }
