@@ -131,6 +131,14 @@ By comparing each lane's cells before and after a step:
   before that, and again after a `free` or a `crash`, when its live copy is gone. A server step that gives the server
   cells (it loaded the notebook, say) also means it holds it;
 - a **tab that opens** with no `cells` shows what it loaded from the server, not what it held before it closed;
+- a **message** (a step with `to`) flies from one window to the other as an envelope. A `fault` stops part of the way
+  across, with a cross where it was lost (its destination is the server, or a tab if the server's message is lost); a
+  `late` answer arrives slowly; the window that hears it says *receives*;
+- a **reconnect, rebuild or late answer that leaves a copy exactly as it was** is shown as the product keeping its
+  promise: a green *✓ nothing lost* above the window. This is how a control story, where nothing is supposed to change,
+  still shows something happening. It is not shown if the tab differs from the server at that moment;
+- every window shows **how many cells** it holds, and the last frame says *✓ every copy holds the same N cells* when
+  they do;
 - on a **reconnect**, the cells that differ between the tab and the server (or, if the server holds nothing yet, a tab
   that is still connected) are outlined in amber, then the result **jumps** in.
 

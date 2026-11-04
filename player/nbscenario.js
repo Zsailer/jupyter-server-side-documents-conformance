@@ -84,6 +84,7 @@
     spark: '<path class="f" d="M8 1.5l1.4 4.6 4.6 1.4-4.6 1.4L8 13.5 6.6 8.9 2 7.5l4.6-1.4z"/>',
     server: '<rect x="2.5" y="3" width="11" height="4" rx="1"/><rect x="2.5" y="9" width="11" height="4" rx="1"/><path d="M5 5h.1M5 11h.1"/>',
     window: '<rect x="2" y="3" width="12" height="10" rx="1.4"/><path d="M2 6.2h12"/>',
+    mail: '<rect x="2" y="3.5" width="12" height="9" rx="1.4"/><path d="M2.3 4.7L8 9l5.7-4.3"/>',
     box: '<path d="M2.5 5L8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5L8 7.5 13.5 5M8 7.5v6"/>'
   };
 
@@ -242,6 +243,7 @@
     kind: '',
     acting: false,
     receiving: false,
+    unchanged: false,
     active: null,
     editing: false
   });
@@ -258,6 +260,7 @@
         ghosts: [],
         acting: false,
         receiving: false,
+        unchanged: false,
         verb: '',
         kind: '',
         text: l.text,
@@ -400,6 +403,29 @@
     });
   }
 
+  /** A lost message is on its way to somewhere: the server, or, if the server's message is lost, a tab. */
+  function lostTarget(frameLanes, at) {
+    const id = at[0];
+    if (family(id) === 'server') return Object.keys(frameLanes).find(l => family(l) === 'tab') || null;
+    return frameLanes.server ? 'server' : null;
+  }
+
+  const codesOf = cells => cells.filter(c => !c.remark).map(c => c.code).join('\n');
+
+  /**
+   * A reconnect, a rebuild or a late answer that leaves a copy exactly as it was is an event worth showing: it is the
+   * product keeping its promise. Mark the lanes it happened to.
+   */
+  function markUnchanged(before, after, ids) {
+    ids.forEach(id => {
+      const b = before[id];
+      const a = after[id];
+      if (!a || !b) return;
+      const real = a.cells.filter(c => !c.remark);
+      if (real.length && codesOf(a.cells) === codesOf(b.cells) && !real.some(c => c.diff)) a.unchanged = true;
+    });
+  }
+
   const cloneLanes = lanes => {
     const out = {};
     Object.keys(lanes).forEach(id => (out[id] = Object.assign({}, lanes[id])));
@@ -463,6 +489,7 @@
         if (!next[st.to].status && STATUS[family(st.to)]) next[st.to].status = START_STATUS[family(st.to)];
       }
       markDiff(next, st);
+      if (st.kind === 'reconnect' || st.kind === 'rebuild' || st.kind === 'late') markUnchanged(cur, next, at.concat(st.to ? [st.to] : []));
       const typing = Math.min(typedChars * cfg.typingMs, 2600);
       const reading = Math.max(0, st.text.length - 70) * 12;
       frames.push({
@@ -470,7 +497,7 @@
         kind: st.kind,
         text: st.text,
         at,
-        to: st.to || null,
+        to: st.to || (st.kind === 'fault' ? lostTarget(next, at) : null),
         user: !!kind.user,
         blip: !!kind.blip,
         ms: Math.round(kind.ms + typing + reading),
@@ -579,8 +606,10 @@
 
   function panelHTML(lane, title, o) {
     const fam = family(lane.id);
+    const realCells = lane.cells.filter(c => !c.remark).length;
+    const count = lane.visible && realCells && !NO_COPY.has(lane.id) ? '<span class="nbs-count">' + realCells + (realCells === 1 ? ' cell' : ' cells') + '</span>' : '';
     const head = (chip, extra) =>
-      '<header class="nbs-phead">' + icon(LANE_ICON[fam] || 'box') + '<span class="nbs-ptitle">' + esc(title) + '</span>' + chip + '</header>' + (extra || '');
+      '<header class="nbs-phead">' + icon(LANE_ICON[fam] || 'box') + '<span class="nbs-ptitle">' + esc(title) + '</span>' + count + chip + '</header>' + (extra || '');
     // what the lane does in this step is said above its window, in a row that is always there, so that no window's cells move
     const lift = (actHtml, windowHtml) => (o.bare ? windowHtml : '<div class="nbs-col-lane"><div class="nbs-actrow">' + actHtml + '</div>' + windowHtml + '</div>');
     if (!lane.visible) {
@@ -588,7 +617,10 @@
     }
     const st = (STATUS[fam] || {})[lane.status];
     const chip = st ? '<span class="nbs-chip nbs-' + st[1] + '">' + esc(st[0]) + '</span>' : '';
-    const act = lane.acting && lane.verb ? '<div class="nbs-act nbs-k-' + lane.kind + '">' + icon((KINDS[lane.kind] || KINDS.note).icon) + '<span>' + esc(lane.verb) + '</span></div>' : '';
+    const doing = lane.acting && lane.verb
+      ? '<div class="nbs-act nbs-k-' + lane.kind + '">' + icon((KINDS[lane.kind] || KINDS.note).icon) + '<span>' + esc(lane.verb) + '</span></div>'
+      : lane.receiving ? '<div class="nbs-act nbs-k-receive">' + icon('mail') + '<span>receives</span></div>' : '';
+    const act = doing + (lane.unchanged ? '<div class="nbs-keep">✓ nothing lost</div>' : '');
     const snap = !o.static && lane.cells.some(c => c.fx && c.fx !== 'gone') && !lane.editing ? ' nbs-snap' : '';
     let body;
     if (NO_COPY.has(lane.id) || ((fam === 'record' || fam === 'store') && !lane.cells.length)) {
@@ -737,6 +769,14 @@
       return idx;
     };
 
+    /** How many cells every copy holds at the end, if they all hold the same ones; else 0. */
+    function sameEverywhere(frame) {
+      const copies = tl.lanes.map(l => frame.lanes[l.id]).filter(L => L.visible && !NO_COPY.has(L.id) && L.cells.some(c => !c.remark));
+      if (copies.length < 2) return 0;
+      const first = codesOf(copies[0].cells);
+      return copies.every(L => codesOf(L.cells) === first) ? copies[0].cells.filter(c => !c.remark).length : 0;
+    }
+
     function render(idx) {
       const f = tl.frames[idx];
       board.innerHTML = boardHTML(tl, f, { static: reduced });
@@ -744,8 +784,9 @@
       el.classList.toggle('nbs-instant', !!f.blip);
       const names = f.at.map(tl.titleOf).join(' + ');
       const kind = KINDS[f.kind];
+      const agree = f.end ? sameEverywhere(f) : 0;
       caption.innerHTML = f.kind === 'start' || f.end
-        ? '<span class="nbs-capnum">' + (f.end ? '✓' : '·') + '</span><span>' + esc(f.text) + '</span>'
+        ? '<span class="nbs-capnum">' + (f.end ? '✓' : '·') + '</span><span>' + esc(f.text) + '</span>' + (agree ? '<span class="nbs-same">✓ every copy holds the same ' + agree + ' cells</span>' : '')
         : '<span class="nbs-capnum">' + idx + '</span>' + icon(kind.icon) + '<span><b>' + esc(names) + '</b> ' + esc(f.text) + (f.to ? ' <span class="nbs-to">→ ' + esc(tl.titleOf(f.to)) + '</span>' : '') + '</span>' + (f.blip ? '<span class="nbs-quick">⚡ over in a moment</span>' : '');
       stepItems.forEach((li, i) => li.classList.toggle('on', i + 1 === idx));
       segsEl.querySelectorAll('.nbs-seg').forEach((s, i) => {
@@ -768,7 +809,7 @@
     }
 
     function startFlight(f) {
-      if (flight) flight.el.remove();
+      if (flight) flight.els.forEach(x => x.remove());
       flight = null;
       flights.innerHTML = '';
       if (reduced || !f.to || !f.at.length || typeof Element === 'undefined' || !Element.prototype.animate) return;
@@ -781,12 +822,31 @@
       const ax = a.left + a.width / 2 - base.left;
       const bx = b.left + b.width / 2 - base.left;
       const y = 24;
-      const dot = document.createElement('div');
-      dot.className = 'nbs-dot';
-      flights.appendChild(dot);
-      const anim = dot.animate([{ transform: 'translate(' + ax + 'px,' + y + 'px)', opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.85 }, { transform: 'translate(' + bx + 'px,' + y + 'px)', opacity: 0 }], { duration: 800, fill: 'both' });
-      anim.pause();
-      flight = { el: dot, anim };
+      const pos = x => 'translate(' + x + 'px,' + y + 'px)';
+      const dur = f.kind === 'late' ? Math.max(900, f.ms - 250) : f.kind === 'fault' ? 1100 : 900;
+      const mk = html => {
+        const d = document.createElement('div');
+        d.className = 'nbs-dot';
+        d.innerHTML = html;
+        flights.appendChild(d);
+        return d;
+      };
+      const msg = mk(icon('mail'));
+      let anims;
+      if (f.kind === 'fault') {
+        // lost on the way: it stops part of the way across, and a cross takes its place
+        const mx = ax + (bx - ax) * 0.55;
+        const lost = mk('✕');
+        lost.classList.add('nbs-lostx');
+        anims = [
+          msg.animate([{ transform: pos(ax), opacity: 0 }, { transform: pos(ax + (mx - ax) * 0.2), opacity: 1, offset: 0.15 }, { transform: pos(mx), opacity: 1, offset: 0.55 }, { transform: pos(mx), opacity: 0, offset: 0.7 }, { transform: pos(mx), opacity: 0 }], { duration: dur, fill: 'both' }),
+          lost.animate([{ transform: pos(mx), opacity: 0 }, { transform: pos(mx), opacity: 0, offset: 0.5 }, { transform: pos(mx), opacity: 1, offset: 0.65 }, { transform: pos(mx), opacity: 1 }], { duration: dur, fill: 'both' })
+        ];
+      } else {
+        anims = [msg.animate([{ transform: pos(ax), opacity: 0 }, { transform: pos(ax + (bx - ax) * 0.06), opacity: 1, offset: 0.1 }, { transform: pos(bx - (bx - ax) * 0.06), opacity: 1, offset: 0.9 }, { transform: pos(bx), opacity: 0 }], { duration: dur, fill: 'both' })];
+      }
+      anims.forEach(x => x.pause());
+      flight = { els: Array.prototype.slice.call(flights.children), anims, dur };
     }
 
     function step() {
@@ -806,7 +866,7 @@
           left -= m;
         });
       });
-      if (flight) flight.anim.currentTime = Math.max(0, Math.min(800, elapsed - 100));
+      if (flight) flight.anims.forEach(an => (an.currentTime = Math.max(0, Math.min(flight.dur, elapsed - 100))));
       const fills = segsEl.children;
       for (let i = 0; i < fills.length; i++) {
         const frac = i < shown ? 1 : i === shown ? Math.min(1, elapsed / tl.frames[i].ms) : 0;

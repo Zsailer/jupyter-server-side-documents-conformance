@@ -36,6 +36,14 @@ version*). Then the result appears at once, with a ring around the window that c
 When you write the story, give the reconnect its own step, and give the result its own step after it. Do not fold them
 into one.
 
+### When the point is that nothing changes
+
+Some of the most important stories are controls: *the reply is lost, the tab reconnects, and nothing is deleted.* The
+cells never change, so there is nothing to watch. Write them anyway, and give the reconnect and rebuild steps the same
+`cells` as before: the player shows the envelope travelling (or lost, with a cross), the status chips going
+Offline → Reconnecting → Connected, a green **✓ nothing lost** where it matters, and at the end **✓ every copy holds the
+same 3 cells**. Leave the `cells` out and none of that can be shown.
+
 ## 5. Make the ending checkable
 
 - `ends` says what every copy holds. The last frame shows all the windows side by side, so "everyone ends with the
