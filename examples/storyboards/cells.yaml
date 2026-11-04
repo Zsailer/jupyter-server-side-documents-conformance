@@ -1,0 +1,17 @@
+# How the cell names of the storyboards are drawn as real-looking notebook cells.
+#
+# A storyboard says "c1" or "ONLINE CELL"; the player needs code to put in the cell. Anything not listed here is
+# drawn as print("<name>"), so a story never needs an entry to work: these only make the pictures read better.
+# (See docs/02-spec-reference.md, "How a cell name becomes code".)
+bank:
+  x9: "x9 = 9"
+
+# A note that rewrites a cell ("c1=fixed"): the cell shows this code, with the note as its tag.
+rewrites:
+  fixed: "df = df.dropna()"
+  EDITED ON DISK: 'df = pd.read_csv(path, sep=";")'
+  EXTERNAL EDIT: 'df = pd.read_csv(path, sep=";")'
+  EDITED OFFLINE: "df = df.dropna()"
+
+outputs:
+  1 output: "42"
