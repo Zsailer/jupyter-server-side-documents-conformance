@@ -45,6 +45,8 @@ export interface StoryMeta {
   /** The cells the notebook file holds at the start (names; see cells.ts). */
   /** Whether the order of the cells at the end is part of the answer. */
   ordered?: boolean;
+  /** Something inside the server that a person can neither cause nor see: the story is skipped, with this reason. */
+  internal?: string;
   /** Notes the generator could not turn into an exact expectation: the story is checked more loosely. */
   loose?: string[];
 }

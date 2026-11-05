@@ -154,6 +154,22 @@ class GeneratedTest(unittest.TestCase):
         self.assertIn("await tab3.close();", h2, "W never comes back: it really closes")
         self.assertNotIn("await tab2.close();", h2)
 
+    def test_stories_about_the_servers_inside_are_not_checked_from_the_outside(self):
+        for sid in ("X1", "X2", "X3", "X4"):
+            self.assertTrue(self.manifest[sid]["internal"], sid)
+        self.assertFalse(self.manifest["Z3"]["internal"])
+        self.assertIn('"internal":', self.result["files"]["stop.spec.ts"])
+
+    def test_a_server_that_has_let_go_of_the_notebook_is_not_asked_what_it_holds(self):
+        # X4 ends after "the server is told to shut the notebook down": its copy is gone
+        text = self.result["files"]["stop.spec.ts"]
+        x4 = text[text.index('"id": "X4"'):]
+        self.assertNotIn("server:", x4[x4.index("await s.ends(["):])
+        # Z6 ends after the server dies and starts again and a tab opens: it holds the notebook
+        residual = self.result["files"]["residual.spec.ts"]
+        z6 = residual[residual.index('"id": "Z6"'):residual.index('"id": "Z7"')]
+        self.assertIn("server:", z6[z6.index("await s.ends(["):])
+
     def test_the_committed_files_are_what_the_storyboards_give(self):
         self.assertEqual(g.write(self.result, check=True), [], "run: python3 -I compliance/generate.py")
 

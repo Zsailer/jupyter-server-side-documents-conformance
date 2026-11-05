@@ -37,7 +37,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -78,7 +78,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -122,7 +122,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -166,7 +166,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -207,7 +207,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -251,7 +251,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )

@@ -55,8 +55,16 @@ export class Story {
 
   /** One step of the storyboard: it shows in the report under the words the storyboard uses. */
   async step(n: number, who: string, text: string, body: () => Promise<void>): Promise<void> {
-    this.recorder.step(`${n}. ${who} ${text}`);
-    await test.step(`${n}. ${who} ${text}`, body);
+    const name = `${n}. ${who} ${text}`;
+    this.recorder.step(name);
+    try {
+      await test.step(name, body);
+    } catch (e) {
+      await this.showTabs(`step ${n}`);
+      const error = e as Error;
+      error.message = `step ${name}\n\n${error.message}`;
+      throw error;
+    }
   }
 
   // ---- the server and the file ----
@@ -340,6 +348,19 @@ export class Story {
     });
   }
 
+  /** Attach a screenshot of every open tab: what each looked like when something went wrong. */
+  private async showTabs(when: string): Promise<void> {
+    for (const tab of this.tabs.values()) {
+      if (tab.page) {
+        try {
+          await test.info().attach(`${tab.name} at ${when}`, { body: await tab.page.screenshot(), contentType: 'image/png' });
+        } catch {
+          /* the tab is gone */
+        }
+      }
+    }
+  }
+
   /** Close every tab, which completes their videos, and put the videos in the report. */
   async closeAll(): Promise<void> {
     for (const tab of this.tabs.values()) {
@@ -392,6 +413,7 @@ export function story(
       if (meta.loose?.length) {
         testInfo.annotations.push({ type: 'checked-loosely', description: meta.loose.join('; ') });
       }
+      test.skip(Boolean(meta.internal), `not checkable from the user's side: ${meta.internal}`);
       test.skip(missing.length > 0, `adapter "${adapter.name}" cannot: ${missing.join(', ')}`);
 
       const ctx: AdapterContext = { admin: page, baseURL: baseURL! };

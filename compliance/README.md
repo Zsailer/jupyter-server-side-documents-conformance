@@ -83,6 +83,10 @@ elsewhere), or use `JSD_ENV` and `JSD_UI_TESTS`. The server's log is `/tmp/compl
 | `COMPLIANCE_DECISIONS` | `'{"Z3":1}'` holds Z3 to its second option instead of the proposed one |
 | `COMPLIANCE_TIMEOUT_MS`, `COMPLIANCE_SAVE_TIMEOUT_MS`, `COMPLIANCE_STABLE_MS`, `COMPLIANCE_SETTLE_MS` | waits (default 20 s, 40 s, 1.5 s, 0.75 s) |
 
+## Reading a run
+
+`run-jsd.sh` ends with a summary, also available after any run with `python3 -I compliance/scripts/summarize.py`: one line per story (passed, or failed with the first line of why), what was skipped and what each skip lacked, and, for every story that is still an open question, **which of the storyboard's options the backend does**. A failing step names the storyboard step it was in, and every open tab is photographed at that moment.
+
 ## Watching a story
 
 A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `run-jsd.sh` prints where they are and opens the page when you ran a single story.

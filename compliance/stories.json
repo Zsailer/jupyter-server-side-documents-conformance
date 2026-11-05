@@ -8,6 +8,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -20,6 +21,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 9
  },
  {
@@ -32,6 +34,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 9
  },
  {
@@ -43,6 +46,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -54,6 +58,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -63,6 +68,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -72,6 +78,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -83,6 +90,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 11
  },
  {
@@ -92,6 +100,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -101,6 +110,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -110,6 +120,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 3
  },
  {
@@ -121,6 +132,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -133,6 +145,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 10
  },
  {
@@ -144,6 +157,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 9
  },
  {
@@ -155,6 +169,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 12
  },
  {
@@ -166,6 +181,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 13
  },
  {
@@ -177,6 +193,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 11
  },
  {
@@ -188,6 +205,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 10
  },
  {
@@ -197,6 +215,7 @@
   "requires": [],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -208,6 +227,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -219,6 +239,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -230,6 +251,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -241,6 +263,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -252,6 +275,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -263,6 +287,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -274,6 +299,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -285,6 +311,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -296,6 +323,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -307,6 +335,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -318,6 +347,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -329,6 +359,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 10
  },
  {
@@ -341,6 +372,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -353,6 +385,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -365,6 +398,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -377,6 +411,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -389,6 +424,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -401,6 +437,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -413,6 +450,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -425,6 +463,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -437,6 +476,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -449,6 +489,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -461,6 +502,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -473,6 +515,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 9
  },
  {
@@ -485,6 +528,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -497,6 +541,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -509,6 +554,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -521,6 +567,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -533,6 +580,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -545,6 +593,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -556,6 +605,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment",
   "steps": 5
  },
  {
@@ -567,6 +617,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser",
   "steps": 5
  },
  {
@@ -579,6 +630,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": "work the server registers for its own shutdown: nothing a person does or sees",
   "steps": 4
  },
  {
@@ -590,6 +642,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race",
   "steps": 6
  },
  {
@@ -599,6 +652,7 @@
   "requires": [],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -608,6 +662,7 @@
   "requires": [],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -617,6 +672,7 @@
   "requires": [],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -626,6 +682,7 @@
   "requires": [],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -637,6 +694,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -648,6 +706,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -659,6 +718,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -670,6 +730,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -683,6 +744,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 5
  },
  {
@@ -696,6 +758,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 9
  },
  {
@@ -709,6 +772,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 12
  },
  {
@@ -720,6 +784,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 6
  },
  {
@@ -731,6 +796,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 7
  },
  {
@@ -743,6 +809,7 @@
   ],
   "needsAlignment": true,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -757,6 +824,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  },
  {
@@ -769,6 +837,7 @@
   ],
   "needsAlignment": false,
   "loose": [],
+  "internal": null,
   "steps": 8
  }
 ]
