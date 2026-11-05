@@ -24,7 +24,8 @@ export default defineConfig({
   timeout: Number(process.env.COMPLIANCE_STORY_TIMEOUT_MS ?? 240000),
   retries: 0,
   workers: Number(process.env.COMPLIANCE_WORKERS ?? 1),
-  use: { ...baseConfig.use, baseURL },
+  // a click that cannot be made (something is in the way) fails with a message and a picture, not after the whole story's time
+  use: { ...baseConfig.use, baseURL, actionTimeout: Number(process.env.COMPLIANCE_ACTION_TIMEOUT_MS ?? 30000) },
   webServer: process.env.COMPLIANCE_SERVER_CMD
     ? { command: process.env.COMPLIANCE_SERVER_CMD, url: `${baseURL}/lab`, timeout: 120000, reuseExistingServer: true }
     : undefined

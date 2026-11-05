@@ -196,8 +196,8 @@ export class Tab {
    * After enough failed attempts JupyterLab stops reconnecting by itself and asks the person to click "Reconnect". A
    * person who is back online does; so does the test, and it says so, because that is something a person would have seen.
    */
-  async clickReconnectIfAsked(waitMs = 0): Promise<boolean> {
-    if (!this.page || this.offline) {
+  async clickReconnectIfAsked(waitMs = 0, evenOffline = false): Promise<boolean> {
+    if (!this.page || (this.offline && !evenOffline)) {
       return false;
     }
     const dialog = this.page.locator('.jp-Dialog', { hasText: /unable to reconnect|connection error/i });
@@ -216,6 +216,27 @@ export class Tab {
       this.env.recorder.note(`${this.name}: asked the person to click “Reconnect”, and they did`);
     }
     return true;
+  }
+
+  /**
+   * Do something with the keyboard and mouse the way a person does when a dialog may come up in the middle of it: the
+   * "Connection Error" dialog blocks the notebook after a few failed reconnects (about 4 s into an outage), and a person
+   * who wants to carry on clicks it away. Without this a click waits behind the dialog.
+   */
+  private async asPerson<T>(act: () => Promise<T>): Promise<T> {
+    let done = false;
+    const watcher = (async () => {
+      while (!done) {
+        await this.clickReconnectIfAsked(0, true);
+        await new Promise(r => setTimeout(r, 300));
+      }
+    })();
+    try {
+      return await act();
+    } finally {
+      done = true;
+      await watcher;
+    }
   }
 
   /** The sources of the cells the tab shows, or null if the notebook is not open in it. */
@@ -239,6 +260,10 @@ export class Tab {
 
   /** Type `text` at the end of cell `index`, key by key. */
   async type(index: number, text: string): Promise<void> {
+    return this.asPerson(() => this.typeNow(index, text));
+  }
+
+  private async typeNow(index: number, text: string): Promise<void> {
     const page = this.p;
     await page.notebook.enterCellEditingMode(index);
     await page.keyboard.press('End');
@@ -248,6 +273,10 @@ export class Tab {
 
   /** Replace everything in cell `index` with `text`. */
   async rewrite(index: number, text: string): Promise<void> {
+    return this.asPerson(() => this.rewriteNow(index, text));
+  }
+
+  private async rewriteNow(index: number, text: string): Promise<void> {
     const page = this.p;
     await page.notebook.enterCellEditingMode(index);
     // select all: Control+A moves the cursor to the start of the line on a Mac, so ask for the key the platform uses
@@ -258,6 +287,10 @@ export class Tab {
 
   /** Add a cell so that it ends up at `index`, and type `text` into it. */
   async addCell(index: number, text: string): Promise<void> {
+    return this.asPerson(() => this.addCellNow(index, text));
+  }
+
+  private async addCellNow(index: number, text: string): Promise<void> {
     const page = this.p;
     const before = (await page.notebook.getCellCount()) ?? 0;
     index = Math.min(index, before); // a tab that has not yet seen every cell adds at the end of what it has
@@ -274,6 +307,10 @@ export class Tab {
 
   /** Delete cell `index`. */
   async deleteCell(index: number): Promise<void> {
+    return this.asPerson(() => this.deleteCellNow(index));
+  }
+
+  private async deleteCellNow(index: number): Promise<void> {
     const page = this.p;
     const before = await page.notebook.getCellCount();
     await page.notebook.selectCells(index);
@@ -283,6 +320,10 @@ export class Tab {
 
   /** Move cell `from` so that it ends up at `to`. */
   async moveCell(from: number, to: number): Promise<void> {
+    return this.asPerson(() => this.moveCellNow(from, to));
+  }
+
+  private async moveCellNow(from: number, to: number): Promise<void> {
     const page = this.p;
     await page.notebook.selectCells(from);
     const command = to > from ? 'notebook:move-cell-down' : 'notebook:move-cell-up';
