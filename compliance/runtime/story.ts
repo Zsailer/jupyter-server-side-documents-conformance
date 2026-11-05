@@ -185,7 +185,7 @@ export class Story {
   }
 
   /** What a tab shows once everything has arrived. */
-  async expectTabEventually(tab: Tab, expected: Expect[], opts: { ordered?: boolean } = {}): Promise<void> {
+  async expectTabEventually(tab: Tab, expected: Expect[], opts: { ordered?: boolean; timeout?: number; stable?: number } = {}): Promise<void> {
     await this.expectCells(`tab "${tab.name}"`, () => tab.cells(), expected, opts);
   }
 
@@ -195,26 +195,75 @@ export class Story {
   }
 
   /**
+   * Wait until every copy a person could look at (each open tab, and the server if it can be read cheaply) shows the
+   * same cells. A tab that was offline has not caught up until it agrees with the others, and a check made before then
+   * could pass on the strength of a copy that has not yet been told. Returns why not, if they never agree.
+   */
+  private async converge(): Promise<string | null> {
+    const readers: { name: string; read: () => Promise<string[] | null> }[] = [];
+    for (const tab of this.tabs.values()) {
+      if (tab.isOpen) {
+        readers.push({ name: `tab "${tab.name}"`, read: () => tab.cells() });
+      }
+    }
+    if (this.adapter.capabilities.has('serverState') && this.adapter.serverCells) {
+      readers.push({ name: 'the server', read: () => this.serverCells() });
+    }
+    if (readers.length < 2) {
+      return null;
+    }
+    const started = Date.now();
+    let seen: (string[] | null)[] = [];
+    while (Date.now() - started < WAIT.eventually) {
+      seen = await Promise.all(readers.map(r => r.read()));
+      if (seen.every(s => s !== null && JSON.stringify(s) === JSON.stringify(seen[0]))) {
+        return null;
+      }
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return (
+      'the copies never agreed with each other:\n' +
+      readers.map((r, i) => `\n${r.name}:\n${showActual(seen[i] ?? [])}`).join('\n')
+    );
+  }
+
+  /**
    * How the story must end: what every copy holds. `options[0]` is the proposed answer; if the story is an open
    * question the others are its alternatives, and `COMPLIANCE_DECISIONS` picks which one is held to.
+   *
+   * It waits for the copies to agree, then reports every copy that is wrong, not only the first.
    */
   async ends(options: Ends[]): Promise<void> {
     const ends = options[chosenOption(this.meta.id, options.length)];
     await test.step('the end: every copy holds what the storyboard says', async () => {
+      const failures: string[] = [];
+      const disagreement = await this.converge();
+      if (disagreement) {
+        failures.push(disagreement);
+      }
+      // once the copies have agreed there is nothing to wait for; if they have not, say what each holds and move on
+      const quick = disagreement ? { timeout: 2000, stable: 0 } : {};
       for (const [lane, expected] of Object.entries(ends)) {
         if (!expected) {
           continue;
         }
-        if (lane === 'file') {
-          await this.expectFile(expected);
-        } else if (lane === 'server') {
-          await this.expectCells('the server', () => this.serverCells(), expected);
-        } else {
-          const tab = this.tabs.get(lane);
-          if (tab?.isOpen) {
-            await this.expectTabEventually(tab, expected);
+        try {
+          if (lane === 'file') {
+            await this.expectFile(expected);
+          } else if (lane === 'server') {
+            await this.expectCells('the server', () => this.serverCells(), expected, quick);
+          } else {
+            const tab = this.tabs.get(lane);
+            if (tab?.isOpen) {
+              await this.expectTabEventually(tab, expected, quick);
+            }
           }
+        } catch (e) {
+          failures.push((e as Error).message);
         }
+      }
+      if (failures.length) {
+        throw new Error(failures.join('\n\n----\n\n'));
       }
     });
   }
