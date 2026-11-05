@@ -196,16 +196,18 @@ export class Story {
   }
 
   /** What the file holds once it has been saved. */
-  async expectFile(expected: Expect[], opts: { ordered?: boolean } = {}): Promise<void> {
+  async expectFile(expected: Expect[], opts: { ordered?: boolean; timeout?: number; stable?: number } = {}): Promise<void> {
     await this.expectCells('the file', () => this.fileCells(), expected, { timeout: WAIT.save, ...opts });
   }
 
   /**
    * Wait until every copy a person could look at (each open tab, and the server if it can be read cheaply) shows the
-   * same cells. A tab that was offline has not caught up until it agrees with the others, and a check made before then
-   * could pass on the strength of a copy that has not yet been told. Returns why not, if they never agree.
+   * same cells, and keeps showing them for a moment. A tab that was offline has not caught up until it agrees with the
+   * others, and a check made before then could pass on the strength of a copy that has not yet been told.
+   *
+   * Returns what they agree on, or why they never did; `compared` says whether there was more than one copy to compare.
    */
-  private async converge(): Promise<string | null> {
+  private async converge(): Promise<{ compared: boolean; agreed: string[] | null; why: string | null }> {
     const readers: { name: string; read: () => Promise<string[] | null> }[] = [];
     for (const tab of this.tabs.values()) {
       if (tab.isOpen) {
@@ -216,21 +218,28 @@ export class Story {
       readers.push({ name: 'the server', read: () => this.serverCells() });
     }
     if (readers.length < 2) {
-      return null;
+      return { compared: false, agreed: null, why: null };
     }
     const started = Date.now();
     let seen: (string[] | null)[] = [];
-    while (Date.now() - started < WAIT.eventually) {
+    let since = 0;
+    while (Date.now() - started < WAIT.eventually + WAIT.stable) {
       seen = await Promise.all(readers.map(r => r.read()));
-      if (seen.every(s => s !== null && JSON.stringify(s) === JSON.stringify(seen[0]))) {
-        return null;
+      const same = seen.every(s => s !== null && JSON.stringify(s) === JSON.stringify(seen[0]));
+      if (!same) {
+        since = 0;
+      } else if (since === 0) {
+        since = Date.now();
+      } else if (Date.now() - since >= WAIT.stable) {
+        return { compared: true, agreed: seen[0], why: null };
       }
       await new Promise(r => setTimeout(r, 250));
     }
-    return (
-      'the copies never agreed with each other:\n' +
-      readers.map((r, i) => `\n${r.name}:\n${showActual(seen[i] ?? [])}`).join('\n')
-    );
+    return {
+      compared: true,
+      agreed: null,
+      why: 'the copies never agreed with each other:\n' + readers.map((r, i) => `\n${r.name}:\n${showActual(seen[i] ?? [])}`).join('\n')
+    };
   }
 
   /** What every place a person could look holds now, without waiting for it to change. */
@@ -287,25 +296,28 @@ export class Story {
     this.recorder.step('The end: every copy is compared with what the storyboard says');
     await test.step('the end: every copy holds what the storyboard says', async () => {
       const failures: string[] = [];
-      const disagreement = await this.converge();
-      if (disagreement) {
-        failures.push(disagreement);
+      const copies = await this.converge();
+      if (copies.why) {
+        failures.push(copies.why);
       }
-      // once the copies have agreed there is nothing to wait for; if they have not, say what each holds and move on
-      const quick = disagreement ? { timeout: 2000, stable: 0 } : {};
+      // Once the copies have agreed and stayed agreed there is nothing left to wait for: look once. (If they have not,
+      // say what each holds and move on.) The file is the exception: it is saved a little after the others.
+      const look = copies.compared ? { timeout: 1500, stable: 0 } : {};
       for (const [lane, expected] of Object.entries(ends)) {
         if (!expected) {
           continue;
         }
         try {
           if (lane === 'file') {
-            await this.expectFile(expected);
+            const now = await this.fileCells();
+            const caughtUp = copies.agreed !== null && now !== null && JSON.stringify(now) === JSON.stringify(copies.agreed);
+            await this.expectFile(expected, caughtUp ? { timeout: 1500, stable: 0 } : {});
           } else if (lane === 'server') {
-            await this.expectCells('the server', () => this.serverCells(), expected, quick);
+            await this.expectCells('the server', () => this.serverCells(), expected, look);
           } else {
             const tab = this.tabs.get(lane);
             if (tab?.isOpen) {
-              await this.expectTabEventually(tab, expected, quick);
+              await this.expectTabEventually(tab, expected, look);
             }
           }
         } catch (e) {

@@ -2,6 +2,17 @@
 import { expect, test } from '@playwright/test';
 import { loadAdapter } from '../runtime/adapter';
 
+// these tests choose an adapter by changing the environment of the worker they run in: leave it as it was found, or
+// the next test in the same worker would run with the wrong adapter
+const before = process.env.COMPLIANCE_ADAPTER;
+test.afterEach(() => {
+  if (before === undefined) {
+    delete process.env.COMPLIANCE_ADAPTER;
+  } else {
+    process.env.COMPLIANCE_ADAPTER = before;
+  }
+});
+
 for (const name of ['generic', 'jsd']) {
   test(`the ${name} adapter loads and declares what it can do`, async () => {
     process.env.COMPLIANCE_ADAPTER = name;
