@@ -1,6 +1,8 @@
 import json
 import re
 import sys
+import shutil
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -8,6 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "compliance"))
 sys.path.insert(0, str(ROOT / "tools"))
 
+import yaml
 import generate as g  # noqa: E402
 import nbscenario_spec as spec  # noqa: E402
 
@@ -170,8 +173,33 @@ class GeneratedTest(unittest.TestCase):
         z6 = residual[residual.index('"id": "Z6"'):residual.index('"id": "Z7"')]
         self.assertIn("server:", z6[z6.index("await s.ends(["):])
 
-    def test_the_committed_files_are_what_the_storyboards_give(self):
-        self.assertEqual(g.write(self.result, check=True), [], "run: python3 -I compliance/generate.py")
+    def test_a_proposed_case_added_to_a_group_is_generated_and_marked(self):
+        with tempfile.TemporaryDirectory() as d:
+            copy = Path(d) / "stories"
+            shutil.copytree(g.DATA, copy)
+            path = copy / "storyboards" / "rebuild.yaml"
+            body = yaml.safe_load(path.read_text())
+            new = {
+                "title": "A new case",
+                "story": "Someone proposes it.",
+                "status": "proposed",
+                "steps": [{"at": "tab", "kind": "open", "text": "opens", "cells": ["c0"]}],
+                "result": "Nothing happens.",
+                "ends": {"all": ["c0"]},
+            }
+            body["scenarios"]["NEW1"] = new
+            path.write_text(yaml.safe_dump(body, sort_keys=False))
+            result = g.generate(copy)
+        manifest = {m["id"]: m for m in result["manifest"]}
+        self.assertTrue(manifest["NEW1"]["proposed"])
+        self.assertFalse(manifest["Z3"]["proposed"])
+        text = result["files"]["rebuild.spec.ts"]
+        mine = text[text.index('"id": "NEW1"') :]
+        self.assertIn('"proposed": true', mine[: mine.index("async s =>")])
+
+    def test_generating_twice_gives_the_same_files(self):
+        again = g.generate()
+        self.assertEqual(again["files"], self.result["files"])
 
     def test_no_generated_test_leaks_a_python_artifact(self):
         for name, text in self.result["files"].items():

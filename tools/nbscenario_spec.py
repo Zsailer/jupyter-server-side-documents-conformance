@@ -28,7 +28,9 @@ KINDS = (
     "rebuild", "crash", "save", "deadline", "fault", "late", "outside", "restore", "remove", "note",
 )
 
-STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges"}
+STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges", "status"}
+# "proposed": the case is up for discussion, so a backend that does not meet it is reported but not failed
+STATUSES = ("accepted", "proposed")
 REQUIRED = ("title", "story", "steps", "result", "ends")
 STEP_KEYS = {"at", "kind", "text", "cells", "to"}
 
@@ -84,6 +86,8 @@ def validate_story(sid: str, story: dict) -> None:
     unknown = set(story) - STORY_KEYS - {"group"}
     if unknown:
         raise SpecError(f"{where}: unknown key(s) {sorted(unknown)}")
+    if story.get("status", "accepted") not in STATUSES:
+        raise SpecError(f"{where}: status must be one of {list(STATUSES)}, not {story['status']!r}")
     for key in REQUIRED:
         if not story.get(key):
             raise SpecError(f"{where}: {key} is required")

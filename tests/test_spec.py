@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / "examples" / "storyboards"))
 import build  # noqa: E402
 import nbscenario_spec as spec  # noqa: E402
 
-DATA = ROOT / "examples" / "storyboards" / "data"
+DATA = ROOT / "stories"
 
 
 def story(**over):
@@ -38,11 +38,13 @@ class SpecTest(unittest.TestCase):
 
     def test_a_minimal_story_is_valid(self):
         spec.validate_story("X", story())
+        spec.validate_story("X", story(status="proposed"))
 
     def test_mistakes_are_refused_with_a_message(self):
         bad = {
             "unknown key": (story(colour="red"), "unknown key"),
             "missing result": (story(result=""), "result is required"),
+            "unknown status": (story(status="maybe"), "status must be"),
             "unknown kind": (story(steps=[{"at": "tab", "kind": "dance", "text": "x"}]), "not one of"),
             "unknown lane": (story(steps=[{"at": "phone", "kind": "open", "text": "x"}]), "not a lane"),
             "step key": (story(steps=[{"at": "tab", "kind": "open", "text": "x", "when": 3}]), "a step has"),

@@ -406,6 +406,15 @@ interface Fixtures {
  *
  * The test is skipped, with the reason, if the backend adapter lacks something the story needs.
  */
+/** The accepted stories a backend is known not to meet yet, with why (known-gaps/<adapter>.json). */
+function knownGaps(adapterName: string): Record<string, string> {
+  try {
+    return JSON.parse(fs.readFileSync(nodePath.join(__dirname, '..', 'known-gaps', `${adapterName}.json`), 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
 export function story(
   meta: StoryMeta,
   body: (s: Story) => Promise<void>
@@ -424,6 +433,14 @@ export function story(
       }
       if (meta.loose?.length) {
         testInfo.annotations.push({ type: 'checked-loosely', description: meta.loose.join('; ') });
+      }
+      if (meta.proposed) {
+        testInfo.annotations.push({ type: 'proposed', description: 'not agreed yet: a miss is reported, not failed' });
+      }
+      const gap = knownGaps(adapter.name)[meta.id];
+      if (gap) {
+        testInfo.annotations.push({ type: 'known-gap', description: gap });
+        test.fail(true, `known gap in "${adapter.name}": ${gap}`);
       }
       test.skip(Boolean(meta.internal), `not checkable from the user's side: ${meta.internal}`);
       test.skip(missing.length > 0, `adapter "${adapter.name}" cannot: ${missing.join(', ')}`);
@@ -445,6 +462,13 @@ export function story(
       const s = new Story(meta, adapter, ctx, env, tmpPath);
       try {
         await body(s);
+      } catch (error) {
+        if (!meta.proposed) {
+          throw error;
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        testInfo.annotations.push({ type: 'proposed-not-met', description: message.split('\n')[0] });
+        fs.writeFileSync(nodePath.join(testInfo.outputDir, 'not-met.txt'), message);
       } finally {
         await s.closeAll();
       }

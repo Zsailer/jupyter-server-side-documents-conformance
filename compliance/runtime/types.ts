@@ -40,6 +40,8 @@ export interface StoryMeta {
   requires: Capability[];
   /** The story's answer is still an open question: see `decisions`. */
   needsAlignment?: boolean;
+  /** The case is only proposed: a backend that does not meet it is reported, and the test does not fail. */
+  proposed?: boolean;
   /** Applies only if the backend does something optional (e.g. keeps a history record). */
   appliesIf?: string[];
   /** The cells the notebook file holds at the start (names; see cells.ts). */

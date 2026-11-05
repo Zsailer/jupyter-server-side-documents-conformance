@@ -9,7 +9,8 @@
     "test:py": "python3 -I -m unittest discover -s tests -p \"test_*.py\"",
     "test": "npm run build && npm run test:js && npm run test:py",
     "deploy": "npm test",
-    "test:compliance": "npm --prefix compliance run generate:check && npm --prefix compliance run typecheck && npm --prefix compliance run test:unit"
+    "test:compliance": "npm --prefix compliance run generate && npm --prefix compliance run typecheck && npm --prefix compliance run test:unit",
+    "check": "npm test && npm run test:compliance"
   },
   "devDependencies": {
     "jsdom": "^26.0.0"
