@@ -138,6 +138,13 @@ export class Tab {
     page.on('pageerror', e => keep(`pageerror: ${String(e).slice(0, 300)}`));
     page.on('requestfailed', r => keep(`request failed: ${r.method()} ${r.url().slice(0, 160)} (${r.failure()?.errorText})`));
     page.on('response', r => r.status() >= 400 && keep(`HTTP ${r.status()}: ${r.url().slice(0, 160)}`));
+    page.on('requestfinished', r => {
+      const timing = r.timing();
+      const took = timing.responseEnd - timing.startTime;
+      if (took > 2000) {
+        keep(`slow request (${(took / 1000).toFixed(1)} s): ${r.method()} ${r.url().slice(0, 140)}`);
+      }
+    });
     page.on('framenavigated', f => f === page.mainFrame() && keep(`navigated: ${f.url().slice(0, 160)}`));
   }
 
