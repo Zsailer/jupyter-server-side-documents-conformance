@@ -1,5 +1,7 @@
 import { expect, galata, IJupyterLabPageFixture, test } from '@jupyterlab/galata';
-import type { Browser, Page } from '@playwright/test';
+import type { Browser, BrowserContext, Page } from '@playwright/test';
+import * as nodePath from 'node:path';
+import type { Recorder } from './recording';
 import { sourceText } from './cells';
 
 export interface TabEnv {
@@ -8,7 +10,12 @@ export interface TabEnv {
   waitForApplication: (page: Page, helpers: any) => Promise<void>;
   /** The folder on the server the story works in: a tab opens JupyterLab there (Galata opens `/lab/tree/<dir>`). */
   dir: string;
+  /** Keeps a video of every tab, and when each step happened. */
+  recorder: Recorder;
 }
+
+/** The size of every tab's browser, and of its video. */
+const VIEW = { width: 1280, height: 720 };
 
 /** Waits that every test shares. Milliseconds. */
 export const WAIT = {
@@ -55,12 +62,18 @@ async function explain(page: Page | null, name: string): Promise<void> {
  */
 export class Tab {
   page: IJupyterLabPageFixture | null = null;
+  private context: BrowserContext | null = null;
+  private lead: Page | null = null;
+  private startedAt = 0;
+  private opened = 0;
 
   constructor(
     readonly name: string,
     private readonly env: TabEnv,
     /** The path of the notebook, on the server. */
-    private readonly path: string
+    private readonly path: string,
+    /** Whether to keep a video of this tab (a fresh tab opened only to look is not worth one). */
+    private readonly record = true
   ) {}
 
   get isOpen(): boolean {
@@ -76,17 +89,32 @@ export class Tab {
 
   /** Open JupyterLab in a new browser, and the notebook in it. */
   async open(): Promise<void> {
-    let loading: Page | null = null;
     try {
-      const { page } = await galata.newPage({
-        baseURL: this.env.baseURL,
-        browser: this.env.browser,
-        tmpPath: this.env.dir,
-        waitForApplication: async page => {
-          loading = page;
-          await waitForLab(page);
-        }
-      });
+      // The browser is made here, not by Galata, so that it can be recorded: Playwright films only the pages it makes.
+      this.startedAt = Date.now();
+      this.opened++;
+      this.context = await this.env.browser.newContext(
+        this.record
+          ? { viewport: VIEW, recordVideo: { dir: nodePath.join(this.env.recorder.dir, 'videos'), size: VIEW } }
+          : { viewport: VIEW }
+      );
+      this.lead = await this.context.newPage();
+      const page = await galata.initTestPage(
+        '/lab',
+        true,
+        this.env.baseURL,
+        true,
+        galata.DEFAULT_SETTINGS,
+        true,
+        true,
+        this.lead,
+        new Map(),
+        new Map(),
+        this.env.dir,
+        async p => waitForLab(p),
+        new Map(),
+        true
+      );
       this.page = page;
       await page.evaluate(async (p: string) => {
         await (window as any).jupyterapp.commands.execute('docmanager:open', { path: p });
@@ -99,17 +127,25 @@ export class Tab {
         })
         .toBeGreaterThan(0);
     } catch (e) {
-      await explain(this.page ?? loading, this.name);
+      await explain(this.lead, this.name);
       throw e;
     }
   }
 
-  /** The person closes the tab: the connection goes with it. */
+  /** The person closes the tab: the connection goes with it. The video is complete once it has closed. */
   async close(): Promise<void> {
-    if (this.page) {
-      await this.page.context().close();
-      this.page = null;
+    if (!this.context) {
+      return;
     }
+    const video = this.record ? this.lead?.video() : null;
+    await this.context.close().catch(() => undefined);
+    if (this.record) {
+      const file = video ? await video.path().catch(() => null) : null;
+      this.env.recorder.tabs.push({ name: this.opened > 1 ? `${this.name} (${this.opened})` : this.name, startedAt: this.startedAt, file });
+    }
+    this.context = null;
+    this.lead = null;
+    this.page = null;
   }
 
   /** The connection drops (a laptop lid closed). The tab keeps working on what it has. */
