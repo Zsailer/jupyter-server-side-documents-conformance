@@ -209,8 +209,10 @@ export class Tab {
         return false;
       }
       // "Cannot open Failed to fetch" comes up when the tab tries to fetch the file while cut off; a person closes it
-      asked = ((await dialog.first().innerText()) || '').toLowerCase().includes('cannot open') ? 'OK' : 'Reconnect';
-      await dialog.locator('.jp-mod-accept').first().click({ timeout: 3000 });
+      asked = ((await dialog.first().innerText()) || '').toLowerCase().includes('cannot open') ? 'Close' : 'Reconnect';
+      // the error dialog's only button is "Close", which is not the accept button
+      const button = asked === 'Close' ? '.jp-Dialog-button' : '.jp-mod-accept';
+      await dialog.locator(button).first().click({ timeout: 3000 });
     } catch {
       return false;
     }
