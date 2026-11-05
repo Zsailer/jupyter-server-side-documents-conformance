@@ -44,7 +44,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] },
+        { label: "As the story ends", ends: { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] } },
       ]);
     }
   )
@@ -92,7 +92,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +SERVER", "c1", "c2"], server: ["c0 +SERVER", "c1", "c2"], file: ["c0 +SERVER", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +SERVER", "c1", "c2"], server: ["c0 +SERVER", "c1", "c2"], file: ["c0 +SERVER", "c1", "c2"] } },
       ]);
     }
   )
@@ -151,7 +151,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], tab2: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], server: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], file: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], tab2: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], server: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"], file: ["c0", "c1", "c2", "BOTH TABS HOLD THIS"] } },
       ]);
     }
   )
@@ -204,8 +204,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
-        { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] },
+        { label: "The file wins", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "The newer content comes back", ends: { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] } },
       ]);
     }
   )
@@ -260,7 +260,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] },
+        { label: "As the story ends", ends: { tab: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1", "c2", "ONLINE CELL"] } },
       ]);
     }
   )

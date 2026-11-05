@@ -38,7 +38,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -90,7 +90,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -142,7 +142,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -181,7 +181,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -220,7 +220,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -266,7 +266,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["EDITED OFFLINE", "c1", "c2"], tab2: ["EDITED OFFLINE", "c1", "c2"], server: ["EDITED OFFLINE", "c1", "c2"], file: ["EDITED OFFLINE", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["EDITED OFFLINE", "c1", "c2"], tab2: ["EDITED OFFLINE", "c1", "c2"], server: ["EDITED OFFLINE", "c1", "c2"], file: ["EDITED OFFLINE", "c1", "c2"] } },
       ]);
     }
   )
@@ -312,7 +312,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "typed while offline"], tab2: ["c0", "c1", "c2", "typed while offline"], server: ["c0", "c1", "c2", "typed while offline"], file: ["c0", "c1", "c2", "typed while offline"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "typed while offline"], tab2: ["c0", "c1", "c2", "typed while offline"], server: ["c0", "c1", "c2", "typed while offline"], file: ["c0", "c1", "c2", "typed while offline"] } },
       ]);
     }
   )
@@ -381,7 +381,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "X-1", "X-2"], tab2: ["c0", "c1", "c2", "X-1", "X-2"], server: ["c0", "c1", "c2", "X-1", "X-2"], file: ["c0", "c1", "c2", "X-1", "X-2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "X-1", "X-2"], tab2: ["c0", "c1", "c2", "X-1", "X-2"], server: ["c0", "c1", "c2", "X-1", "X-2"], file: ["c0", "c1", "c2", "X-1", "X-2"] } },
       ]);
     }
   )
@@ -422,7 +422,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "offline edit"], server: ["c0", "c1", "c2", "offline edit"], file: ["c0", "c1", "c2", "offline edit"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "offline edit"], server: ["c0", "c1", "c2", "offline edit"], file: ["c0", "c1", "c2", "offline edit"] } },
       ]);
     }
   )

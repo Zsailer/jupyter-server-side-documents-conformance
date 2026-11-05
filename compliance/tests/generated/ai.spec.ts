@@ -35,7 +35,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2"], server: ["c0", "fixed", "c2"], file: ["c0", "fixed", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2"], server: ["c0", "fixed", "c2"], file: ["c0", "fixed", "c2"] } },
       ]);
     }
   )
@@ -76,7 +76,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
@@ -129,7 +129,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
@@ -192,7 +192,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2", "tests", "docs"], server: ["c0", "fixed", "c2", "tests", "docs"], file: ["c0", "fixed", "c2", "tests", "docs"] },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests", "docs"], server: ["c0", "fixed", "c2", "tests", "docs"], file: ["c0", "fixed", "c2", "tests", "docs"] } },
       ]);
     }
   )
@@ -237,8 +237,9 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed +# check", "c2"], server: ["c0", "fixed +# check", "c2"], file: ["c0", "fixed +# check", "c2"] },
-        { tab: ["c0", "c1 +# check", "c2"], server: ["c0", "c1 +# check", "c2"], file: ["c0", "c1 +# check", "c2"] },
+        { label: "Both are kept", ends: { tab: ["c0", "fixed +# check", "c2"], server: ["c0", "fixed +# check", "c2"], file: ["c0", "fixed +# check", "c2"] } },
+        { label: "The agent waits", ends: { tab: ["c0", "c1 +# check", "c2"], server: ["c0", "c1 +# check", "c2"], file: ["c0", "c1 +# check", "c2"] } },
+        { label: "The person decides", ends: { tab: ["c0", "c1 +# check", "c2"], server: ["c0", "c1 +# check", "c2"], file: ["c0", "c1 +# check", "c2"] } },
       ]);
     }
   )
@@ -285,8 +286,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] },
-        { tab: ["c0", E.contains("c1", "+B-TYPED"), "c2"], server: ["c0", E.contains("c1", "+B-TYPED"), "c2"], file: ["c0", E.contains("c1", "+B-TYPED"), "c2"] },
+        { label: "The deletion wins, as for a person", ends: { tab: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] } },
+        { label: "The typing is kept as a recovered copy", ends: { tab: ["c0", E.contains("c1", "+B-TYPED"), "c2"], server: ["c0", E.contains("c1", "+B-TYPED"), "c2"], file: ["c0", E.contains("c1", "+B-TYPED"), "c2"] } },
       ]);
     }
   )
@@ -337,8 +338,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2"], server: ["c0", "fixed", "c2"], file: ["c0", "fixed", "c2"] },
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "The agent is told after the edit is saved", ends: { tab: ["c0", "fixed", "c2"], server: ["c0", "fixed", "c2"], file: ["c0", "fixed", "c2"] } },
+        { label: "The same bound as typing", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -390,7 +391,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
@@ -442,7 +443,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1", "fixed"], server: ["c0 +TYPED", "c1", "fixed"], file: ["c0 +TYPED", "c1", "fixed"] },
+        { label: "As the story ends", ends: { tab: ["c0 +TYPED", "c1", "fixed"], server: ["c0 +TYPED", "c1", "fixed"], file: ["c0 +TYPED", "c1", "fixed"] } },
       ]);
     }
   )

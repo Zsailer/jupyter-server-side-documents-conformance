@@ -37,7 +37,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "offline edit"], server: ["c0", "c1", "c2", "offline edit"], file: ["c0", "c1", "c2", "offline edit"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "offline edit"], server: ["c0", "c1", "c2", "offline edit"], file: ["c0", "c1", "c2", "offline edit"] } },
       ]);
     }
   )
@@ -68,7 +68,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -109,7 +109,7 @@ test(
       });
 
       await s.ends([
-        { tab2: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab2: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"] } },
       ]);
     }
   )
@@ -165,7 +165,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +OFFLINE", "c1", "c2"], server: ["c0 +OFFLINE", "c1", "c2"], file: ["c0 +OFFLINE", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +OFFLINE", "c1", "c2"], server: ["c0 +OFFLINE", "c1", "c2"], file: ["c0 +OFFLINE", "c1", "c2"] } },
       ]);
     }
   )
@@ -219,7 +219,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["EDITED OFFLINE", "c1", "c2"], tab2: ["EDITED OFFLINE", "c1", "c2"], server: ["EDITED OFFLINE", "c1", "c2"], file: ["EDITED OFFLINE", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["EDITED OFFLINE", "c1", "c2"], tab2: ["EDITED OFFLINE", "c1", "c2"], server: ["EDITED OFFLINE", "c1", "c2"], file: ["EDITED OFFLINE", "c1", "c2"] } },
       ]);
     }
   )
@@ -291,7 +291,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], tab2: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], server: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], file: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], tab2: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], server: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"], file: ["c0", "c1", "c2", "X-1", "X-2", "Y-1"] } },
       ]);
     }
   )
@@ -362,7 +362,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], tab2: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], server: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], file: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], tab2: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], server: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"], file: ["c0 +B-OFFLINE", "c1", "c2", "X-1", "X-2"] } },
       ]);
     }
   )
@@ -426,7 +426,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "Y-1", "NEW-B"], tab2: ["c0", "c1", "c2", "Y-1", "NEW-B"], server: ["c0", "c1", "c2", "Y-1", "NEW-B"], file: ["c0", "c1", "c2", "Y-1", "NEW-B"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "Y-1", "NEW-B"], tab2: ["c0", "c1", "c2", "Y-1", "NEW-B"], server: ["c0", "c1", "c2", "Y-1", "NEW-B"], file: ["c0", "c1", "c2", "Y-1", "NEW-B"] } },
       ]);
     }
   )
@@ -489,7 +489,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", "B-1", "Y-1"], tab2: ["c0", "c1", "c2", "B-1", "Y-1"], server: ["c0", "c1", "c2", "B-1", "Y-1"], file: ["c0", "c1", "c2", "B-1", "Y-1"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c1", "c2", "B-1", "Y-1"], tab2: ["c0", "c1", "c2", "B-1", "Y-1"], server: ["c0", "c1", "c2", "B-1", "Y-1"], file: ["c0", "c1", "c2", "B-1", "Y-1"] } },
       ]);
     }
   )
@@ -535,7 +535,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c1", "c2", "c0"], tab2: ["c1", "c2", "c0"], server: ["c1", "c2", "c0"], file: ["c1", "c2", "c0"] },
+        { label: "As the story ends", ends: { tab: ["c1", "c2", "c0"], tab2: ["c1", "c2", "c0"], server: ["c1", "c2", "c0"], file: ["c1", "c2", "c0"] } },
       ]);
     }
   )

@@ -51,3 +51,9 @@ export interface StoryMeta {
 
 /** What every copy must hold at the end, per lane. */
 export type Ends = Partial<Record<'file' | 'server' | string, Expect[]>>;
+
+/** One way a story may end: the proposed answer, or an alternative the storyboard names. */
+export interface Ending {
+  label: string;
+  ends: Ends;
+}

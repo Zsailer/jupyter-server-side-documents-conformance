@@ -42,7 +42,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1", "c2"], server: ["c0 +TYPED", "c1", "c2"], file: ["c0 +TYPED", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +TYPED", "c1", "c2"], server: ["c0 +TYPED", "c1", "c2"], file: ["c0 +TYPED", "c1", "c2"] } },
       ]);
     }
   )
@@ -88,7 +88,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c1", "c2", "c0"], server: ["c1", "c2", "c0"], file: ["c1", "c2", "c0"] },
+        { label: "As the story ends", ends: { tab: ["c1", "c2", "c0"], server: ["c1", "c2", "c0"], file: ["c1", "c2", "c0"] } },
       ]);
     }
   )
@@ -137,7 +137,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] } },
       ]);
     }
   )
@@ -190,7 +190,7 @@ test(
       });
 
       await s.ends([
-        { tab: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], tab2: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], server: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], file: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], tab2: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], server: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"], file: [E.parts("c0", "+A-OFFLINE", "+B-ONLINE"), "c1", "c2"] } },
       ]);
     }
   )
@@ -244,7 +244,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], tab2: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], server: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], file: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], tab2: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], server: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], file: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"] } },
       ]);
     }
   )
@@ -298,7 +298,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], tab2: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], server: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], file: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], tab2: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], server: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"], file: ["c0 +A-OFFLINE", "c1 +B-OFFLINE", "c2"] } },
       ]);
     }
   )
@@ -347,7 +347,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"] },
+        { label: "As the story ends", ends: { tab: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"], server: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"], file: ["c0 +TYPED", "c1 +OFFLINE", "c2", "ONLINE CELL"] } },
       ]);
     }
   )
@@ -393,7 +393,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +A-OFFLINE", "c1", "c2"], server: ["c0 +A-OFFLINE", "c1", "c2"], file: ["c0 +A-OFFLINE", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +A-OFFLINE", "c1", "c2"], server: ["c0 +A-OFFLINE", "c1", "c2"], file: ["c0 +A-OFFLINE", "c1", "c2"] } },
       ]);
     }
   )
@@ -439,7 +439,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +A-OFFLINE", "c1", "c2"], server: ["c0 +A-OFFLINE", "c1", "c2"], file: ["c0 +A-OFFLINE", "c1", "c2"] },
+        { label: "As the story ends", ends: { tab: ["c0 +A-OFFLINE", "c1", "c2"], server: ["c0 +A-OFFLINE", "c1", "c2"], file: ["c0 +A-OFFLINE", "c1", "c2"] } },
       ]);
     }
   )

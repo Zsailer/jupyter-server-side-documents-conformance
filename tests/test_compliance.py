@@ -117,12 +117,26 @@ class GeneratedTest(unittest.TestCase):
         text = self.result["files"]["residual.spec.ts"]
         self.assertIn("await tab.moveCell(1, 2);", text, "c1 goes to the end, as the story says")
 
-    def test_a_decision_gives_its_endings_proposed_first(self):
+    def test_a_decision_gives_its_endings_proposed_first_each_with_its_name(self):
         text = self.result["files"]["residual.spec.ts"]
         z3 = text[text.index('"id": "Z3"'):text.index('"id": "Z4"')]
         ends = z3[z3.index("await s.ends(["):]
         # proposed: the deletion wins; the alternative: the typing comes back as a recovered copy
+        self.assertLess(ends.index('label: "The deletion wins"'), ends.index('label: "The typing is kept as a recovered copy"'))
         self.assertLess(ends.index('"c0", "c2"'), ends.index("E.contains"))
+
+    def test_an_alternative_expects_what_the_proposed_answer_rules_out(self):
+        # Z2: the proposed answer has the cell once; "the merge decides" is the cell twice, which the page marks "!"
+        text = self.result["files"]["residual.spec.ts"]
+        z2 = text[text.index('"id": "Z2"'):text.index('"id": "Z3"')]
+        proposed, alternative = z2.split('label: "The merge decides"')
+        self.assertIn('label: "The cell exists once"', proposed)
+        self.assertNotIn('"c1", "c0", "c0", "c2"', proposed)
+        self.assertIn('"c1", "c0", "c0", "c2"', alternative)
+
+    def test_a_story_that_is_not_a_question_has_one_ending(self):
+        text = self.result["files"]["rebuild.spec.ts"]
+        self.assertIn('label: "As the story ends"', text)
 
     def test_the_committed_files_are_what_the_storyboards_give(self):
         self.assertEqual(g.write(self.result, check=True), [], "run: python3 -I compliance/generate.py")
