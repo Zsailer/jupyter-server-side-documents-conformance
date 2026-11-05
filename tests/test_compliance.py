@@ -138,6 +138,22 @@ class GeneratedTest(unittest.TestCase):
         text = self.result["files"]["rebuild.spec.ts"]
         self.assertIn('label: "As the story ends"', text)
 
+    def test_a_collaborator_who_adds_a_cell_the_storyboard_only_names_adds_it(self):
+        # H3: "W adds a cell “X-1”" has no cells; without the cell in quotes nothing would ever be added
+        text = self.result["files"]["edges.spec.ts"]
+        h3 = text[text.index('"id": "H3"'):text.index('"id": "H4"')]
+        self.assertIn('await tab3.addCell(3, "X-1");', h3)
+        self.assertIn('await tab3.addCell(4, "X-2");', h3)
+        self.assertIn('await tab4.addCell(5, "Y-1");', h3)
+
+    def test_a_tab_that_closes_and_later_comes_back_stays_open_offline(self):
+        # H2: "B and W close their tabs" ... "B comes back second"
+        text = self.result["files"]["handshake.spec.ts"]
+        h2 = text[text.index('"id": "H2"'):text.index('"id": "C1"')]
+        self.assertIn("await tab2.goOffline(); // it goes away", h2)
+        self.assertIn("await tab3.close();", h2, "W never comes back: it really closes")
+        self.assertNotIn("await tab2.close();", h2)
+
     def test_the_committed_files_are_what_the_storyboards_give(self):
         self.assertEqual(g.write(self.result, check=True), [], "run: python3 -I compliance/generate.py")
 

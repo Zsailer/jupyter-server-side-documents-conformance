@@ -245,6 +245,18 @@ def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Comp
         out.lines.append(f"const {lane} = s.tab({ts(lane)});")
     out.lines.append("")
 
+    # "B closes its tab" ... "B comes back": the tab that comes back is the one that went away, so it stays open, offline
+    comes_back: set[tuple[str, int]] = set()
+    for i, step in enumerate(steps, 1):
+        if step["kind"] == "leave":
+            for lane in lanes_of(step):
+                for later in steps[i:]:
+                    if lane in lanes_of(later) and later["kind"] == "open":
+                        break
+                    if lane in lanes_of(later) and later["kind"] == "reconnect":
+                        comes_back.add((lane, i))
+                        break
+
     released = False
     crashed = False
     for n, step in enumerate(steps, 1):
@@ -256,7 +268,7 @@ def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Comp
         for lane in lanes_of(step):
             fam = family(lane)
             if fam == "tab":
-                tab_body, state_after = tab_step(lane, kind, new_cells, known, state, out)
+                tab_body, state_after = tab_step(lane, kind, new_cells, known, state, out, (lane, n) in comes_back, step, steps[n:], cell_oracle)
                 body += tab_body
                 state[lane] = state_after
                 if kind == "reconnect":
@@ -346,7 +358,7 @@ def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Comp
     return out
 
 
-def tab_step(lane: str, kind: str, new: list[Cell] | None, known: dict, state: dict, out: Compiled) -> tuple[list[str], str]:
+def tab_step(lane: str, kind: str, new: list[Cell] | None, known: dict, state: dict, out: Compiled, stays_open: bool = False, step: dict | None = None, later: list | None = None, oracle: dict | None = None) -> tuple[list[str], str]:
     """The lines that make a tab do a step, and the state it is in after."""
     body: list[str] = []
     cur = state.get(lane, "new")
@@ -365,8 +377,30 @@ def tab_step(lane: str, kind: str, new: list[Cell] | None, known: dict, state: d
             known[lane] = new
         return body, "online"
     if kind == "leave":
+        if stays_open:
+            body.append(f"await {lane}.goOffline(); // it goes away and, later in the story, comes back: the tab stays open")
+            return body, "offline"
         body.append(f"await {lane}.close();")
         return body, "closed"
+    if kind == "add" and new is None and step is not None:
+        quoted = re.findall(r"“([^”]+)”", step["text"])
+        have = {c.key for c in known.get(lane, [])}
+        for name in quoted:
+            if name in have:
+                continue
+            at = len(known.get(lane, []))
+            for nxt in later or []:
+                if isinstance(nxt.get("cells"), list):
+                    names = [c.key for c in model(nxt["cells"], oracle or {}, []) if c.look != "gone"]
+                    if name in names:
+                        at = names.index(name)
+                        break
+            body.append(f"await {lane}.addCell({at}, {ts(name)});")
+            known[lane] = list(known.get(lane, []))
+            known[lane].insert(min(at, len(known[lane])), Cell(key=name, look="new", base=name, expect=("exact", name)))
+        if body and cur == "online":
+            body.append(f"await s.settle({lane});")
+        return body, cur
     if kind in USER_KINDS and new is not None:
         ops = ops_for(known.get(lane, []), new)
         for op in ops:

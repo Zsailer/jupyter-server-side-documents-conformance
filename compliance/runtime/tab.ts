@@ -199,6 +199,7 @@ export class Tab {
   async addCell(index: number, text: string): Promise<void> {
     const page = this.p;
     const before = (await page.notebook.getCellCount()) ?? 0;
+    index = Math.min(index, before); // a tab that has not yet seen every cell adds at the end of what it has
     if (index === 0) {
       await page.notebook.selectCells(0);
       await this.command('notebook:insert-cell-above');

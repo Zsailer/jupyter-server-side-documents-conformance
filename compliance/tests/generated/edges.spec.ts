@@ -254,7 +254,8 @@ test(
         await s.expectTab(tab4, ["c0", "c1", "c2"]);
       });
       await s.step(2, "Collaborator W", "W adds a cell “X-1”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(3, "X-1");
+        await s.settle(tab3);
       });
       await s.step(3, "Tab A + Tab B", "A and B receive X-1", async () => {
         await s.expectTabEventually(tab, ["c0", "c1", "c2", "X-1"]);
@@ -264,16 +265,18 @@ test(
         await tab.goOffline();
       });
       await s.step(5, "Collaborator W", "W adds another cell “X-2”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(4, "X-2");
+        await s.settle(tab3);
       });
       await s.step(6, "Collaborator V", "V adds a cell “Y-1”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab4.addCell(5, "Y-1");
+        await s.settle(tab4);
       });
       await s.step(7, "Tab B", "only B receives X-2 and Y-1: B holds work that A never saw", async () => {
         await s.expectTabEventually(tab2, ["c0", "c1", "c2", "X-1", "X-2", "Y-1"]);
       });
       await s.step(8, "Tab B + Collaborator W + Collaborator V", "B, W and V close their tabs", async () => {
-        await tab2.close();
+        await tab2.goOffline(); // it goes away and, later in the story, comes back: the tab stays open
         await tab3.close();
         await tab4.close();
       });
@@ -323,7 +326,8 @@ test(
         await s.expectTab(tab3, ["c0", "c1", "c2"]);
       });
       await s.step(2, "Collaborator W", "W adds a cell “X-1”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(3, "X-1");
+        await s.settle(tab3);
       });
       await s.step(3, "Tab A + Tab B", "A and B receive X-1", async () => {
         await s.expectTabEventually(tab, ["c0", "c1", "c2", "X-1"]);
@@ -333,7 +337,8 @@ test(
         await tab.goOffline();
       });
       await s.step(5, "Collaborator W", "W adds another cell “X-2”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(4, "X-2");
+        await s.settle(tab3);
       });
       await s.step(6, "Tab B", "only B receives X-2: B holds more of W's work than A", async () => {
         await s.expectTabEventually(tab2, ["c0", "c1", "c2", "X-1", "X-2"]);
@@ -397,7 +402,8 @@ test(
         await tab.goOffline();
       });
       await s.step(3, "Collaborator V", "V adds a cell “Y-1”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(3, "Y-1");
+        await s.settle(tab3);
       });
       await s.step(4, "Tab B", "only B receives Y-1", async () => {
         await s.expectTabEventually(tab2, ["c0", "c1", "c2", "Y-1"]);
@@ -466,13 +472,14 @@ test(
         await s.expectTab(tab2, ["c0", "c1", "c2", "B-1"]);
       });
       await s.step(4, "Collaborator V", "V adds a cell “Y-1”", async () => {
-        // nothing for a test to do: the storyboard states what is so
+        await tab3.addCell(4, "Y-1");
+        await s.settle(tab3);
       });
       await s.step(5, "Tab B", "B receives Y-1", async () => {
         await s.expectTabEventually(tab2, ["c0", "c1", "c2", "B-1", "Y-1"]);
       });
       await s.step(6, "Tab B + Collaborator V", "B and V close their tabs", async () => {
-        await tab2.close();
+        await tab2.goOffline(); // it goes away and, later in the story, comes back: the tab stays open
         await tab3.close();
       });
       await s.step(7, "File on disk", "holds five cells", async () => {

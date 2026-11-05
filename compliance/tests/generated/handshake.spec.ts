@@ -364,7 +364,7 @@ test(
         await s.expectTabEventually(tab2, ["c0", "c1", "c2", "X-1", "X-2"]);
       });
       await s.step(7, "Tab B + Collaborator W", "B and W close their tabs", async () => {
-        await tab2.close();
+        await tab2.goOffline(); // it goes away and, later in the story, comes back: the tab stays open
         await tab3.close();
       });
       await s.step(8, "File on disk", "holds all five cells", async () => {
