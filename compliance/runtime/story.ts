@@ -358,6 +358,20 @@ export class Story {
     }
   }
 
+  /** What a person would have had to do or seen, worth saying in the summary of the run. */
+  private keepNotes(): void {
+    const info = test.info();
+    for (const note of this.recorder.notes) {
+      info.annotations.push({ type: 'a person would have noticed', description: note });
+    }
+    if (this.recorder.notes.length) {
+      fs.mkdirSync(info.project.outputDir, { recursive: true });
+      for (const note of this.recorder.notes) {
+        fs.appendFileSync(nodePath.join(info.project.outputDir, 'notes.jsonl'), JSON.stringify({ id: this.meta.id, note }) + '\n');
+      }
+    }
+  }
+
   /** Close every tab, which completes their videos, and put the videos in the report. */
   async closeAll(): Promise<void> {
     for (const tab of this.tabs.values()) {
@@ -369,6 +383,7 @@ export class Story {
         await info.attach(`video: ${rec.name}`, { path: rec.file, contentType: 'video/webm' }).catch(() => undefined);
       }
     }
+    this.keepNotes();
     const watch = this.recorder.finish();
     if (watch) {
       await info.attach('watch every tab side by side (open this file)', { path: watch, contentType: 'text/html' }).catch(() => undefined);
@@ -413,6 +428,12 @@ export function story(
       test.skip(Boolean(meta.internal), `not checkable from the user's side: ${meta.internal}`);
       test.skip(missing.length > 0, `adapter "${adapter.name}" cannot: ${missing.join(', ')}`);
 
+      try {
+        fs.mkdirSync(testInfo.project.outputDir, { recursive: true });
+        fs.writeFileSync(nodePath.join(testInfo.project.outputDir, 'adapter.json'), JSON.stringify({ name: adapter.name, capabilities: [...adapter.capabilities, ...ALWAYS] }));
+      } catch {
+        /* the summary will not know which adapter ran */
+      }
       const ctx: AdapterContext = { admin: page, baseURL: baseURL! };
       const env: TabEnv = {
         browser,

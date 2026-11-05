@@ -71,3 +71,18 @@ test('a page that is gone leaves nothing and does not throw', async () => {
   };
   assert.deepEqual(await keepLook(dir, 'tab', 'x', gone), []);
 });
+
+test('what the browser reported is kept with the picture', async () => {
+  const dir = folder();
+  const page = { screenshot: async () => Buffer.from('PNG'), locator: () => ({ ariaSnapshot: async () => '- main' }) };
+  const written = await keepLook(dir, 'tab2', 'could not be set up', page, 'tab2: opened 20 s ago\n 1.0s  navigated: http://x/lab');
+  assert.equal(written.length, 3);
+  assert.match(fs.readFileSync(written[2], 'utf8'), /navigated/);
+});
+
+test('a note about what a person had to do is a step on the watch page too', () => {
+  const r = new Recorder(folder());
+  r.note('tab: asked the person to click “Reconnect”, and they did');
+  assert.deepEqual(r.notes, ['tab: asked the person to click “Reconnect”, and they did']);
+  assert.equal(r.steps.length, 1);
+});

@@ -33,6 +33,14 @@ export class Recorder {
     this.title = title;
   }
 
+  /** Something a person would have had to do or would have seen, worth saying in the summary. */
+  readonly notes: string[] = [];
+
+  note(text: string): void {
+    this.notes.push(text);
+    this.step(text);
+  }
+
   step(text: string): void {
     this.steps.push({ at: Date.now(), text });
   }
@@ -67,7 +75,9 @@ export async function keepLook(
   dir: string,
   name: string,
   when: string,
-  page: { screenshot(options?: { timeout?: number }): Promise<Buffer>; locator(selector: string): { ariaSnapshot(options?: { timeout?: number }): Promise<string> } }
+  page: { screenshot(options?: { timeout?: number }): Promise<Buffer>; locator(selector: string): { ariaSnapshot(options?: { timeout?: number }): Promise<string> } },
+  /** Anything else worth keeping with it: what the browser reported, say. */
+  extra = ''
 ): Promise<string[]> {
   const stem = path.join(dir, 'looks', `${name.replace(/[^\w.-]+/g, '_')} ${when.replace(/[^\w.-]+/g, '_')}`);
   fs.mkdirSync(path.dirname(stem), { recursive: true });
@@ -83,6 +93,10 @@ export async function keepLook(
     written.push(`${stem}.txt`);
   } catch {
     /* the page is gone */
+  }
+  if (extra) {
+    fs.writeFileSync(`${stem}.events.txt`, extra);
+    written.push(`${stem}.events.txt`);
   }
   return written;
 }
