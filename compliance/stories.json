@@ -1,0 +1,843 @@
+[
+ {
+  "id": "A",
+  "group": "handshake",
+  "title": "Control: a tab reconnects to a notebook the server rebuilt",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "B",
+  "group": "handshake",
+  "title": "The tab's answer to the server is lost on the way",
+  "requires": [
+   "releaseRoom",
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 9
+ },
+ {
+  "id": "G",
+  "group": "handshake",
+  "title": "The tab's answer is late, not lost",
+  "requires": [
+   "releaseRoom",
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 9
+ },
+ {
+  "id": "D1",
+  "group": "handshake",
+  "title": "A new tab loses everything it sends on its first connection",
+  "requires": [
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "D2",
+  "group": "handshake",
+  "title": "A new tab loses only its answer",
+  "requires": [
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "C3",
+  "group": "handshake",
+  "title": "A second tab types into a cell while offline",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "C2",
+  "group": "handshake",
+  "title": "A second tab adds a cell while offline",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "H2",
+  "group": "handshake",
+  "title": "Two out-of-date tabs hold different amounts of the same session",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 11
+ },
+ {
+  "id": "C1",
+  "group": "handshake",
+  "title": "Control: the first tab adds a cell while offline",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "C",
+  "group": "edges",
+  "title": "A tab that has only been reading adds a cell while offline",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "E",
+  "group": "edges",
+  "title": "A view-only user reconnects",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 3
+ },
+ {
+  "id": "F",
+  "group": "edges",
+  "title": "A tab that left does not freeze the notebook for the others",
+  "requires": [
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "G2",
+  "group": "edges",
+  "title": "A late answer after typing offline",
+  "requires": [
+   "releaseRoom",
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 10
+ },
+ {
+  "id": "G3",
+  "group": "edges",
+  "title": "A second tab types offline and its answer is late",
+  "requires": [
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 9
+ },
+ {
+  "id": "H3",
+  "group": "edges",
+  "title": "Two out-of-date tabs, one also holding the work of a second collaborator",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 12
+ },
+ {
+  "id": "H4",
+  "group": "edges",
+  "title": "Two out-of-date tabs, the old session forgotten, one of them typed offline",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 13
+ },
+ {
+  "id": "K",
+  "group": "edges",
+  "title": "A cell created offline by a tab the server only partly remembers",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 11
+ },
+ {
+  "id": "K2",
+  "group": "edges",
+  "title": "A cell that was already saved is not added a second time",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 10
+ },
+ {
+  "id": "M1",
+  "group": "edges",
+  "title": "A second tab moves a cell while offline",
+  "requires": [],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "N1",
+  "group": "rebuild",
+  "title": "Typing while offline, across a rebuilt notebook",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "M2",
+  "group": "rebuild",
+  "title": "Moving a cell while offline, across a rebuilt notebook",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "R1",
+  "group": "rebuild",
+  "title": "Deleting a cell while offline, across a rebuilt notebook",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "W1",
+  "group": "rebuild",
+  "title": "Two people type into one cell; one was offline across a rebuild",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "W2",
+  "group": "rebuild",
+  "title": "Two out-of-date tabs both typed offline",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "W3",
+  "group": "rebuild",
+  "title": "Two out-of-date tabs both typed offline, and the server forgot the old session",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "S1",
+  "group": "rebuild",
+  "title": "A tab that edited online, then offline, reconnects to a rebuilt notebook",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "S5",
+  "group": "rebuild",
+  "title": "The server forgot the old session; a tab typed offline",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "S7",
+  "group": "rebuild",
+  "title": "What the server kept about the old session is damaged",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "S2",
+  "group": "crash",
+  "title": "The server dies before it saved; the tab holds newer edits",
+  "requires": [
+   "crashServer"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "S3",
+  "group": "crash",
+  "title": "An edit made on the server itself survives a crash",
+  "requires": [
+   "crashServer"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "Q1",
+  "group": "crash",
+  "title": "A cell held by two tabs is lost by the server in a crash",
+  "requires": [
+   "crashServer"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 10
+ },
+ {
+  "id": "P1",
+  "group": "crash",
+  "title": "The file is put back to an older copy",
+  "requires": [
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "S6",
+  "group": "crash",
+  "title": "The server dies in the middle of saving",
+  "requires": [
+   "crashServer",
+   "historyRecord"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "S4",
+  "group": "files",
+  "title": "The file is edited outside Jupyter while a tab is offline",
+  "requires": [
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "S8",
+  "group": "files",
+  "title": "An outside edit that keeps the file's modification time",
+  "requires": [
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "S9",
+  "group": "files",
+  "title": "The file is edited outside while a tab is connected, then the server dies",
+  "requires": [
+   "crashServer",
+   "fileSystem"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "S10",
+  "group": "files",
+  "title": "The notebook is deleted through Jupyter",
+  "requires": [
+   "fileSystem",
+   "historyRecord"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "S11",
+  "group": "files",
+  "title": "The notebook is deleted behind the server's back",
+  "requires": [
+   "fileSystem",
+   "historyRecord"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "S12",
+  "group": "lineage",
+  "title": "A notebook too big for the server to keep a history record of",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "S13",
+  "group": "lineage",
+  "title": "A history record written by another version of the software",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "S14",
+  "group": "lineage",
+  "title": "A notebook with empty metadata is restored without needless work",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "T1",
+  "group": "lineage",
+  "title": "The server starts keeping a history record after a tab met one that kept none",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "X5",
+  "group": "lineage",
+  "title": "An update waiting when the server shuts down is kept in the record",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 9
+ },
+ {
+  "id": "O1",
+  "group": "outputs",
+  "title": "Outputs survive a rebuild, in a notebook without cell ids",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "O2",
+  "group": "outputs",
+  "title": "Control: outputs survive a rebuild, in a notebook with cell ids",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "O3",
+  "group": "outputs",
+  "title": "Outputs survive a wiped output store, in a notebook without cell ids",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "O4",
+  "group": "outputs",
+  "title": "Outputs survive a wiped output store, in a notebook with cell ids",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "O5",
+  "group": "outputs",
+  "title": "Outputs that live only in the store survive a rebuild",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "O6",
+  "group": "outputs",
+  "title": "Outputs that live only in the store: the store is wiped",
+  "requires": [
+   "historyRecord",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "X1",
+  "group": "stop",
+  "title": "Shutting down with an update still waiting from a connected tab",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment",
+  "steps": 5
+ },
+ {
+  "id": "X2",
+  "group": "stop",
+  "title": "Shutting down with a damaged message ahead of a valid one",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser",
+  "steps": 5
+ },
+ {
+  "id": "X3",
+  "group": "stop",
+  "title": "Shutting down waits for the cleanup work registered for it",
+  "requires": [
+   "releaseRoom",
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": "work the server registers for its own shutdown: nothing a person does or sees",
+  "steps": 4
+ },
+ {
+  "id": "X4",
+  "group": "stop",
+  "title": "Shutting down with an update from a tab that has already left",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": "the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race",
+  "steps": 6
+ },
+ {
+  "id": "Z1",
+  "group": "residual",
+  "title": "One person moves a cell while another types into it",
+  "requires": [],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "Z2",
+  "group": "residual",
+  "title": "Two people move the same cell at the same time",
+  "requires": [],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "Z3",
+  "group": "residual",
+  "title": "One person deletes a cell while another types into it offline",
+  "requires": [],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "Z4",
+  "group": "residual",
+  "title": "Two people rewrite the same cell at the same time",
+  "requires": [],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "Z5",
+  "group": "residual",
+  "title": "The file changes from outside while a tab has unsaved typing",
+  "requires": [
+   "fileSystem"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "Z6",
+  "group": "residual",
+  "title": "The server dies before it saved, and no tab that held the typing is left",
+  "requires": [
+   "crashServer"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "Z7",
+  "group": "residual",
+  "title": "Offline typing in a notebook without cell ids, after the server forgot the old session",
+  "requires": [
+   "releaseRoom"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "AI1",
+  "group": "ai",
+  "title": "An AI agent edits a notebook that is open",
+  "requires": [
+   "agent"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "AI2",
+  "group": "ai",
+  "title": "An AI agent edits a notebook that nobody has open",
+  "requires": [
+   "agent",
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 5
+ },
+ {
+  "id": "AI3",
+  "group": "ai",
+  "title": "A person opens the notebook in the middle of the agent's work",
+  "requires": [
+   "agent",
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 9
+ },
+ {
+  "id": "AI4",
+  "group": "ai",
+  "title": "The last person leaves in the middle of the agent's work",
+  "requires": [
+   "agent",
+   "fileSystem",
+   "releaseRoom"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 12
+ },
+ {
+  "id": "AI5",
+  "group": "ai",
+  "title": "The agent rewrites a cell while a person is typing in it",
+  "requires": [
+   "agent"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 6
+ },
+ {
+  "id": "AI6",
+  "group": "ai",
+  "title": "The agent deletes a cell that a person edited while offline",
+  "requires": [
+   "agent"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 7
+ },
+ {
+  "id": "AI7",
+  "group": "ai",
+  "title": "The server dies after the agent's edit, before the next autosave",
+  "requires": [
+   "agent",
+   "crashServer"
+  ],
+  "needsAlignment": true,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "AI8",
+  "group": "ai",
+  "title": "The agent is still writing the file when the server reads it",
+  "requires": [
+   "agent",
+   "fileSystem",
+   "releaseRoom",
+   "wireFaults"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ },
+ {
+  "id": "AI9",
+  "group": "ai",
+  "title": "The agent writes the file although the server still holds the notebook",
+  "requires": [
+   "agent",
+   "fileSystem"
+  ],
+  "needsAlignment": false,
+  "loose": [],
+  "internal": null,
+  "steps": 8
+ }
+]
