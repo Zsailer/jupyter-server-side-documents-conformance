@@ -83,6 +83,10 @@ elsewhere), or use `JSD_ENV` and `JSD_UI_TESTS`. The server's log is `/tmp/compl
 | `COMPLIANCE_DECISIONS` | `'{"Z3":1}'` holds Z3 to its second option instead of the proposed one |
 | `COMPLIANCE_TIMEOUT_MS`, `COMPLIANCE_SAVE_TIMEOUT_MS`, `COMPLIANCE_STABLE_MS`, `COMPLIANCE_SETTLE_MS` | waits (default 20 s, 40 s, 1.5 s, 0.75 s) |
 
+## Watching a story
+
+A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `run-jsd.sh` prints where they are and opens the page when you ran a single story.
+
 ## Open questions in the storyboards
 
 A story marked *Needs alignment* has a proposed answer and alternatives. The test holds the backend to the **proposed** answer, tags itself `@needs-alignment`, and says so in its annotations. When the question is settled, the storyboard changes, the tests are generated again, and the answer is enforced everywhere at once.

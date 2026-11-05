@@ -4,6 +4,7 @@ import { ALWAYS, Capability, Ending, Expect, StoryMeta } from './types';
 import { AdapterContext, BackendAdapter, loadAdapter } from './adapter';
 import { matchCells, notebookJSON, showActual, showExpected } from './cells';
 import { Tab, TabEnv, WAIT } from './tab';
+import { Recorder } from './recording';
 import * as fs from 'node:fs';
 import * as nodePath from 'node:path';
 
@@ -30,7 +31,11 @@ export class Story {
     private readonly ctx: AdapterContext,
     private readonly env: TabEnv,
     private readonly dir: string
-  ) {}
+  ) {
+    this.recorder = env.recorder;
+  }
+
+  private readonly recorder: Recorder;
 
   /** Create the notebook file the story starts from. `ids: false` makes an older notebook without cell ids. */
   async notebook(sources: string[], opts: { ids?: boolean } = {}): Promise<void> {
@@ -50,6 +55,7 @@ export class Story {
 
   /** One step of the storyboard: it shows in the report under the words the storyboard uses. */
   async step(n: number, who: string, text: string, body: () => Promise<void>): Promise<void> {
+    this.recorder.step(`${n}. ${who} ${text}`);
     await test.step(`${n}. ${who} ${text}`, body);
   }
 
@@ -98,7 +104,7 @@ export class Story {
     if (this.adapter.capabilities.has('serverState') && this.adapter.serverCells) {
       return this.adapter.serverCells(this.ctx, this.path);
     }
-    const probe = new Tab('probe', this.env, this.path);
+    const probe = new Tab('probe', this.env, this.path, false);
     try {
       await probe.open();
       return await probe.cells();
@@ -320,9 +326,21 @@ export class Story {
     });
   }
 
+  /** Close every tab, which completes their videos, and put the videos in the report. */
   async closeAll(): Promise<void> {
     for (const tab of this.tabs.values()) {
       await tab.close().catch(() => undefined);
+    }
+    const info = test.info();
+    for (const rec of this.recorder.tabs) {
+      if (rec.file) {
+        await info.attach(`video: ${rec.name}`, { path: rec.file, contentType: 'video/webm' }).catch(() => undefined);
+      }
+    }
+    const watch = this.recorder.finish();
+    if (watch) {
+      await info.attach('watch every tab side by side (open this file)', { path: watch, contentType: 'text/html' }).catch(() => undefined);
+      console.log(`watch every tab side by side: ${watch}`);
     }
   }
 }
@@ -363,7 +381,13 @@ export function story(
       test.skip(missing.length > 0, `adapter "${adapter.name}" cannot: ${missing.join(', ')}`);
 
       const ctx: AdapterContext = { admin: page, baseURL: baseURL! };
-      const env: TabEnv = { browser, baseURL: baseURL!, waitForApplication, dir: tmpPath };
+      const env: TabEnv = {
+        browser,
+        baseURL: baseURL!,
+        waitForApplication,
+        dir: tmpPath,
+        recorder: new Recorder(testInfo.outputDir, `${meta.id} · ${meta.title}`)
+      };
       const s = new Story(meta, adapter, ctx, env, tmpPath);
       try {
         await body(s);
