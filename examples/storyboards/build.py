@@ -70,7 +70,9 @@ def stories_of(src: dict, gid: str) -> list[str]:
     """The stories of a group, in the suite's order where the suite has the group, else the file's."""
     suite = src["suite"].get("scenarios") or {}
     if gid in (src["suite"].get("groups") or {}):
-        return [sid for sid, s in suite.items() if s.get("group") == gid and sid in src["stories"]]
+        listed = [sid for sid, s in suite.items() if s.get("group") == gid and sid in src["stories"]]
+        # a story added to the file without an entry in the suite follows the ones the suite orders
+        return listed + [sid for sid, s in src["stories"].items() if s["group"] == gid and sid not in suite]
     return [sid for sid, s in src["stories"].items() if s["group"] == gid]
 
 
@@ -91,6 +93,8 @@ def story_json(src: dict, sid: str) -> dict:
     if story.get("decision"):
         badges.append({"text": "Needs alignment", "tone": "need"})
         story["decision"] = dict(story["decision"], answerLabel=answer_label(src, sid, played))
+    if story.get("status") == "proposed":
+        badges.append({"text": "Proposed case", "tone": "new", "title": "This case is up for discussion; nothing is held to it yet."})
     if not played:
         badges.append({"text": page["unplayed"]["badge"], "tone": "new", "title": page["unplayed"]["text"]})
     for feature in sorted(scn.get("requires") or []):
@@ -219,7 +223,7 @@ def build(data: Path, out: Path) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--data", type=Path, default=HERE / "data")
+    ap.add_argument("--data", type=Path, default=ROOT / "stories")
     ap.add_argument("-o", "--out", type=Path, default=HERE / "site" / "index.html")
     args = ap.parse_args()
     result = build(args.data, args.out)

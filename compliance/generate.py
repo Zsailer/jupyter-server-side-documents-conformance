@@ -2,7 +2,7 @@
 """Generate the compliance tests from the storyboards.
 
     python3 -I compliance/generate.py                 # writes compliance/tests/generated/*.spec.ts, stories.json, COVERAGE.md
-    python3 -I compliance/generate.py --check         # fail if the committed files are not what the storyboards give
+    python3 -I compliance/generate.py --check         # fail if the files on disk are not what the stories give
 
 Each story of the storyboards becomes one Galata test. The test does what the story's steps say (a person types,
 a tab goes offline, the server lets go of the notebook, the file changes from outside) and, at the end, checks what
@@ -31,7 +31,7 @@ sys.path.insert(0, str(ROOT / "examples" / "storyboards"))
 import build as storyboards  # noqa: E402
 import nbscenario_spec as spec  # noqa: E402
 
-DATA = ROOT / "examples" / "storyboards" / "data"
+DATA = ROOT / "stories"
 OUT = HERE / "tests" / "generated"
 
 #: things a person does with their hands: the test does them with real keystrokes
@@ -468,6 +468,8 @@ def emit_story(sid: str, st: dict, group: str, scn: dict, page: dict, c: Compile
     }
     if needs:
         meta["needsAlignment"] = True
+    if st.get("status") == "proposed":
+        meta["proposed"] = True
     if features:
         meta["appliesIf"] = features
     if not c.ordered:
@@ -502,6 +504,7 @@ def generate(data: Path = DATA) -> dict:
                 "title": st["title"],
                 "requires": sorted(c.requires),
                 "needsAlignment": bool(st.get("decision")),
+                "proposed": st.get("status") == "proposed",
                 "loose": c.loose,
                 "internal": c.internal,
                 "steps": len(st["steps"]),
@@ -572,7 +575,7 @@ def write(result: dict, check: bool) -> list[str]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", type=Path, default=DATA)
-    ap.add_argument("--check", action="store_true", help="fail if the committed files are out of date")
+    ap.add_argument("--check", action="store_true", help="fail if the files on disk are out of date")
     args = ap.parse_args()
     result = generate(args.data)
     stale = write(result, args.check)

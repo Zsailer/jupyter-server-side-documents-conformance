@@ -41,7 +41,7 @@ A story needs the backend's help only to *cause* an event: the server letting go
 | `historyRecord` | the server keeps a history record next to the file (optional) |
 | `serverState` | *(optional)* the server can say what its own copy holds; otherwise a fresh tab is opened to see |
 
-[`COVERAGE.md`](COVERAGE.md) is generated with the tests: it lists what every story needs and how many stories each capability unlocks. Today `releaseRoom` is by far the most needed, because most stories turn on the server rebuilding a notebook from its file. Making that portable (for instance, by restarting the server) is the most useful thing a backend can offer.
+[`COVERAGE.md`](COVERAGE.md) is generated with the tests (`npm run generate`; none of the generated files are committed): it lists what every story needs and how many stories each capability unlocks. Today `releaseRoom` is by far the most needed, because most stories turn on the server rebuilding a notebook from its file. Making that portable (for instance, by restarting the server) is the most useful thing a backend can offer.
 
 ## Adapters
 
