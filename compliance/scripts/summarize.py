@@ -69,6 +69,11 @@ def main() -> None:
     print("\nSkipped:")
     for why, ids in sorted(skipped.items(), key=lambda kv: -len(kv[1])):
         print(f"  {len(ids):>2}  {why}: {', '.join(ids)}")
+    probe = RESULTS / "probe.txt"
+    if probe.exists():
+        print("\nProbe:")
+        for line in probe.read_text().splitlines():
+            print("  " + line)
     notes = RESULTS / "notes.jsonl"
     if notes.exists():
         print("\nWhat a person would have noticed:")
