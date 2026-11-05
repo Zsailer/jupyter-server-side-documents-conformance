@@ -42,9 +42,9 @@ async function waitForLab(page: Page): Promise<void> {
 }
 
 /** When a tab cannot be set up, say what it looked like: a picture and the page as text, kept in the results folder. */
-async function explain(page: Page | null, name: string, dir: string): Promise<void> {
+async function explain(page: Page | null, name: string, dir: string, extra: string): Promise<void> {
   if (page) {
-    await keepLook(dir, name, 'could not be set up', page as any);
+    await keepLook(dir, name, 'could not be set up', page as any, extra);
   }
 }
 
@@ -60,6 +60,10 @@ export class Tab {
   private lead: Page | null = null;
   private startedAt = 0;
   private opened = 0;
+  private offline = false;
+  /** What the browser reported while the tab was being set up, for when it cannot be. */
+  private events: string[] = [];
+  private askedToReconnect = false;
 
   constructor(
     readonly name: string,
@@ -93,6 +97,7 @@ export class Tab {
           : { viewport: VIEW }
       );
       this.lead = await this.context.newPage();
+      this.watch(this.lead);
       const page = await galata.initTestPage(
         '/lab',
         true,
@@ -121,9 +126,32 @@ export class Tab {
         })
         .toBeGreaterThan(0);
     } catch (e) {
-      await explain(this.lead, this.name, this.env.recorder.dir);
+      await explain(this.lead, this.name, this.env.recorder.dir, await this.report());
       throw e;
     }
+  }
+
+  private watch(page: Page): void {
+    const at = () => ((Date.now() - this.startedAt) / 1000).toFixed(1).padStart(5);
+    const keep = (line: string) => this.events.length < 300 && this.events.push(`${at()}s  ${line}`);
+    page.on('console', m => ['error', 'warning'].includes(m.type()) && keep(`console.${m.type()}: ${m.text().slice(0, 300)}`));
+    page.on('pageerror', e => keep(`pageerror: ${String(e).slice(0, 300)}`));
+    page.on('requestfailed', r => keep(`request failed: ${r.method()} ${r.url().slice(0, 160)} (${r.failure()?.errorText})`));
+    page.on('response', r => r.status() >= 400 && keep(`HTTP ${r.status()}: ${r.url().slice(0, 160)}`));
+    page.on('framenavigated', f => f === page.mainFrame() && keep(`navigated: ${f.url().slice(0, 160)}`));
+  }
+
+  /** What the browser said while the tab was loading, and whether the server answers right now. */
+  private async report(): Promise<string> {
+    let ping: string;
+    const began = Date.now();
+    try {
+      const res = await fetch(`${this.env.baseURL}/api/status`, { signal: AbortSignal.timeout(5000) });
+      ping = `the server answers /api/status: HTTP ${res.status} in ${Date.now() - began} ms`;
+    } catch (e) {
+      ping = `the server does NOT answer /api/status within 5 s: ${String(e)}`;
+    }
+    return [`${this.name}: opened ${((Date.now() - this.startedAt) / 1000).toFixed(1)} s ago, at ${this.lead?.url() ?? '?'}`, ping, '', ...this.events].join('\n');
   }
 
   /** The person closes the tab: the connection goes with it. The video is complete once it has closed. */
@@ -145,11 +173,40 @@ export class Tab {
   /** The connection drops (a laptop lid closed). The tab keeps working on what it has. */
   async goOffline(): Promise<void> {
     await this.p.context().setOffline(true);
+    this.offline = true;
   }
 
   /** The connection comes back. */
   async goOnline(): Promise<void> {
     await this.p.context().setOffline(false);
+    this.offline = false;
+    await this.clickReconnectIfAsked(3000);
+  }
+
+  /**
+   * After enough failed attempts JupyterLab stops reconnecting by itself and asks the person to click "Reconnect". A
+   * person who is back online does; so does the test, and it says so, because that is something a person would have seen.
+   */
+  async clickReconnectIfAsked(waitMs = 0): Promise<boolean> {
+    if (!this.page || this.offline) {
+      return false;
+    }
+    const dialog = this.page.locator('.jp-Dialog', { hasText: /unable to reconnect|connection error/i });
+    try {
+      if (waitMs) {
+        await dialog.first().waitFor({ state: 'visible', timeout: waitMs });
+      } else if ((await dialog.count()) === 0) {
+        return false;
+      }
+      await dialog.locator('.jp-mod-accept').first().click({ timeout: 3000 });
+    } catch {
+      return false;
+    }
+    if (!this.askedToReconnect) {
+      this.askedToReconnect = true;
+      this.env.recorder.note(`${this.name}: asked the person to click “Reconnect”, and they did`);
+    }
+    return true;
   }
 
   /** The sources of the cells the tab shows, or null if the notebook is not open in it. */
@@ -157,6 +214,7 @@ export class Tab {
     if (!this.page) {
       return null;
     }
+    await this.clickReconnectIfAsked();
     const raw = await this.page.evaluate((p: string) => {
       const app = (window as any).jupyterapp;
       for (const widget of app.shell.widgets('main')) {

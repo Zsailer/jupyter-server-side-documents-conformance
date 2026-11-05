@@ -39,13 +39,21 @@ def main() -> None:
         m = re.match(r"generated-[a-z]+-([A-Z]+[0-9]*)-", d.name)
         if d.is_dir() and m:
             folders[m.group(1)] = d
+    adapter_file = RESULTS / "adapter.json"
+    has = set(json.loads(adapter_file.read_text())["capabilities"]) if adapter_file.exists() else None
     passed = failed = 0
     skipped: dict[str, list[str]] = {}
     rows = []
     for s in stories:
         folder = folders.get(s["id"])
         if folder is None:
-            why = "not checkable from the user's side" if s["internal"] else "needs " + ", ".join(s["requires"])
+            missing = [r for r in s["requires"] if has is not None and r not in has]
+            if s["internal"]:
+                why = "not checkable from the user's side"
+            elif has is not None and not missing:
+                why = "not selected in this run"
+            else:
+                why = "needs " + ", ".join(missing or s["requires"])
             skipped.setdefault(why, []).append(s["id"])
             continue
         if (folder / "error-context.md").exists():
@@ -61,6 +69,12 @@ def main() -> None:
     print("\nSkipped:")
     for why, ids in sorted(skipped.items(), key=lambda kv: -len(kv[1])):
         print(f"  {len(ids):>2}  {why}: {', '.join(ids)}")
+    notes = RESULTS / "notes.jsonl"
+    if notes.exists():
+        print("\nWhat a person would have noticed:")
+        for line in notes.read_text().splitlines():
+            r = json.loads(line)
+            print(f"  {r['id']:<4} {r['note']}")
     verdicts = RESULTS / "implements.jsonl"
     if verdicts.exists():
         print("\nOpen questions in the storyboards, and what this backend does:")
