@@ -3,5 +3,9 @@ __pycache__/
 *.pyc
 # the built page is an artifact: `npm run build` makes it
 examples/storyboards/site/
+# the compliance tests are generated from stories/: `npm run generate`
+compliance/tests/generated/
+compliance/stories.json
+compliance/COVERAGE.md
 compliance/playwright-report/
 compliance/test-results/
