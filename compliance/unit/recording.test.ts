@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { Recorder, watchPage } from '../runtime/recording.ts';
+import { Recorder, keepLook, watchPage } from '../runtime/recording.ts';
 
 function folder(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'recording-'));
@@ -47,4 +47,27 @@ test('a tab that was opened twice is two videos', () => {
   r.tabs.push({ name: 'tab', startedAt: r.t0, file: f }, { name: 'tab (2)', startedAt: r.t0 + 9000, file: f });
   const html = fs.readFileSync(r.finish()!, 'utf8');
   assert.match(html, /<figcaption>tab \(2\)<\/figcaption>/);
+});
+
+test('what a tab looked like is kept as files that stay in the results folder', async () => {
+  const dir = folder();
+  const page = {
+    screenshot: async () => Buffer.from('PNG'),
+    locator: () => ({ ariaSnapshot: async () => '- main: the page' })
+  };
+  const written = await keepLook(dir, 'tab 2', 'the end', page);
+  assert.equal(written.length, 2);
+  assert.equal(fs.readFileSync(written[0], 'utf8'), 'PNG');
+  assert.match(fs.readFileSync(written[1], 'utf8'), /the page/);
+  assert.ok(written[0].startsWith(path.join(dir, 'looks')), 'in a folder of their own');
+  assert.ok(!/\s/.test(path.basename(written[0]).replace(/ /g, '')), 'a name that is safe to type');
+});
+
+test('a page that is gone leaves nothing and does not throw', async () => {
+  const dir = folder();
+  const gone = {
+    screenshot: async () => { throw new Error('closed'); },
+    locator: () => ({ ariaSnapshot: async () => { throw new Error('closed'); } })
+  };
+  assert.deepEqual(await keepLook(dir, 'tab', 'x', gone), []);
 });

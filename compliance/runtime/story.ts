@@ -4,7 +4,7 @@ import { ALWAYS, Capability, Ending, Expect, StoryMeta } from './types';
 import { AdapterContext, BackendAdapter, loadAdapter } from './adapter';
 import { matchCells, notebookJSON, showActual, showExpected } from './cells';
 import { Tab, TabEnv, WAIT } from './tab';
-import { Recorder } from './recording';
+import { keepLook, Recorder } from './recording';
 import * as fs from 'node:fs';
 import * as nodePath from 'node:path';
 
@@ -342,21 +342,18 @@ export class Story {
       }
       this.recorder.step(failures.length ? 'The end: a copy is not what the storyboard says' : 'The end: every copy holds what the storyboard says');
       if (failures.length) {
+        await this.showTabs('the end');
         const which = verdict.length ? `\n\nOf the options the storyboard names, this backend:\n  ${verdict.join('\n  ')}` : '';
         throw new Error(failures.join('\n\n----\n\n') + which);
       }
     });
   }
 
-  /** Attach a screenshot of every open tab: what each looked like when something went wrong. */
+  /** Keep a picture of every open tab: what each looked like when something went wrong. */
   private async showTabs(when: string): Promise<void> {
     for (const tab of this.tabs.values()) {
       if (tab.page) {
-        try {
-          await test.info().attach(`${tab.name} at ${when}`, { body: await tab.page.screenshot(), contentType: 'image/png' });
-        } catch {
-          /* the tab is gone */
-        }
+        await keepLook(this.recorder.dir, tab.name, when, tab.page as any);
       }
     }
   }

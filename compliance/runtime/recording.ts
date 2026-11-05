@@ -58,6 +58,35 @@ export class Recorder {
   }
 }
 
+/**
+ * Keep what a tab looked like as files in the story's results folder: a picture, and the page as text. Files stay where
+ * they are put, whichever reporter ran; an attachment made from bytes lives only in an HTML report, which a run with the
+ * list reporter never makes.
+ */
+export async function keepLook(
+  dir: string,
+  name: string,
+  when: string,
+  page: { screenshot(options?: { timeout?: number }): Promise<Buffer>; locator(selector: string): { ariaSnapshot(options?: { timeout?: number }): Promise<string> } }
+): Promise<string[]> {
+  const stem = path.join(dir, 'looks', `${name.replace(/[^\w.-]+/g, '_')} ${when.replace(/[^\w.-]+/g, '_')}`);
+  fs.mkdirSync(path.dirname(stem), { recursive: true });
+  const written: string[] = [];
+  try {
+    fs.writeFileSync(`${stem}.png`, await page.screenshot({ timeout: 5000 }));
+    written.push(`${stem}.png`);
+  } catch {
+    /* the page is gone */
+  }
+  try {
+    fs.writeFileSync(`${stem}.txt`, await page.locator('body').ariaSnapshot({ timeout: 5000 }));
+    written.push(`${stem}.txt`);
+  } catch {
+    /* the page is gone */
+  }
+  return written;
+}
+
 const esc = (s: string): string => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** The page that plays the videos of a story side by side, one clock for all of them. */
