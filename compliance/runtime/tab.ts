@@ -151,7 +151,12 @@ export class Tab {
 
   /** Replace everything in cell `index` with `text`. */
   async rewrite(index: number, text: string): Promise<void> {
-    await this.p.notebook.setCell(index, 'code', text);
+    const page = this.p;
+    await page.notebook.enterCellEditingMode(index);
+    // select all: Control+A moves the cursor to the start of the line on a Mac, so ask for the key the platform uses
+    await page.keyboard.press('ControlOrMeta+a');
+    await page.keyboard.type(text);
+    await page.notebook.leaveCellEditingMode(index);
   }
 
   /** Add a cell so that it ends up at `index`, and type `text` into it. */
