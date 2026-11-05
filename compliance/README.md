@@ -91,6 +91,10 @@ elsewhere), or use `JSD_ENV` and `JSD_UI_TESTS`. The server's log is `/tmp/compl
 
 A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `run-jsd.sh` prints where they are and opens the page when you ran a single story.
 
+## Going offline
+
+A tab goes offline by having **its own browser** cut off, not with Playwright's `context.setOffline()`: in Chromium that makes every *other* browser opened while it is on start about seven times slower (measured: 5.9 s against 0.8 s, `tests/probe-offline.spec.ts`), which made any story that opens a tab after another has gone offline time out. `runtime/network.ts` refuses the browser's requests the way a real outage does (`ERR_INTERNET_DISCONNECTED`), closes its WebSockets, and makes any it opens fail at once, all inside that one browser. `COMPLIANCE_OFFLINE=emulate` brings back Playwright's own, for comparison. When a tab is back online and JupyterLab asks the person to click "Reconnect", the test clicks it, and the run says so.
+
 ## Open questions in the storyboards
 
 A story marked *Needs alignment* has a proposed answer and alternatives. The test holds the backend to the **proposed** answer, tags itself `@needs-alignment`, and says so in its annotations. When the question is settled, the storyboard changes, the tests are generated again, and the answer is enforced everywhere at once.
