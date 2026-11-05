@@ -44,6 +44,13 @@ export interface BackendAdapter {
 export async function loadAdapter(): Promise<BackendAdapter> {
   const which = process.env.COMPLIANCE_ADAPTER || 'generic';
   const path = which === 'generic' || which === 'jsd' ? `../adapters/${which}` : which;
-  const mod = await import(path);
-  return mod.default as BackendAdapter;
+  let adapter: any = await import(path);
+  // however the module was loaded (ES module, CommonJS, transpiled), the adapter is the object with `capabilities`
+  while (adapter && !adapter.capabilities && adapter.default) {
+    adapter = adapter.default;
+  }
+  if (!adapter || !adapter.capabilities) {
+    throw new Error(`COMPLIANCE_ADAPTER=${which}: ${path} does not export a BackendAdapter as its default`);
+  }
+  return adapter as BackendAdapter;
 }
