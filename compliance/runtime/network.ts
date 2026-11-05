@@ -4,15 +4,16 @@ import type { BrowserContext, Page } from '@playwright/test';
  * Two ways to take one browser off the network.
  *
  * `emulate` is Playwright's own `context.setOffline()`. It is the simplest, but in Chromium it slows the start of every
- * other browser opened while it is on (a second browser took 6 s to start JupyterLab instead of 1 s), and a story with
- * several tabs opens browsers at all times.
+ * other browser opened while it is on: measured here, a second browser took 5.9 s to start JupyterLab instead of 0.8 s
+ * (tests/probe-offline.spec.ts), and a story with several tabs opens browsers at all times. It is kept for comparison:
+ * COMPLIANCE_OFFLINE=emulate.
  *
- * `cut` keeps the outage inside the one browser: its HTTP requests are refused (as ERR_INTERNET_DISCONNECTED, the error
+ * `cut`, the default, keeps the outage inside the one browser (a second browser then starts in 0.8 s, as with none offline): its HTTP requests are refused (as ERR_INTERNET_DISCONNECTED, the error
  * a real outage gives) and its WebSockets are closed, and while it is cut every WebSocket it tries to open fails at once.
  */
 export type OfflineMode = 'emulate' | 'cut';
 
-export const OFFLINE_MODE: OfflineMode = process.env.COMPLIANCE_OFFLINE === 'cut' ? 'cut' : 'emulate';
+export const OFFLINE_MODE: OfflineMode = process.env.COMPLIANCE_OFFLINE === 'emulate' ? 'emulate' : 'cut';
 
 /** Installed in every page of the browser before the page's own scripts run: it keeps track of the WebSockets. */
 export const NETWORK_SHIM = `(() => {
