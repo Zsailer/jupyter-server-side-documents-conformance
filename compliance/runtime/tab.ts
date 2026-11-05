@@ -1,7 +1,7 @@
 import { expect, galata, IJupyterLabPageFixture, test } from '@jupyterlab/galata';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import * as nodePath from 'node:path';
-import type { Recorder } from './recording';
+import { keepLook, Recorder } from './recording';
 import { sourceText } from './cells';
 
 export interface TabEnv {
@@ -41,16 +41,10 @@ async function waitForLab(page: Page): Promise<void> {
   });
 }
 
-/** When a tab cannot be set up, say what it looked like: a screenshot and what the page held. */
-async function explain(page: Page | null, name: string): Promise<void> {
-  if (!page) {
-    return;
-  }
-  try {
-    await test.info().attach(`${name}: what the tab looked like`, { body: await page.screenshot(), contentType: 'image/png' });
-    await test.info().attach(`${name}: the page`, { body: await page.locator('body').ariaSnapshot(), contentType: 'text/plain' });
-  } catch {
-    /* the page is gone; nothing to show */
+/** When a tab cannot be set up, say what it looked like: a picture and the page as text, kept in the results folder. */
+async function explain(page: Page | null, name: string, dir: string): Promise<void> {
+  if (page) {
+    await keepLook(dir, name, 'could not be set up', page as any);
   }
 }
 
@@ -127,7 +121,7 @@ export class Tab {
         })
         .toBeGreaterThan(0);
     } catch (e) {
-      await explain(this.lead, this.name);
+      await explain(this.lead, this.name, this.env.recorder.dir);
       throw e;
     }
   }
