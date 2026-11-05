@@ -284,6 +284,7 @@ export class Story {
    */
   async ends(endings: Ending[]): Promise<void> {
     const ends = endings[chosenOption(this.meta.id, endings.length)].ends;
+    this.recorder.step('The end: every copy is compared with what the storyboard says');
     await test.step('the end: every copy holds what the storyboard says', async () => {
       const failures: string[] = [];
       const disagreement = await this.converge();
@@ -319,6 +320,7 @@ export class Story {
         fs.mkdirSync(info.project.outputDir, { recursive: true });
         fs.appendFileSync(nodePath.join(info.project.outputDir, 'implements.jsonl'), JSON.stringify({ id: this.meta.id, title: this.meta.title, verdict }) + '\n');
       }
+      this.recorder.step(failures.length ? 'The end: a copy is not what the storyboard says' : 'The end: every copy holds what the storyboard says');
       if (failures.length) {
         const which = verdict.length ? `\n\nOf the options the storyboard names, this backend:\n  ${verdict.join('\n  ')}` : '';
         throw new Error(failures.join('\n\n----\n\n') + which);
