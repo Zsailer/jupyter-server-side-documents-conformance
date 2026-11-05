@@ -200,20 +200,23 @@ export class Tab {
     if (!this.page || (this.offline && !evenOffline)) {
       return false;
     }
-    const dialog = this.page.locator('.jp-Dialog', { hasText: /unable to reconnect|connection error/i });
+    let asked = 'Reconnect';
+    const dialog = this.page.locator('.jp-Dialog', { hasText: /unable to reconnect|connection error|cannot open/i });
     try {
       if (waitMs) {
         await dialog.first().waitFor({ state: 'visible', timeout: waitMs });
       } else if ((await dialog.count()) === 0) {
         return false;
       }
+      // "Cannot open Failed to fetch" comes up when the tab tries to fetch the file while cut off; a person closes it
+      asked = ((await dialog.first().innerText()) || '').toLowerCase().includes('cannot open') ? 'OK' : 'Reconnect';
       await dialog.locator('.jp-mod-accept').first().click({ timeout: 3000 });
     } catch {
       return false;
     }
     if (!this.askedToReconnect) {
       this.askedToReconnect = true;
-      this.env.recorder.note(`${this.name}: asked the person to click “Reconnect”, and they did`);
+      this.env.recorder.note(`${this.name}: asked the person to click “${asked}”, and they did`);
     }
     return true;
   }
