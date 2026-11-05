@@ -41,7 +41,7 @@ def main() -> None:
             folders[m.group(1)] = d
     adapter_file = RESULTS / "adapter.json"
     has = set(json.loads(adapter_file.read_text())["capabilities"]) if adapter_file.exists() else None
-    passed = failed = 0
+    passed = failed = missed = 0
     skipped: dict[str, list[str]] = {}
     rows = []
     for s in stories:
@@ -56,16 +56,22 @@ def main() -> None:
                 why = "needs " + ", ".join(missing or s["requires"])
             skipped.setdefault(why, []).append(s["id"])
             continue
-        if (folder / "error-context.md").exists():
+        if (folder / "not-met.txt").exists():  # a proposed case the backend does not meet: reported, not failed
+            missed += 1
+            line = next((l for l in (folder / "not-met.txt").read_text().splitlines() if l.strip()), "")
+            rows.append((s["id"], "miss", line.strip()[:150], s["needsAlignment"]))
+        elif (folder / "error-context.md").exists():
             failed += 1
             rows.append((s["id"], "FAIL", reason(folder), s["needsAlignment"]))
         else:
             passed += 1
             rows.append((s["id"], "ok", "", s["needsAlignment"]))
-    print(f"\n{len(stories)} stories: {passed} passed, {failed} failed, {sum(len(v) for v in skipped.values())} skipped\n")
+    print(f"\n{len(stories)} stories: {passed} passed, {failed} failed, {missed} proposed cases not met, {sum(len(v) for v in skipped.values())} skipped\n")
     for sid, status, why, open_ in rows:
         print(f"  {sid:<4} {status:<4} {'?' if open_ else ' '} {why}")
     print("\n  ? = the storyboard still asks a question about this one")
+    if missed:
+        print("  miss = a proposed case this backend does not meet yet (reported, not failed)")
     print("\nSkipped:")
     for why, ids in sorted(skipped.items(), key=lambda kv: -len(kv[1])):
         print(f"  {len(ids):>2}  {why}: {', '.join(ids)}")

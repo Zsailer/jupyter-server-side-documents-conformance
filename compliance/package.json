@@ -6,6 +6,8 @@
   "scripts": {
     "generate": "python3 -I generate.py",
     "generate:check": "python3 -I generate.py --check",
+    "pretest": "npm run generate",
+    "prelist": "npm run generate",
     "typecheck": "tsc --noEmit",
     "list": "playwright test --list",
     "test": "playwright test",
