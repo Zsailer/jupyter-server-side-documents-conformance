@@ -262,7 +262,7 @@ export function story(
       test.skip(missing.length > 0, `adapter "${adapter.name}" cannot: ${missing.join(', ')}`);
 
       const ctx: AdapterContext = { admin: page, baseURL: baseURL! };
-      const env: TabEnv = { browser, baseURL: baseURL!, waitForApplication };
+      const env: TabEnv = { browser, baseURL: baseURL!, waitForApplication, dir: tmpPath };
       const s = new Story(meta, adapter, ctx, env, tmpPath);
       try {
         await body(s);

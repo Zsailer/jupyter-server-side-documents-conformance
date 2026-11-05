@@ -6,6 +6,8 @@ export interface TabEnv {
   browser: Browser;
   baseURL: string;
   waitForApplication: (page: Page, helpers: any) => Promise<void>;
+  /** The folder on the server the story works in: a tab opens JupyterLab there (Galata opens `/lab/tree/<dir>`). */
+  dir: string;
 }
 
 /** Waits that every test shares. Milliseconds. */
@@ -79,6 +81,7 @@ export class Tab {
       const { page } = await galata.newPage({
         baseURL: this.env.baseURL,
         browser: this.env.browser,
+        tmpPath: this.env.dir,
         waitForApplication: async page => {
           loading = page;
           await waitForLab(page);
