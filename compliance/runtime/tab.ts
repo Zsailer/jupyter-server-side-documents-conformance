@@ -2,6 +2,7 @@ import { expect, galata, IJupyterLabPageFixture, test } from '@jupyterlab/galata
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import * as nodePath from 'node:path';
 import { keepLook, Recorder } from './recording';
+import { prepareNetwork, setNetwork } from './network';
 import { sourceText } from './cells';
 
 export interface TabEnv {
@@ -96,6 +97,7 @@ export class Tab {
           ? { viewport: VIEW, recordVideo: { dir: nodePath.join(this.env.recorder.dir, 'videos'), size: VIEW } }
           : { viewport: VIEW }
       );
+      await prepareNetwork(this.context);
       this.lead = await this.context.newPage();
       this.watch(this.lead);
       const page = await galata.initTestPage(
@@ -179,13 +181,13 @@ export class Tab {
 
   /** The connection drops (a laptop lid closed). The tab keeps working on what it has. */
   async goOffline(): Promise<void> {
-    await this.p.context().setOffline(true);
+    await setNetwork(this.p.context(), true);
     this.offline = true;
   }
 
   /** The connection comes back. */
   async goOnline(): Promise<void> {
-    await this.p.context().setOffline(false);
+    await setNetwork(this.p.context(), false);
     this.offline = false;
     await this.clickReconnectIfAsked(3000);
   }
