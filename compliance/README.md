@@ -53,6 +53,16 @@ A story needs the backend's help only to *cause* an event: the server letting go
 
 ## Running it
 
+**The short way**, for jupyter-server-documents: one command starts a server, runs the tests, and stops the server.
+
+```sh
+sh compliance/scripts/run-jsd.sh                      # story Z3, browsers showing
+sh compliance/scripts/run-jsd.sh -g "Z1|Z2|Z3|Z4"     # any Playwright arguments
+```
+
+It finds an environment that has jupyter_server_documents in a checkout of jupyter-server-documents (`DEV_REPO` if yours is
+elsewhere), or use `JSD_ENV` and `JSD_UI_TESTS`. The server's log is `/tmp/compliance-server.log`. The long way, step by step:
+
 1. **Start a JupyterLab** the way JupyterLab's own UI tests do: no login, and the app exposed to the page (`from jupyterlab.galata import configure_jupyter_server; configure_jupyter_server(c)` in its config). For jupyter-server-documents, [`scripts/start-jsd-server.sh`](scripts/start-jsd-server.sh) does it from its `ui-tests`. A server with extensions that pop modals on start will time every test out: disable them.
 2. **Run**:
 
