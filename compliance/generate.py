@@ -73,7 +73,7 @@ def split_typed(note: str) -> list[str]:
     return [p.strip() for p in re.split(r"\s+(?=\+)", note) if p.strip()]
 
 
-def make_cell(token: str, oracle: dict, loose: list[str]) -> Cell | None:
+def make_cell(token: str, oracle: dict, loose: list[str], expect_bad: bool = False) -> Cell | None:
     mark, name, note = spec.parse_cell(token)
     if mark == "*":
         return None
@@ -101,8 +101,8 @@ def make_cell(token: str, oracle: dict, loose: list[str]) -> Cell | None:
         look = "edited"
     cell = Cell(key=base, look=look, base=base, typed=typed, rewrite=rewrite)
     over = oracle.get(token)
-    if mark in ("-", "!"):
-        cell.expect = None  # must not happen / is gone: the exact list at the end is what rules it out
+    if mark == "-" or (mark == "!" and not expect_bad):
+        cell.expect = None  # gone, or must not happen: the exact list at the end is what rules it out
     elif over:
         if "contains" in over:
             cell.expect = ("contains", list(over["contains"]))
@@ -121,10 +121,10 @@ def make_cell(token: str, oracle: dict, loose: list[str]) -> Cell | None:
     return cell
 
 
-def model(tokens, oracle: dict, loose: list[str]) -> list[Cell]:
+def model(tokens, oracle: dict, loose: list[str], expect_bad: bool = False) -> list[Cell]:
     if isinstance(tokens, str):
         return []
-    return [c for c in (make_cell(t, oracle, loose) for t in tokens) if c is not None]
+    return [c for c in (make_cell(t, oracle, loose, expect_bad) for t in tokens) if c is not None]
 
 
 def ts_expect(e: tuple) -> str:
@@ -136,7 +136,7 @@ def ts_expect(e: tuple) -> str:
 
 
 def expects(cells: list[Cell]) -> list[tuple]:
-    return [c.expect for c in cells if c.expect is not None and c.look not in ("gone", "bad")]
+    return [c.expect for c in cells if c.expect is not None and c.look != "gone"]
 
 
 def ts_list(cells: list[Cell]) -> str:
@@ -321,25 +321,24 @@ def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Comp
     # the end
     end_lanes = ends_lanes(st, drawn, state)
     # every ending the story allows, the proposed one first; a list of cells means every copy ends like that
-    options = [st["ends"]]
+    endings: list[tuple[str, dict, bool]] = [("As the story ends", st["ends"], False)]
     if st.get("decision"):
         proposed = [o for o in st["decision"]["options"] if o.get("proposed")][0]
-        others = [o for o in st["decision"]["options"] if not o.get("proposed")]
-        options = [proposed.get("ends", st["ends"])] + [o["ends"] for o in others if "ends" in o]
-    options = [o if isinstance(o, dict) else {"all": o} for o in options]
+        others = [o for o in st["decision"]["options"] if not o.get("proposed") and "ends" in o]
+        endings = [(proposed["label"], proposed.get("ends", st["ends"]), False)] + [(o["label"], o["ends"], True) for o in others]
     blocks = []
-    for opt in options:
+    for label, ends, alternative in endings:
+        opt = ends if isinstance(ends, dict) else {"all": ends}
         per_lane = []
         for lane in end_lanes:
             tokens = opt.get(lane, opt.get("all"))
             if tokens is None:
                 continue
-            cells = model(tokens, cell_oracle, out.loose)
+            cells = model(tokens, cell_oracle, out.loose, expect_bad=alternative)
             if isinstance(tokens, list) and any(isinstance(t, str) and t.startswith("*") and "one of" in t for t in tokens):
                 out.ordered = False
             per_lane.append(f"{lane}: {ts_list(cells)}")
-        blocks.append("{ " + ", ".join(per_lane) + " }")
-    blocks = list(dict.fromkeys(blocks))
+        blocks.append("{ label: " + ts(label) + ", ends: { " + ", ".join(per_lane) + " } }")
     out.lines.append("")
     out.lines.append("await s.ends([")
     out.lines += [f"  {b}," for b in blocks]

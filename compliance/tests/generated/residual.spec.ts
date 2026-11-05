@@ -48,8 +48,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c2", "c1 +B-TYPED"], tab2: ["c0", "c2", "c1 +B-TYPED"], server: ["c0", "c2", "c1 +B-TYPED"], file: ["c0", "c2", "c1 +B-TYPED"] },
-        { tab: ["c0", "c2", "c1"], tab2: ["c0", "c2", "c1"], server: ["c0", "c2", "c1"], file: ["c0", "c2", "c1"] },
+        { label: "The move and the typing both survive", ends: { tab: ["c0", "c2", "c1 +B-TYPED"], tab2: ["c0", "c2", "c1 +B-TYPED"], server: ["c0", "c2", "c1 +B-TYPED"], file: ["c0", "c2", "c1 +B-TYPED"] } },
+        { label: "The merge decides", ends: { tab: ["c0", "c2", "c1"], tab2: ["c0", "c2", "c1"], server: ["c0", "c2", "c1"], file: ["c0", "c2", "c1"] } },
       ]);
     }
   )
@@ -102,7 +102,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c1", "c0", "c2"], tab2: ["c1", "c0", "c2"], server: ["c1", "c0", "c2"], file: ["c1", "c0", "c2"] },
+        { label: "The cell exists once", ends: { tab: ["c1", "c0", "c2"], tab2: ["c1", "c0", "c2"], server: ["c1", "c0", "c2"], file: ["c1", "c0", "c2"] } },
+        { label: "The merge decides", ends: { tab: ["c1", "c0", "c0", "c2"], tab2: ["c1", "c0", "c0", "c2"], server: ["c1", "c0", "c0", "c2"], file: ["c1", "c0", "c0", "c2"] } },
       ]);
     }
   )
@@ -154,8 +155,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c2"], tab2: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] },
-        { tab: ["c0", E.contains("c1", "+B-TYPED"), "c2"], tab2: ["c0", E.contains("c1", "+B-TYPED"), "c2"], server: ["c0", E.contains("c1", "+B-TYPED"), "c2"], file: ["c0", E.contains("c1", "+B-TYPED"), "c2"] },
+        { label: "The deletion wins", ends: { tab: ["c0", "c2"], tab2: ["c0", "c2"], server: ["c0", "c2"], file: ["c0", "c2"] } },
+        { label: "The typing is kept as a recovered copy", ends: { tab: ["c0", E.contains("c1", "+B-TYPED"), "c2"], tab2: ["c0", E.contains("c1", "+B-TYPED"), "c2"], server: ["c0", E.contains("c1", "+B-TYPED"), "c2"], file: ["c0", E.contains("c1", "+B-TYPED"), "c2"] } },
       ]);
     }
   )
@@ -207,9 +208,9 @@ test(
       });
 
       await s.ends([
-        { tab: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], tab2: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], server: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], file: [E.contains("total = a - b", "total = a * b"), "c1", "c2"] },
-        { tab: ["total = a * b", "c1", "c2"], tab2: ["total = a * b", "c1", "c2"], server: ["total = a * b", "c1", "c2"], file: ["total = a * b", "c1", "c2"] },
-        { tab: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], tab2: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], server: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], file: ["total = a * b", E.contains("total = a - b"), "c1", "c2"] },
+        { label: "The merge decides: both are kept", ends: { tab: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], tab2: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], server: [E.contains("total = a - b", "total = a * b"), "c1", "c2"], file: [E.contains("total = a - b", "total = a * b"), "c1", "c2"] } },
+        { label: "One rewrite wins whole", ends: { tab: ["total = a * b", "c1", "c2"], tab2: ["total = a * b", "c1", "c2"], server: ["total = a * b", "c1", "c2"], file: ["total = a * b", "c1", "c2"] } },
+        { label: "The second rewrite becomes a cell of its own", ends: { tab: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], tab2: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], server: ["total = a * b", E.contains("total = a - b"), "c1", "c2"], file: ["total = a * b", E.contains("total = a - b"), "c1", "c2"] } },
       ]);
     }
   )
@@ -254,8 +255,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +TYPED", "c1", "EXTERNAL EDIT"], server: ["c0 +TYPED", "c1", "EXTERNAL EDIT"], file: ["c0 +TYPED", "c1", "EXTERNAL EDIT"] },
-        { tab: ["c0", "c1", "EXTERNAL EDIT"], server: ["c0", "c1", "EXTERNAL EDIT"], file: ["c0", "c1", "EXTERNAL EDIT"] },
+        { label: "The change is merged with the typing", ends: { tab: ["c0 +TYPED", "c1", "EXTERNAL EDIT"], server: ["c0 +TYPED", "c1", "EXTERNAL EDIT"], file: ["c0 +TYPED", "c1", "EXTERNAL EDIT"] } },
+        { label: "The file replaces the notebook", ends: { tab: ["c0", "c1", "EXTERNAL EDIT"], server: ["c0", "c1", "EXTERNAL EDIT"], file: ["c0", "c1", "EXTERNAL EDIT"] } },
       ]);
     }
   )
@@ -302,8 +303,8 @@ test(
       });
 
       await s.ends([
-        { tab2: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] },
-        { tab2: ["c0 +TYPED", "c1", "c2"], server: ["c0 +TYPED", "c1", "c2"], file: ["c0 +TYPED", "c1", "c2"] },
+        { label: "The bound is accepted", ends: { tab2: ["c0", "c1", "c2"], server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "Every update is written to disk first", ends: { tab2: ["c0 +TYPED", "c1", "c2"], server: ["c0 +TYPED", "c1", "c2"], file: ["c0 +TYPED", "c1", "c2"] } },
       ]);
     }
   )
@@ -347,8 +348,8 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")], server: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")], file: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")] },
-        { tab: ["c0", "c1 +OFFLINE", "c2"], server: ["c0", "c1 +OFFLINE", "c2"], file: ["c0", "c1 +OFFLINE", "c2"] },
+        { label: "Merged when it can be matched, a recovered cell when it cannot", ends: { tab: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")], server: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")], file: ["c0", "c1", "c2", E.contains("c1", "+OFFLINE")] } },
+        { label: "Always merged into its cell", ends: { tab: ["c0", "c1 +OFFLINE", "c2"], server: ["c0", "c1 +OFFLINE", "c2"], file: ["c0", "c1 +OFFLINE", "c2"] } },
       ]);
     }
   )

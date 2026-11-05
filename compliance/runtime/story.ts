@@ -1,6 +1,6 @@
 import { expect, IJupyterLabPageFixture, test } from '@jupyterlab/galata';
 import type { Browser, TestInfo } from '@playwright/test';
-import { ALWAYS, Capability, Ends, Expect, StoryMeta } from './types';
+import { ALWAYS, Capability, Ending, Expect, StoryMeta } from './types';
 import { AdapterContext, BackendAdapter, loadAdapter } from './adapter';
 import { matchCells, notebookJSON, showActual, showExpected } from './cells';
 import { Tab, TabEnv, WAIT } from './tab';
@@ -227,14 +227,57 @@ export class Story {
     );
   }
 
+  /** What every place a person could look holds now, without waiting for it to change. */
+  private async observe(): Promise<Record<string, string[] | null>> {
+    const seen: Record<string, string[] | null> = {};
+    for (const [name, tab] of this.tabs) {
+      if (tab.isOpen) {
+        seen[name] = await tab.cells();
+      }
+    }
+    if (this.adapter.capabilities.has('serverState') && this.adapter.serverCells) {
+      seen.server = await this.serverCells();
+    }
+    seen.file = await this.fileCells();
+    return seen;
+  }
+
   /**
-   * How the story must end: what every copy holds. `options[0]` is the proposed answer; if the story is an open
+   * Which of the endings the storyboard names the backend actually does, lane by lane: for an open question the useful
+   * answer is not pass or fail but "this is the option it implements".
+   */
+  private implemented(endings: Ending[], seen: Record<string, string[] | null>): string[] {
+    const ordered = this.meta.ordered ?? true;
+    const lines: string[] = [];
+    endings.forEach((ending, i) => {
+      const matched: string[] = [];
+      const missed: string[] = [];
+      for (const [lane, expected] of Object.entries(ending.ends)) {
+        const actual = seen[lane];
+        if (!expected || actual === undefined) {
+          continue; // a place that cannot be looked at
+        }
+        (actual !== null && matchCells(actual, expected, ordered).ok ? matched : missed).push(lane);
+      }
+      const what = `option ${i + 1}${i === 0 ? ' (proposed)' : ''}: ${ending.label}`;
+      if (matched.length && !missed.length) {
+        lines.push(`does   ${what}`);
+      } else if (matched.length) {
+        lines.push(`partly ${what}  (${matched.join(', ')}; not ${missed.join(', ')})`);
+      }
+    });
+    return lines.length ? lines : ['matches none of the options the storyboard names'];
+  }
+
+  /**
+   * How the story must end: what every copy holds. `endings[0]` is the proposed answer; if the story is an open
    * question the others are its alternatives, and `COMPLIANCE_DECISIONS` picks which one is held to.
    *
-   * It waits for the copies to agree, then reports every copy that is wrong, not only the first.
+   * It waits for the copies to agree, then reports every copy that is wrong, not only the first. For an open question it
+   * also says which of the storyboard's options the backend does.
    */
-  async ends(options: Ends[]): Promise<void> {
-    const ends = options[chosenOption(this.meta.id, options.length)];
+  async ends(endings: Ending[]): Promise<void> {
+    const ends = endings[chosenOption(this.meta.id, endings.length)].ends;
     await test.step('the end: every copy holds what the storyboard says', async () => {
       const failures: string[] = [];
       const disagreement = await this.converge();
@@ -262,8 +305,17 @@ export class Story {
           failures.push((e as Error).message);
         }
       }
+      let verdict: string[] = [];
+      if (endings.length > 1) {
+        verdict = this.implemented(endings, await this.observe());
+        const info = test.info();
+        info.annotations.push({ type: 'does', description: verdict.join(' | ') });
+        fs.mkdirSync(info.project.outputDir, { recursive: true });
+        fs.appendFileSync(nodePath.join(info.project.outputDir, 'implements.jsonl'), JSON.stringify({ id: this.meta.id, title: this.meta.title, verdict }) + '\n');
+      }
       if (failures.length) {
-        throw new Error(failures.join('\n\n----\n\n'));
+        const which = verdict.length ? `\n\nOf the options the storyboard names, this backend:\n  ${verdict.join('\n  ')}` : '';
+        throw new Error(failures.join('\n\n----\n\n') + which);
       }
     });
   }

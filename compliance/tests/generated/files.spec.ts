@@ -46,7 +46,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"], server: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"], file: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"] },
+        { label: "As the story ends", ends: { tab: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"], server: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"], file: ["c0 +A-OFFLINE", "EDITED ON DISK", "x9"] } },
       ]);
     }
   )
@@ -89,7 +89,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], server: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], file: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"] },
+        { label: "As the story ends", ends: { tab: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], server: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], file: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"] } },
       ]);
     }
   )
@@ -138,7 +138,7 @@ test(
       });
 
       await s.ends([
-        { tab: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], server: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], file: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"] },
+        { label: "As the story ends", ends: { tab: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], server: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"], file: ["c0", "EXTERNAL EDIT", "c2", "EXTERNAL NEW CELL"] } },
       ]);
     }
   )
@@ -184,7 +184,7 @@ test(
       });
 
       await s.ends([
-        { server: [], file: [] },
+        { label: "As the story ends", ends: { server: [], file: [] } },
       ]);
     }
   )
@@ -230,7 +230,7 @@ test(
       });
 
       await s.ends([
-        { server: [], file: [] },
+        { label: "As the story ends", ends: { server: [], file: [] } },
       ]);
     }
   )
