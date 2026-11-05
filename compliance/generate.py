@@ -211,11 +211,13 @@ class Compiled:
         self.loose: list[str] = []
         self.ordered = True
         self.tabs: list[str] = []
+        self.internal: str | None = None
 
 
 def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Compiled:
     out = Compiled(sid)
     cell_oracle = (oracle.get("cells") or {}).get(sid) or {}
+    out.internal = (oracle.get("internal") or {}).get(sid)
     if (oracle.get("ordered") or {}).get(sid) is False:
         out.ordered = False
     titles = {**spec.LANES, **(st.get("lanes") or {})}
@@ -331,7 +333,7 @@ def compile_story(sid: str, st: dict, features: list[str], oracle: dict) -> Comp
         out.lines.append("});")
 
     # the end
-    end_lanes = ends_lanes(st, drawn, state)
+    end_lanes = ends_lanes(st, drawn, state, server_holds=not (released or crashed))
     # every ending the story allows, the proposed one first; a list of cells means every copy ends like that
     endings: list[tuple[str, dict, bool]] = [("As the story ends", st["ends"], False)]
     if st.get("decision"):
@@ -430,7 +432,7 @@ def op_line(tab: str, op: tuple) -> str:
     return f"await {tab}.rewrite({op[1]}, {ts(op[2])});"
 
 
-def ends_lanes(st: dict, drawn: list[str], state: dict) -> list[str]:
+def ends_lanes(st: dict, drawn: list[str], state: dict, server_holds: bool = True) -> list[str]:
     """The lanes whose copy is checked at the end: the ones the story names, or every lane that holds a copy."""
     named = [lane for lane in st["ends"] if lane != "all"]
     lanes = [lane for lane in drawn if family(lane) in ("tab", "server", "file")]
@@ -438,7 +440,11 @@ def ends_lanes(st: dict, drawn: list[str], state: dict) -> list[str]:
         chosen = lanes
     else:
         chosen = [lane for lane in lanes if lane in named]
-    return [lane for lane in chosen if family(lane) != "tab" or state.get(lane) in ("online", "offline")]
+    return [
+        lane
+        for lane in chosen
+        if (family(lane) != "tab" or state.get(lane) in ("online", "offline")) and (lane != "server" or server_holds)
+    ]
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -468,6 +474,8 @@ def emit_story(sid: str, st: dict, group: str, scn: dict, page: dict, c: Compile
         meta["ordered"] = False
     if c.loose:
         meta["loose"] = c.loose
+    if c.internal:
+        meta["internal"] = c.internal
     body = "\n".join("      " + line if line else "" for line in c.lines)
     head = "\n".join("      " + line for line in json.dumps(meta, indent=2, ensure_ascii=False).splitlines())
     words = " ".join(st["story"].split())
@@ -495,6 +503,7 @@ def generate(data: Path = DATA) -> dict:
                 "requires": sorted(c.requires),
                 "needsAlignment": bool(st.get("decision")),
                 "loose": c.loose,
+                "internal": c.internal,
                 "steps": len(st["steps"]),
             })
         files[f"{gid}.spec.ts"] = "\n".join(parts)
@@ -528,6 +537,12 @@ def coverage(manifest: list[dict], groups: dict) -> str:
         for m in loose:
             lines.append(f"- **{m['id']}**: " + "; ".join(m["loose"]))
     else:
+        lines.append("_none_")
+    lines += ["", "## Not checkable from the user's side", "", "These describe something inside the server that a person cannot cause or see. They are generated, and skipped with the reason.", ""]
+    internal = [m for m in manifest if m["internal"]]
+    for m in internal:
+        lines.append(f"- **{m['id']}**: {m['internal']}")
+    if not internal:
         lines.append("_none_")
     lines += ["", "## Stories that are still open questions", "", "The proposed answer is held to, unless `COMPLIANCE_DECISIONS` picks another.", ""]
     lines.append(", ".join(m["id"] for m in manifest if m["needsAlignment"]))

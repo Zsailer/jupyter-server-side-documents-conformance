@@ -40,6 +40,15 @@ Stories where the storyboard describes a result in words that a check cannot be 
 
 _none_
 
+## Not checkable from the user's side
+
+These describe something inside the server that a person cannot cause or see. They are generated, and skipped with the reason.
+
+- **X1**: the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment
+- **X2**: the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser
+- **X3**: work the server registers for its own shutdown: nothing a person does or sees
+- **X4**: the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race
+
 ## Stories that are still open questions
 
 The proposed answer is held to, unless `COMPLIANCE_DECISIONS` picks another.

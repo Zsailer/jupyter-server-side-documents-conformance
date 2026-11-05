@@ -11,7 +11,8 @@ test(
         "title": "Shutting down with an update still waiting from a connected tab",
         "requires": [
           "releaseRoom"
-        ]
+        ],
+        "internal": "the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment"
       },
     async s => {
       await s.notebook(["c0", "c1", "c2"]);
@@ -37,7 +38,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0 +QUEUED", "c1", "c2"], server: ["c0 +QUEUED", "c1", "c2"], file: ["c0 +QUEUED", "c1", "c2"] } },
+        { label: "As the story ends", ends: { tab: ["c0 +QUEUED", "c1", "c2"], file: ["c0 +QUEUED", "c1", "c2"] } },
       ]);
     }
   )
@@ -52,7 +53,8 @@ test(
         "title": "Shutting down with a damaged message ahead of a valid one",
         "requires": [
           "releaseRoom"
-        ]
+        ],
+        "internal": "the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser"
       },
     async s => {
       await s.notebook(["c0", "c1", "c2"]);
@@ -78,7 +80,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0 +VALID", "c1", "c2"], server: ["c0 +VALID", "c1", "c2"], file: ["c0 +VALID", "c1", "c2"] } },
+        { label: "As the story ends", ends: { tab: ["c0 +VALID", "c1", "c2"], file: ["c0 +VALID", "c1", "c2"] } },
       ]);
     }
   )
@@ -94,7 +96,8 @@ test(
         "requires": [
           "releaseRoom",
           "wireFaults"
-        ]
+        ],
+        "internal": "work the server registers for its own shutdown: nothing a person does or sees"
       },
     async s => {
       await s.notebook(["c0", "c1", "c2"]);
@@ -113,7 +116,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: [] } },
+        { label: "As the story ends", ends: {  } },
       ]);
     }
   )
@@ -128,7 +131,8 @@ test(
         "title": "Shutting down with an update from a tab that has already left",
         "requires": [
           "releaseRoom"
-        ]
+        ],
+        "internal": "the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race"
       },
     async s => {
       await s.notebook(["c0", "c1", "c2"]);
@@ -157,7 +161,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { server: ["c0", "c1", "c2"], file: ["c0", "c1", "c2"] } },
+        { label: "As the story ends", ends: { file: ["c0", "c1", "c2"] } },
       ]);
     }
   )

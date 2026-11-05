@@ -76,7 +76,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
@@ -129,7 +129,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
@@ -192,7 +192,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests", "docs"], server: ["c0", "fixed", "c2", "tests", "docs"], file: ["c0", "fixed", "c2", "tests", "docs"] } },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests", "docs"], file: ["c0", "fixed", "c2", "tests", "docs"] } },
       ]);
     }
   )
@@ -391,7 +391,7 @@ test(
       });
 
       await s.ends([
-        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], server: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
+        { label: "As the story ends", ends: { tab: ["c0", "fixed", "c2", "tests"], file: ["c0", "fixed", "c2", "tests"] } },
       ]);
     }
   )
