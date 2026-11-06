@@ -8,6 +8,7 @@ compliance/tests/generated/
 compliance/stories.json
 compliance/COVERAGE.md
 dist/
+conformance-results/
 docs/assets/*.webm
 docs/assets/*.mp4
 .package/

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPicker, reduce, render, visible } from '../bin/picker.mjs';
+import { createPicker, fitCount, reduce, render, visible } from '../bin/picker.mjs';
 import { helpFor, parse, suggest } from '../bin/args.mjs';
 
 const stories = [
@@ -11,11 +11,11 @@ const stories = [
   { id: 'X1', group: 'stop', groupTitle: 'Shutting down', title: 'The queue', requires: [], internal: 'inside the server' }
 ];
 
-const press = (state: any, ...keys: string[]) => keys.reduce((s, k) => reduce(s, k, 3).state, state);
+const press = (state: any, ...keys: string[]) => keys.reduce((s, k) => reduce(s, k, 5).state, state);
 const last = (state: any, ...keys: string[]) => {
   let out: any = { state };
   for (const k of keys) {
-    out = reduce(out.state, k, 3);
+    out = reduce(out.state, k, 5);
   }
   return out;
 };
@@ -78,17 +78,31 @@ test('q and ctrl-c leave; escape leaves only when there is no filter to clear', 
   assert.equal(filtered.state.filter, '');
 });
 
-test('the arrow stays inside the list and the window follows it', () => {
-  let s = press(createPicker(stories), 'up', 'up');
-  assert.equal(s.cursor, 0);
-  s = press(createPicker(stories), 'end');
-  assert.equal(s.cursor, 4);
-  assert.equal(s.top, 2); // three rows are shown, the last of which is the arrow
+test('the arrow stays inside the list', () => {
+  assert.equal(press(createPicker(stories), 'up', 'up').cursor, 0);
+  assert.equal(press(createPicker(stories), 'end').cursor, 4);
+});
+
+test('the window counts the titles of groups, so the list never outgrows the terminal', () => {
+  // three lines: the title of the first group and two of its stories
+  assert.equal(fitCount(stories, 0, 3), 2);
+  // a new group costs a blank line and its title
+  assert.equal(fitCount(stories, 2, 3), 1); // C, then Z3 would need 2 more lines
+  assert.equal(fitCount(stories, 2, 5), 2); // C, then a blank, the title and Z3
+  for (const budget of [4, 6, 8, 12]) {
+    let s = createPicker(stories);
+    for (let i = 0; i < 6; i++) {
+      s = reduce(s, 'down', budget).state;
+      const listLines = render(s, { color: false, budget }).slice(3, -2); // between the keys line and the count
+      assert.ok(listLines.length <= budget, `budget ${budget}: ${listLines.length} lines`);
+      assert.ok(render(s, { color: false, budget }).join('\n').includes('❯'), `the arrow is shown at budget ${budget}`);
+    }
+  }
 });
 
 test('the picker draws groups, what each story needs, and how many are selected', () => {
   const s = press(createPicker(stories), 'space');
-  const text = render(s, { width: 100, rows: 5, color: false }).join('\n');
+  const text = render(s, { width: 100, budget: 14, color: false }).join('\n');
   assert.match(text, /RECONNECTING {2}· {2}3/);
   assert.match(text, /◉ A {5}Control: a tab reconnects {2}releaseRoom/);
   assert.match(text, /○ B/);
@@ -129,4 +143,12 @@ test('a mistyped command or option is met with a suggestion', () => {
   assert.throws(() => parse(['rn']), /Did you mean `run`\?/);
   assert.throws(() => parse(['run', '--hedaed']), /Did you mean --headed\?/);
   assert.throws(() => parse(['run', '--zzzzzz']), /unknown option --zzzzzz$/);
+});
+
+test('help fits an ordinary terminal', () => {
+  for (const topic of ['main', 'run', 'pick', 'list']) {
+    for (const line of helpFor(topic).split('\n')) {
+      assert.ok(line.length <= 78, `${topic}: "${line}" is ${line.length} characters`);
+    }
+  }
 });

@@ -1,11 +1,14 @@
 // Argument parsing and help for the `conformance` command. No dependencies, and nothing here touches the machine.
 
-const MAIN = `conformance: hold a real-time collaboration backend to what people should experience
+// Help is written to fit an ordinary terminal: no line is longer than 78 characters (a test keeps it so).
+const MAIN = `conformance: hold a collaboration backend to what people should see
 
 What it does
-  Starts your server (or uses one that is running), opens real browsers, and plays each story the way a person would:
-  a tab goes offline and keeps typing, the server lets go of a notebook, a file changes underneath. Then it tells you
-  which stories your backend meets, and shows you the ones it doesn't.
+  Starts your server (or uses one that is running), opens real browsers and
+  plays each story the way a person would: a tab goes offline and keeps
+  typing, the server lets go of a notebook, a file changes underneath. Then it
+  tells you which stories your backend meets, and shows you the ones it
+  doesn't.
 
 Start here
   conformance pick               choose stories from a list, then run them
@@ -19,8 +22,8 @@ Commands
   help [command]     more about a command, with examples
 
 Learn more
-  conformance help run           every option for running, and examples
-  docs/running-against-a-backend.md   a longer guide
+  conformance help run    every option for running, and examples
+  docs/running-against-a-backend.md    a longer guide
 `;
 
 const RUN = `conformance run: run the stories against a backend
@@ -29,26 +32,34 @@ Usage
   conformance run [story ...] [options]
 
 Which stories
-  conformance run                  every story
-  conformance run Z3 C2            these two
-  conformance run 'AI*'            every story whose id starts with AI
-  conformance run --group edges    one group of the page (see \`conformance list\`)
-  conformance run -i               pick them from a list first (same as \`conformance pick\`)
+  conformance run                 every story
+  conformance run Z3 C2           these two
+  conformance run 'AI*'           every story whose id starts with AI
+  conformance run --group edges   one group of the page (see \`list\`)
+  conformance run -i              pick them from a list first (same as \`pick\`)
 
 Which server
-  --backend <name>        how to start the server: jsd (default), the built-in way to start jupyter-server-documents
-  --env <dir>             the Python environment with jupyter_server_documents (default: the one on your PATH)
-  --start <command>       your own command that starts a JupyterLab on {port}. The backend must implement the control
-                          contract (docs/backend-contract.md) for the stories that need its help
-  --url <url>             use a server that is already running instead of starting one
-  --root-dir <dir>        the folder that server serves (lets stories change the file from outside)
-  --adapter <path>        your own adapter module (default: ask the server what it can do)
+  --backend <name>     how to start the server: jsd (default), the built-in
+                       way to start jupyter-server-documents
+  --env <dir>          the Python environment with jupyter_server_documents
+                       (default: the one on your PATH)
+  --start <command>    your own command that starts a JupyterLab on {port}.
+                       The backend must implement the control contract
+                       (docs/backend-contract.md) for the stories that need
+                       its help
+  --url <url>          use a server that is already running
+  --root-dir <dir>     the folder that server serves (lets stories change the
+                       file from outside)
+  --adapter <path>     your own adapter module (default: ask the server what
+                       it can do)
 
 What you see
-  --headed                show the browsers
-  --open                  open the side-by-side video page of each story that failed
-  --out <dir>             where videos and results go (default ./conformance-results)
-  --known-gaps <file>     JSON of accepted stories this backend does not meet yet (default ./conformance-known-gaps.json)
+  --headed             show the browsers
+  --open               open the side-by-side video page of each failed story
+  --out <dir>          where videos and results go
+                       (default ./conformance-results)
+  --known-gaps <file>  JSON of accepted stories this backend does not meet yet
+                       (default ./conformance-known-gaps.json)
 
 Examples
   conformance run Z3 --env ~/envs/jsd
@@ -56,23 +67,32 @@ Examples
   conformance run --url http://localhost:8888
   conformance run --start "my-server --port {port}"
 
-A run ends with a line per story and a summary. The exit code is 0 when no story failed, so it works as a CI step.
-  ✓ passes   ✗ fails   ◐ known gap (fails as expected)   ◇ proposed case, not met (never fails the run)   skipped: the backend
-  cannot do something the story needs, and the summary says what.
+A run ends with a line per story and a summary. The exit code is 0 when no
+story failed, so it works as a CI step.
+  ✓ passes
+  ✗ fails
+  ◐ known gap: fails as expected
+  ◇ proposed case, not met: reported, never fails the run
+  skipped: the backend cannot do something the story needs; the summary says
+  what
 `;
 
 const PICK = `conformance pick: choose stories from a list, then run them
 
 Usage
-  conformance pick [options]        takes the same options as \`conformance run\`
+  conformance pick [options]      takes the same options as \`conformance run\`
 
 In the list
-  ↑ ↓  (or j k)   move              space      select or unselect the story under the arrow
-  a               select everything shown (again: unselect it)
-  g               select the whole group the arrow is in
-  /               filter by what you type: an id, a word in the title, a group, a need like releaseRoom
-  c               clear the selection        enter      run what is selected (or the story under the arrow if nothing is)
-  q  or  escape   leave without running
+  ↑ ↓  (or j k)    move
+  space            select or unselect the story under the arrow
+  a                select everything shown (again: unselect it)
+  g                select the whole group the arrow is in
+  /                filter by what you type: an id, a word in a title, a group,
+                   a need like releaseRoom (escape clears it)
+  c                clear the selection
+  enter            run what is selected (or the story under the arrow if
+                   nothing is)
+  q  or  escape    leave without running
 
 Needs a terminal. In a script, name the stories: \`conformance run Z3 C2\`.
 `;
@@ -82,10 +102,12 @@ const LIST = `conformance list: see every story and what each needs from a backe
 Usage
   conformance list [--group <name>] [--filter <text>]
 
-  --group <name>     only the stories of one group
-  --filter <text>    only the stories whose id, title or needs contain the text (for example: releaseRoom, offline, AI)
+  --group <name>    only the stories of one group
+  --filter <text>   only the stories whose id, title or needs contain the text
+                    (for example: releaseRoom, offline, AI)
 
-A story that "needs releaseRoom" is skipped on a backend that cannot make the server let go of a notebook.
+A story that "needs releaseRoom" is skipped on a backend that cannot make the
+server let go of a notebook.
 `;
 
 const TOPICS = { main: MAIN, run: RUN, pick: PICK, list: LIST };
