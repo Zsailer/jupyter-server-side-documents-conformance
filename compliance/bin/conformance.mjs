@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { grepFor, HELP, parse } from './args.mjs';
+import { grepFor, helpFor, parse } from './args.mjs';
+import { pick } from './picker.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(HERE, '..');
@@ -48,16 +49,58 @@ function suiteDir() {
   return cache;
 }
 
-function list(suite) {
-  const stories = JSON.parse(fs.readFileSync(path.join(suite, 'stories.json'), 'utf8'));
-  console.log('');
-  for (const s of stories) {
-    const needs = s.internal ? 'not checkable from outside' : s.requires.length ? `needs ${s.requires.join(', ')}` : 'needs nothing special';
-    const tags = [s.proposed ? 'proposed' : '', s.needsAlignment ? 'open question' : ''].filter(Boolean).join(', ');
-    console.log(`  ${bold(s.id.padEnd(5))} ${s.title}`);
-    console.log(`        ${dim(`${s.group} · ${needs}${tags ? ` · ${tags}` : ''}`)}`);
+function loadStories(suite) {
+  return JSON.parse(fs.readFileSync(path.join(suite, 'stories.json'), 'utf8'));
+}
+
+function needsOf(s) {
+  return s.internal ? 'not checkable from outside' : s.requires.length ? `needs ${s.requires.join(', ')}` : 'needs nothing special';
+}
+
+function list(suite, options) {
+  const all = loadStories(suite);
+  const groups = [...new Set(all.map(s => s.group))];
+  if (options.group && !groups.includes(options.group)) {
+    fail(`No group called "${options.group}"`, `The groups are: ${groups.join(', ')}`);
   }
-  console.log(`\n  ${dim(`${stories.length} stories`)}\n`);
+  const q = options.filter?.toLowerCase();
+  const stories = all
+    .filter(s => !options.group || s.group === options.group)
+    .filter(s => !q || [s.id, s.title, s.group, ...s.requires].join(' ').toLowerCase().includes(q));
+  if (!stories.length) {
+    fail(`No story matches "${options.filter}"`, 'Try a word from a title, an id, or a need such as releaseRoom.');
+  }
+  console.log('');
+  let group;
+  for (const s of stories) {
+    if (s.group !== group) {
+      if (group !== undefined) {
+        console.log('');
+      }
+      group = s.group;
+      console.log(`  ${bold((s.groupTitle ?? group).toUpperCase())}  ${dim(`${stories.filter(x => x.group === group).length} · ${group}`)}`);
+    }
+    const tags = [s.proposed ? 'proposed' : '', s.needsAlignment ? 'open question' : ''].filter(Boolean);
+    console.log(`    ${bold(s.id.padEnd(5))} ${s.title}`);
+    console.log(`          ${dim([needsOf(s), ...tags].join(' · '))}`);
+  }
+  const free = stories.filter(s => !s.internal && !s.requires.length).length;
+  console.log(`\n  ${dim(`${stories.length} stories · ${free} need nothing special from a backend`)}`);
+  console.log(`  ${dim('conformance pick  to choose some   ·   conformance run <id>  to run one')}\n`);
+}
+
+/** The interactive way in: a list to choose from. Resolves with the ids chosen, or exits if the person leaves. */
+async function choose(suite) {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    fail('Picking stories needs a terminal', 'Name the stories instead:\n  conformance run Z3 C2\nor see them with:\n  conformance list');
+  }
+  const chosen = await pick(loadStories(suite));
+  if (!chosen) {
+    console.log(`\n  ${dim('Nothing run.')}\n`);
+    process.exit(0);
+  }
+  console.log(`\n  ${dim(`Running ${chosen.length === 1 ? chosen[0] : `${chosen.length} stories: ${chosen.join(', ')}`}`)}`);
+  return chosen;
 }
 
 async function serving(url) {
@@ -227,15 +270,18 @@ let parsed;
 try {
   parsed = parse(process.argv.slice(2));
 } catch (error) {
-  fail(error.message, 'conformance --help');
+  fail(error.message, 'conformance help');
 }
-const { command, stories, options } = parsed;
+const { command, stories, options, topic } = parsed;
 if (command === 'help') {
-  console.log(`\n${HELP}`);
+  console.log(`\n${helpFor(topic)}`);
 } else if (command === 'version') {
   console.log(VERSION);
 } else if (command === 'list') {
-  list(suiteDir());
+  list(suiteDir(), options);
+} else if (command === 'pick' || options.interactive) {
+  const suite = suiteDir();
+  await run(suite, await choose(suite), options);
 } else {
   await run(suiteDir(), stories, options);
 }

@@ -1,0 +1,132 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createPicker, reduce, render, visible } from '../bin/picker.mjs';
+import { helpFor, parse, suggest } from '../bin/args.mjs';
+
+const stories = [
+  { id: 'A', group: 'handshake', groupTitle: 'Reconnecting', title: 'Control: a tab reconnects', requires: ['releaseRoom'] },
+  { id: 'B', group: 'handshake', groupTitle: 'Reconnecting', title: 'The answer is lost', requires: ['releaseRoom', 'wireFaults'] },
+  { id: 'C', group: 'handshake', groupTitle: 'Reconnecting', title: 'A second tab adds a cell', requires: [] },
+  { id: 'Z3', group: 'residual', groupTitle: 'Edge cases', title: 'One deletes while another types', requires: ['releaseRoom'], proposed: true },
+  { id: 'X1', group: 'stop', groupTitle: 'Shutting down', title: 'The queue', requires: [], internal: 'inside the server' }
+];
+
+const press = (state: any, ...keys: string[]) => keys.reduce((s, k) => reduce(s, k, 3).state, state);
+const last = (state: any, ...keys: string[]) => {
+  let out: any = { state };
+  for (const k of keys) {
+    out = reduce(out.state, k, 3);
+  }
+  return out;
+};
+
+test('space selects the story under the arrow and moves down', () => {
+  const s = press(createPicker(stories), 'space', 'space');
+  assert.deepEqual([...s.selected], ['A', 'B']);
+  assert.equal(s.cursor, 2);
+});
+
+test('space on a selected story unselects it', () => {
+  const s = press(createPicker(stories), 'space', 'up', 'space');
+  assert.equal(s.selected.size, 0);
+});
+
+test('enter runs what is selected; with nothing selected it runs the story under the arrow', () => {
+  assert.deepEqual([...last(createPicker(stories), 'space', 'enter').state.selected], ['A']);
+  const alone = last(createPicker(stories), 'down', 'down', 'enter');
+  assert.equal(alone.done, 'run');
+  assert.deepEqual([...alone.state.selected], ['C']);
+  assert.equal(last(createPicker(stories), 'space', 'space', 'enter').done, 'run');
+});
+
+test('a selects everything shown, and again unselects it', () => {
+  const all = press(createPicker(stories), 'a');
+  assert.equal(all.selected.size, 5);
+  assert.equal(press(all, 'a').selected.size, 0);
+});
+
+test('g selects the whole group of the story under the arrow', () => {
+  const s = press(createPicker(stories), 'down', 'g');
+  assert.deepEqual([...s.selected].sort(), ['A', 'B', 'C']);
+});
+
+test('the filter narrows the list by id, title, group or need, and escape clears it', () => {
+  const typed = (text: string) => press(createPicker(stories), '/', ...text.split(''));
+  assert.deepEqual(visible(typed('release')).map(s => s.id), ['A', 'B', 'Z3']);
+  assert.deepEqual(visible(typed('edge')).map(s => s.id), ['Z3']); // by the title of the group
+  assert.deepEqual(visible(typed('x1')).map(s => s.id), ['X1']);
+  const cleared = press(typed('release'), 'escape');
+  assert.equal(visible(cleared).length, 5);
+});
+
+test('selecting under a filter keeps what was selected before it', () => {
+  const s = press(createPicker(stories), 'space', '/', 'z', '3', 'enter', 'space');
+  assert.deepEqual([...s.selected].sort(), ['A', 'Z3']);
+});
+
+test('typing a space or j into the filter is text, not a command', () => {
+  const s = press(createPicker(stories), '/', 'j', 'space', 'k');
+  assert.equal(s.filter, 'j k');
+});
+
+test('q and ctrl-c leave; escape leaves only when there is no filter to clear', () => {
+  assert.equal(last(createPicker(stories), 'q').done, 'cancel');
+  assert.equal(last(createPicker(stories), '/', 'a', 'ctrl-c').done, 'cancel');
+  assert.equal(last(createPicker(stories), 'escape').done, 'cancel');
+  const filtered = last(createPicker(stories), '/', 'a', 'enter', 'escape');
+  assert.equal(filtered.done, undefined);
+  assert.equal(filtered.state.filter, '');
+});
+
+test('the arrow stays inside the list and the window follows it', () => {
+  let s = press(createPicker(stories), 'up', 'up');
+  assert.equal(s.cursor, 0);
+  s = press(createPicker(stories), 'end');
+  assert.equal(s.cursor, 4);
+  assert.equal(s.top, 2); // three rows are shown, the last of which is the arrow
+});
+
+test('the picker draws groups, what each story needs, and how many are selected', () => {
+  const s = press(createPicker(stories), 'space');
+  const text = render(s, { width: 100, rows: 5, color: false }).join('\n');
+  assert.match(text, /RECONNECTING {2}· {2}3/);
+  assert.match(text, /◉ A {5}Control: a tab reconnects {2}releaseRoom/);
+  assert.match(text, /○ B/);
+  assert.match(text, /Z3 {4}One deletes while another types {2}releaseRoom · proposed/);
+  assert.match(text, /not checkable from outside/);
+  assert.match(text, /1 selected/);
+});
+
+test('with nothing matching the picker says so, and enter does not run', () => {
+  const s = press(createPicker(stories), '/', 'z', 'z', 'z', 'enter');
+  assert.match(render(s, { color: false }).join('\n'), /No story matches/);
+  const out = reduce(s, 'enter', 3);
+  assert.equal(out.done, undefined);
+  assert.match(out.state.hint, /Nothing matches/);
+});
+
+test('help is there for the whole command and for each part of it', () => {
+  assert.match(helpFor('main'), /Start here/);
+  assert.match(helpFor('run'), /Examples/);
+  assert.match(helpFor('pick'), /space/);
+  assert.match(helpFor('list'), /--filter/);
+  assert.equal(helpFor('nonsense'), helpFor('main'));
+});
+
+test('arguments: help in every form, and the picker', () => {
+  assert.deepEqual([parse(['help', 'run']).command, parse(['help', 'run']).topic], ['help', 'run']);
+  assert.deepEqual([parse(['run', '--help']).command, parse(['run', '--help']).topic], ['help', 'run']);
+  assert.equal(parse([]).topic, 'main');
+  assert.equal(parse(['pick']).command, 'pick');
+  assert.equal(parse(['run', '-i']).options.interactive, true);
+  assert.equal(parse(['list', '--filter', 'offline']).options.filter, 'offline');
+});
+
+test('a mistyped command or option is met with a suggestion', () => {
+  assert.equal(suggest('rn', ['run', 'pick', 'list']), 'run');
+  assert.equal(suggest('lst', ['run', 'pick', 'list']), 'list');
+  assert.equal(suggest('zebra', ['run', 'pick', 'list']), undefined);
+  assert.throws(() => parse(['rn']), /Did you mean `run`\?/);
+  assert.throws(() => parse(['run', '--hedaed']), /Did you mean --headed\?/);
+  assert.throws(() => parse(['run', '--zzzzzz']), /unknown option --zzzzzz$/);
+});
