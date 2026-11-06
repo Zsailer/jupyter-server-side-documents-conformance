@@ -157,7 +157,8 @@ test('help fits an ordinary terminal', () => {
 
 test('the welcome screen has the logo, the name, the version and where to start', () => {
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
-  assert.match(text, /[▀▄█]/); // the logo is drawn in half blocks
+  assert.match(text, /[\u2801-\u28ff]/); // the logo is drawn in braille
+  assert.doesNotMatch(text, /[█▀▄]/); // and only as an outline: nothing is filled in
   assert.match(text, /rtc-conformance v9\.8\.7/);
   assert.match(text, /rtc-conformance pick/);
   assert.match(text, /rtc-conformance run Z3/);
@@ -167,10 +168,11 @@ test('the welcome screen has the logo, the name, the version and where to start'
 
 test('the logo is a block of the same width on every row', () => {
   const rows = logo({ color: false });
-  assert.equal(rows.length, 11);
+  assert.equal(rows.length, 12);
   assert.ok(new Set(rows.map(r => r.length)).size === 1, 'every row has the same width');
-  assert.equal(rows[0].length, 30);
-  assert.ok(rows[5].includes('█'), 'the planet is solid in the middle');
+  assert.equal(rows[0].length, 33);
+  assert.match(rows[5], /^ +[\u2801-\u28ff] +[\u2801-\u28ff] +$/, 'the planet is a ring: its edges, and nothing between them');
+  assert.doesNotMatch(rows.join(''), /\u2800/, 'empty cells are spaces');
 });
 
 test('the welcome screen has colour when asked, and fits an ordinary terminal', () => {

@@ -1,59 +1,55 @@
 // The welcome screen of `rtc-conformance`: what is shown when it is run with nothing to do. A pure function of the
 // version and whether to use colour, so it is tested without a terminal.
 
-// The Jupyter logo, drawn as pixels by scripts/draw-logo.py: two orange crescents around a gray planet, and three moons.
-// Two rows of pixels make one row of the terminal (half blocks). 0 is empty, 1 the crescents, 2 the planet, 3-5 the moons.
+// The Jupyter logo as an outline in braille (two crescents around a planet, with three moons), drawn by
+// scripts/draw-logo.py: change the geometry there and paste the new rows here. LOGO_COLORS gives the colour of each
+// character: 0 none, 1 the crescents, 2 the planet, 3 to 5 the moons.
 const LOGO = [
-  '033000000000011110000000000400',
-  '033300000111111111111000004400',
-  '033300011111111111111110000000',
-  '000001111111111111111111100000',
-  '000011110000000000000011110000',
-  '000111000000022220000000111000',
-  '000100000002222222200000001000',
-  '000000000022222222220000000000',
-  '000000000022222222220000000000',
-  '000000000222222222222000000000',
-  '000000000222222222222000000000',
-  '000000000222222222222000000000',
-  '000000000222222222222000000000',
-  '000000000022222222220000000000',
-  '000000000022222222220000000000',
-  '000100000002222222200000001000',
-  '000111000000022220000000111000',
-  '000011110000000000000011110000',
-  '000001111111111111111111100000',
-  '005500011111111111111110000000',
-  '005500000111111111111000000000',
-  '005500000000011110000000000000'
+  '⠀⢠⠒⠒⡄⠀⠀⠀⠀⠀⢀⣀⠤⠤⠤⠤⠤⠤⠤⠤⠤⣀⡀⠀⠀⠀⠀⠀⡠⠒⢄⠀⠀',
+  '⠀⠱⣀⣀⠎⠀⢀⠤⠒⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠒⠤⡀⠀⠑⠤⠊⠀⠀',
+  '⠀⠀⠀⠀⡠⠊⠁⣀⣀⠤⠤⠤⠒⠒⠒⠒⠒⠒⠒⠒⠒⠤⠤⠤⣀⣀⠈⠑⢄⠀⠀⠀⠀',
+  '⠀⠀⢀⠮⠔⠒⠉⠀⠀⠀⠀⠀⡠⠒⠉⠉⠉⠉⠉⠒⢄⠀⠀⠀⠀⠀⠉⠒⠢⠵⡀⠀⠀',
+  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠎⠀⠀⠀⠀⠀⠀⠀⠀⠀⠱⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
+  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
+  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
+  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢆⠀⠀⠀⠀⠀⠀⠀⠀⠀⡰⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
+  '⠀⠀⠈⢖⠢⠤⣀⠀⠀⠀⠀⠀⠑⠤⣀⣀⣀⣀⣀⠤⠊⠀⠀⠀⠀⠀⣀⠤⠔⡲⠁⠀⠀',
+  '⠀⠀⠀⠀⠑⢄⡀⠉⠉⠒⠒⠒⠤⠤⠤⠤⠤⠤⠤⠤⠤⠒⠒⠒⠉⠉⢀⡠⠊⠀⠀⠀⠀',
+  '⠀⠀⢠⠒⠒⡄⠈⠒⠤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠤⠒⠁⠀⠀⠀⠀⠀⠀',
+  '⠀⠀⠈⠒⠒⠁⠀⠀⠀⠀⠈⠉⠒⠒⠒⠒⠒⠒⠒⠒⠒⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
+];
+const LOGO_COLORS = [
+  '033330000011111111111110000044400',
+  '033330111110000000000011111044400',
+  '000011111111111111111111111110000',
+  '001111100000222222222000001111100',
+  '000000000022000000000220000000000',
+  '000000000020000000000020000000000',
+  '000000000020000000000020000000000',
+  '000000000022000000000220000000000',
+  '001111100000222222222000001111100',
+  '000011111111111111111111111110000',
+  '005555111110000000000011111000000',
+  '005555000011111111111110000000000'
 ];
 
 // the 256-colour palette entries nearest to the colours of the logo
-const COLORS = { 1: 208, 2: 243, 3: 250, 4: 240, 5: 246 };
+const COLORS = { 1: 208, 2: 243, 3: 250, 4: 246, 5: 248 };
 
-/** The logo as rows of terminal text: half blocks, in colour or, without colour, the same shape. */
+/** The logo as rows of terminal text: in colour, or the same shape without. */
 export function logo({ color = true } = {}) {
-  const rows = [];
-  for (let r = 0; r < LOGO.length; r += 2) {
-    let line = '';
-    for (let c = 0; c < LOGO[r].length; c++) {
-      const top = +LOGO[r][c];
-      const bottom = +LOGO[r + 1][c];
-      if (!top && !bottom) {
-        line += ' ';
-      } else if (!color) {
-        line += top && bottom ? '█' : top ? '▀' : '▄';
-      } else if (top === bottom) {
-        line += `\u001b[38;5;${COLORS[top]}m█\u001b[0m`;
-      } else if (top && bottom) {
-        line += `\u001b[38;5;${COLORS[top]};48;5;${COLORS[bottom]}m▀\u001b[0m`;
-      } else {
-        line += `\u001b[38;5;${COLORS[top || bottom]}m${top ? '▀' : '▄'}\u001b[0m`;
-      }
-    }
-    rows.push(line);
-  }
-  return rows;
+  return LOGO.map((row, r) =>
+    [...row]
+      .map((ch, c) => {
+        const id = +LOGO_COLORS[r][c];
+        // an empty braille character is drawn as a space: some fonts draw it as something else
+        if (ch === '\u2800') {
+          return ' ';
+        }
+        return color && id ? `\u001b[38;5;${COLORS[id]}m${ch}\u001b[0m` : ch;
+      })
+      .join('')
+  );
 }
 
 /** The lines of the welcome screen. */
@@ -64,9 +60,9 @@ export function welcome({ version, color = true } = {}) {
 
   // the name and a line about it sit beside the middle of the planet
   const beside = {
-    4: `${bold('rtc-conformance')} ${dim(`v${version}`)}`,
-    5: 'Real-time collaboration, held to',
-    6: 'what people should experience.'
+    5: `${bold('rtc-conformance')} ${dim(`v${version}`)}`,
+    6: 'Real-time collaboration, held to',
+    7: 'what people should experience.'
   };
   const art = logo({ color }).map((row, i) => `  ${row}${beside[i] ? `   ${beside[i]}` : ''}`);
 
