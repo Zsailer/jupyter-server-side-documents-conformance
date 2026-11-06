@@ -4,11 +4,12 @@
     python3 -I compliance/scripts/draw-logo.py            # prints the text to paste into welcome.mjs, and a preview
     python3 -I compliance/scripts/draw-logo.py logo.ppm   # also writes the dots as an image (ffmpeg -i logo.ppm logo.png)
 
-The logo is a planet between two crescents, with three small moons. Only the outlines are drawn, never the insides. It is
+The logo is two crescents, one above the other, with three small circles around them. Only the outlines are drawn,
+never the insides. It is
 made from the geometry of the shapes, so its size and proportions can be changed here and the text made again.
 
 A braille character is a block of 2 by 4 dots, so a thin line can follow a curve. Every character has one colour: the one
-that most of its dots belong to (1 the crescents, 2 the planet, 3 to 5 the moons).
+that most of its dots belong to (1 the crescents, 2 to 4 the circles).
 """
 import math
 import sys
@@ -19,13 +20,12 @@ CX, CY = (W - 1) / 2, (H - 1) / 2
 RX, RY = 30.0, 22.5                # the outer edge of the crescents
 START, END = 22, 158               # degrees, from the right and over the top: where the upper crescent begins and ends
 THICK = 0.38                       # the thickest part of a crescent, as a fraction of the radius
-PLANET_RADIUS = 12.5
 MOONS = [  # (x, y, radius, colour), relative to the centre
-    (-27.0, -19.5, 3.6, 3),
-    (26.0, -20.0, 2.6, 4),
-    (-25.0, 19.5, 3.0, 5),
+    (-27.0, -19.5, 3.6, 2),
+    (26.0, -20.0, 2.6, 3),
+    (-25.0, 19.5, 3.0, 4),
 ]
-RGB = {0: (30, 30, 46), 1: (243, 119, 38), 2: (118, 118, 119), 3: (190, 190, 192), 4: (150, 150, 152), 5: (170, 170, 172)}
+RGB = {0: (30, 30, 46), 1: (243, 119, 38), 2: (190, 190, 192), 3: (150, 150, 152), 4: (170, 170, 172)}
 
 
 def crescent(x, y, upper):
@@ -46,8 +46,6 @@ def shape(x, y):
     """Which shape a dot is inside: 0 for none."""
     if crescent(x, y, True) or crescent(x, y, False):
         return 1
-    if circle(x, y, CX, CY, PLANET_RADIUS):
-        return 2
     for dx, dy, r, colour in MOONS:
         if circle(x, y, CX + dx, CY + dy, r):
             return colour

@@ -159,26 +159,35 @@ test('the welcome screen has the logo, the name, the version and where to start'
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
   assert.match(text, /[\u2801-\u28ff]/); // the logo is drawn in braille
   assert.doesNotMatch(text, /[█▀▄]/); // and only as an outline: nothing is filled in
-  assert.match(text, /rtc-conformance v9\.8\.7/);
+  assert.match(text, /rtc-conformance\s*\n/); // the name sits inside the arcs
+  assert.match(text, /v9\.8\.7/);
   assert.match(text, /rtc-conformance pick/);
   assert.match(text, /rtc-conformance run Z3/);
   assert.match(text, /rtc-conformance help/);
   assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
 });
 
-test('the logo is a block of the same width on every row', () => {
+test('the logo is two arcs with an empty middle, a block of the same width on every row', () => {
   const rows = logo({ color: false });
   assert.equal(rows.length, 12);
   assert.ok(new Set(rows.map(r => r.length)).size === 1, 'every row has the same width');
   assert.equal(rows[0].length, 33);
-  assert.match(rows[5], /^ +[\u2801-\u28ff] +[\u2801-\u28ff] +$/, 'the planet is a ring: its edges, and nothing between them');
+  assert.equal(rows[5].trim(), '', 'there is nothing between the arcs');
   assert.doesNotMatch(rows.join(''), /\u2800/, 'empty cells are spaces');
+});
+
+test('a label goes in the middle of a row of the logo, and nowhere else', () => {
+  const plain = logo({ color: false });
+  const labelled = logo({ color: false, labels: { 5: { text: 'hello', paint: (x: string) => x } } });
+  assert.equal(labelled[5].trim(), 'hello');
+  assert.equal(labelled[5].indexOf('hello'), 14); // (33 - 5) / 2
+  assert.deepEqual(labelled.filter((_, i) => i !== 5), plain.filter((_, i) => i !== 5));
 });
 
 test('the welcome screen has colour when asked, and fits an ordinary terminal', () => {
   const coloured = welcome({ version: '1.0.0', color: true }).join('\n');
   assert.match(coloured, /\u001b\[38;5;208m/); // the orange crescents
-  assert.match(coloured, /\u001b\[38;5;243m/); // the gray planet
+  assert.match(coloured, /\u001b\[38;5;250m/); // the gray circles
   for (const line of welcome({ version: '10.20.30', color: false })) {
     assert.ok(line.length <= 78, `"${line}" is ${line.length} characters`);
   }
