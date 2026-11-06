@@ -192,3 +192,10 @@ test('the welcome screen has colour when asked, and fits an ordinary terminal', 
     assert.ok(line.length <= 78, `"${line}" is ${line.length} characters`);
   }
 });
+
+test('before anything is selected the picker says how to select several', () => {
+  const text = render(createPicker(stories), { color: false, budget: 14 }).join('\n');
+  assert.match(text, /space selects several/);
+  assert.match(text, /enter runs the one under the arrow/);
+  assert.doesNotMatch(render(press(createPicker(stories), 'space'), { color: false, budget: 14 }).join('\n'), /space selects several/);
+});
