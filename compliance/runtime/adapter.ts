@@ -19,6 +19,9 @@ export interface BackendAdapter {
   readonly name: string;
   readonly capabilities: ReadonlySet<Capability>;
 
+  /** Ask the running server what it offers, before the tests decide which stories to run. */
+  discover?(baseURL: string): Promise<void>;
+
   /** The cells (sources) of the server's own live copy, or null if the server holds no copy of `path`. */
   serverCells?(ctx: AdapterContext, path: string): Promise<string[] | null>;
 
@@ -38,12 +41,13 @@ export interface BackendAdapter {
 }
 
 /**
- * Which adapter to use: `COMPLIANCE_ADAPTER` is `generic` (default), `jsd`, or the path of a module whose default
- * export is a BackendAdapter.
+ * Which adapter to use: `COMPLIANCE_ADAPTER` is `http` (default: the backend implements the control contract, or offers
+ * nothing), `generic` (never asks the server for anything), or the path of a module whose default export is a
+ * BackendAdapter.
  */
 export async function loadAdapter(): Promise<BackendAdapter> {
-  const which = process.env.COMPLIANCE_ADAPTER || 'generic';
-  const path = which === 'generic' || which === 'jsd' ? `../adapters/${which}` : which;
+  const which = process.env.COMPLIANCE_ADAPTER || 'http';
+  const path = which === 'generic' || which === 'http' ? `../adapters/${which}` : which;
   let adapter: any = await import(path);
   // however the module was loaded (ES module, CommonJS, transpiled), the adapter is the object with `capabilities`
   while (adapter && !adapter.capabilities && adapter.default) {

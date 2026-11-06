@@ -429,6 +429,7 @@ export function story(
     { tag },
     async ({ browser, baseURL, page, tmpPath, waitForApplication }, testInfo) => {
       const adapter = await loadAdapter();
+      await adapter.discover?.(baseURL!);
       const have = new Set<string>([...adapter.capabilities, ...ALWAYS]);
       const missing = meta.requires.filter((c: Capability) => !have.has(c));
       testInfo.annotations.push({ type: 'needs', description: meta.requires.join(', ') || 'nothing beyond a plain JupyterLab' });

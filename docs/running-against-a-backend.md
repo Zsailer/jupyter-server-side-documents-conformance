@@ -6,7 +6,7 @@ point them at any implementation. Today there is an adapter for jupyter-server-d
 
 ## Quick start
 
-From the root of a jupyter-server-documents checkout, inside the environment you develop it in:
+Inside the Python environment jupyter-server-documents is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
 
 ```sh
 npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run
@@ -48,14 +48,17 @@ conformance run --open             # open the side-by-side video of each failed 
 conformance list                   # every story, and what it needs from a backend
 ```
 
-A server that is already running works too, which is the way to point the tests at something that is not started by the
-adapter:
+Another backend, or a server you already started:
 
 ```sh
-conformance run --url http://localhost:8888 --backend generic
+conformance run --url http://localhost:8888                 # a server that is already running
+conformance run --start "my-server --port {port}"           # your own command that starts one
 ```
 
-`conformance --help` has the rest (`--env`, `--ui-tests`, `--known-gaps`, `--out`, `--root-dir`).
+A server that does not implement the [control contract](backend-contract.md) still runs every story that needs nothing
+from the backend; the rest are skipped, and the summary says how many and why.
+
+`conformance --help` has the rest (`--env`, `--known-gaps`, `--out`, `--root-dir`, `--adapter`).
 
 ## Reading a result
 
@@ -82,9 +85,9 @@ still runs. That keeps a run green while the gap is open, and turns it red the d
 
 ## Another backend
 
-An adapter is a small module that says what the backend can do (`capabilities`) and how to cause it (release a notebook,
-crash the server, change the file from outside). A story the adapter cannot do is skipped, with the reason. See
-`compliance/README.md` and `compliance/adapters/jsd.ts`, and run it with `--backend /path/to/adapter`.
+Give the backend three small test-only endpoints (what it can do, what the server holds, and "let go of this notebook")
+and the tests find out what it offers by asking. The contract, and how to add jupyter-collaboration, jupyverse or any
+other backend, is in [the backend contract](backend-contract.md).
 
 ## In CI
 
