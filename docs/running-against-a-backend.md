@@ -36,17 +36,54 @@ The first run unpacks the tests into `~/.cache` and installs their dependencies,
 starts straight away. To keep a copy on your machine, `npm install -g @jupyter-ai-contrib/jupyter-server-side-documents-conformance`
 gives you a `conformance` command.
 
+## Choosing what to run
+
+Not sure which story you want? `conformance pick` shows them in a list, grouped as on the page, with what each needs from
+a backend, and runs the ones you choose:
+
+```
+  Pick the stories to run
+  ↑↓ move · space select · a all shown · g whole group · / filter · enter run · q quit
+  filter offline  (escape clears it)
+
+  RECONNECTING  ·  3
+ ❯ ◉ C3    A second tab types into a cell while offline
+   ◉ C2    A second tab adds a cell while offline
+   ○ C1    Control: the first tab adds a cell while offline
+
+  2 selected   ↓ 17 below
+```
+
+| key | |
+|---|---|
+| `↑` `↓` (or `j` `k`) | move |
+| `space` | select or unselect the story under the arrow |
+| `a` | select everything shown (again: unselect it) |
+| `g` | select the whole group the arrow is in |
+| `/` | filter by what you type: an id, a word in a title, a group, or a need such as `releaseRoom`; `escape` clears it |
+| `enter` | run what is selected, or the story under the arrow if nothing is |
+| `q` | leave without running |
+
+`conformance run -i` is the same thing with the run options you give it (`--env`, `--headed`, ...). It needs a terminal:
+in a script, name the stories.
+
 ## Commands
 
 ```sh
+conformance help                   # what it is, and where to start
+conformance help run               # every option, with examples
+conformance list                   # every story, grouped, and what it needs from a backend
+conformance list --filter offline  # only the stories about offline
+conformance pick                   # choose stories from a list
 conformance run                    # every story
 conformance run Z3 C2              # just these
 conformance run 'AI*'              # a prefix
 conformance run --group handshake  # one group of the page
 conformance run --headed           # watch the browsers
 conformance run --open             # open the side-by-side video of each failed story
-conformance list                   # every story, and what it needs from a backend
 ```
+
+A mistyped command or option gets a suggestion (`Did you mean --headed?`).
 
 Another backend, or a server you already started:
 
