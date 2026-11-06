@@ -2,7 +2,7 @@ import type { FullResult, Reporter, TestCase, TestResult } from '@playwright/tes
 import { rowLines, rowOf, Row, Style, summaryLines } from './report';
 
 /**
- * The reporter of the `conformance` command: a line per story as it finishes (skipped ones are only counted), a spinner
+ * The reporter of the `jupyter conformance` command: a line per story as it finishes (skipped ones are only counted), a spinner
  * line for the story running now, and a summary. It is not for CI logs that want the full detail: use Playwright's own
  * reporters for that.
  */
