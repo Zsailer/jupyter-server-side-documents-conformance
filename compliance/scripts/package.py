@@ -7,11 +7,11 @@ The tests are generated from stories/, not committed, so what a consumer needs i
 the runtime and the adapters, the Playwright config and the scripts that start a server and summarize a run. The version
 is the one in the root package.json; the release pipeline bumps it.
 
-The package is meant to be unpacked, not installed: Playwright does not compile TypeScript inside node_modules.
+Playwright does not compile TypeScript inside node_modules, so the `rtc-conformance` command unpacks the package into a cache
+the first time it runs from there.
 
-    npm pack @jupyter-ai-contrib/jupyter-server-side-documents-conformance@<version>     # downloads the tarball
-    tar xzf jupyter-ai-contrib-jupyter-server-side-documents-conformance-<version>.tgz   # unpacks to ./package
-    cd package && npm install && sh scripts/run-jsd.sh
+    npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run     # unpacks itself into a cache on first use
+
 """
 from __future__ import annotations
 
@@ -29,10 +29,10 @@ NAME = "@jupyter-ai-contrib/jupyter-server-side-documents-conformance"
 # what goes in, relative to compliance/
 COPY = [
     "adapters",
+    "bin",
     "runtime",
     "known-gaps",
-    "scripts/run-jsd.sh",
-    "scripts/start-jsd-server.sh",
+    "server",
     "scripts/summarize.py",
     "playwright.config.ts",
     "tsconfig.json",
@@ -54,7 +54,7 @@ def build(out: Path, stage: Path) -> Path:
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.is_dir():
-            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("node_modules", "*.map"))
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("node_modules", "*.map", "__pycache__", "*.pyc"))
         else:
             shutil.copy2(src, dst)
     shutil.copytree(COMPLIANCE / "tests" / "generated", stage / "tests" / "generated")
@@ -64,6 +64,7 @@ def build(out: Path, stage: Path) -> Path:
         "name": NAME,
         "version": version,
         "description": own["description"],
+        "bin": {"rtc-conformance": "bin/conformance.mjs"},
         "publishConfig": {"access": "public"},
         "scripts": {"test": "playwright test", "typecheck": "tsc --noEmit"},
         "dependencies": own["devDependencies"],

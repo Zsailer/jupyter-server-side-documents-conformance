@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Compliance tests for real-time collaboration backends in JupyterLab, generated from the storyboards.",
+  "bin": {
+    "rtc-conformance": "bin/conformance.mjs"
+  },
   "scripts": {
     "generate": "python3 -I generate.py",
     "generate:check": "python3 -I generate.py --check",
