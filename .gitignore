@@ -8,6 +8,8 @@ compliance/tests/generated/
 compliance/stories.json
 compliance/COVERAGE.md
 dist/
+docs/assets/*.webm
+docs/assets/*.mp4
 .package/
 compliance/playwright-report/
 compliance/test-results/
