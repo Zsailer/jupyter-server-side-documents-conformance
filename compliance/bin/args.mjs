@@ -7,13 +7,15 @@ Usage
   conformance list                list the stories and what each needs from a backend
 
 Options for run
-  --backend <name|path>   the adapter: jsd (default), generic, or the path of your own
+  --backend <name>        how to start the server: jsd (default), the built-in way to start jupyter-server-documents
+  --env <dir>             the Python environment with jupyter_server_documents (default: the one on your PATH)
+  --start <command>       your own command that starts a JupyterLab on {port}; the backend must implement the
+                          control contract (docs/backend-contract.md) for the stories that need its help
   --url <url>             use a server that is already running instead of starting one
   --root-dir <dir>        the folder that server serves (lets stories change the file from outside)
+  --adapter <path>        your own adapter module (default: ask the server what it can do)
   --group <name>          only the stories of a group (handshake, rebuild, edges, ...)
   --known-gaps <file>     JSON of accepted stories this backend does not meet yet (default ./conformance-known-gaps.json)
-  --env <dir>             the Python environment with jupyter_server_documents (default: the one on your PATH)
-  --ui-tests <dir>        the ui-tests folder of jupyter-server-documents (default ./ui-tests)
   --out <dir>             where videos and results go (default ./conformance-results)
   --headed                show the browsers
   --open                  open the side-by-side video page of each story that failed
@@ -22,7 +24,7 @@ Options for run
   -v, --version           the version of the tests
 `;
 
-const VALUE = new Set(['backend', 'url', 'root-dir', 'group', 'known-gaps', 'env', 'ui-tests', 'out']);
+const VALUE = new Set(['backend', 'url', 'start', 'adapter', 'root-dir', 'group', 'known-gaps', 'env', 'out']);
 const SWITCH = new Set(['headed', 'open', 'help', 'version']);
 const SHORT = { h: 'help', v: 'version' };
 

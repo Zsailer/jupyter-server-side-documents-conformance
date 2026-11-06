@@ -73,23 +73,35 @@ function findPythonEnv() {
   return found.status === 0 ? found.stdout.trim() : undefined;
 }
 
-/** Start a JupyterLab with jupyter-server-documents the way its own UI tests do. */
-async function startJsd(suite, options, port, out) {
-  const env = options.env ?? process.env.JSD_ENV ?? findPythonEnv();
-  const uiTests = path.resolve(options['ui-tests'] ?? process.env.JSD_UI_TESTS ?? 'ui-tests');
-  if (!env) {
-    fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  conformance run --env /path/to/env');
-  }
-  if (!fs.existsSync(path.join(uiTests, 'jupyter_server_test_config.py'))) {
-    fail(`Can't find the ui-tests folder of jupyter-server-documents (looked in ${uiTests})`, 'Run this from the root of a checkout, or point at it:\n  conformance run --ui-tests /path/to/jupyter-server-documents/ui-tests');
-  }
+/**
+ * Start the server the tests run against: the command the person gave (--start), or a JupyterLab with
+ * jupyter-server-documents, set up by the suite's own config (server/conformance_config.py) with the suite's own copy of
+ * the backend's side of the control contract (server/jsd_control.py). Nothing is taken from the backend's repo.
+ */
+async function startServer(suite, options, port, out) {
   fs.mkdirSync(out, { recursive: true });
-  const log = fs.openSync(path.join(out, 'server.log'), 'w');
-  const server = spawn('sh', [path.join(suite, 'scripts', 'start-jsd-server.sh')], {
-    env: { ...process.env, JSD_ENV: env, JSD_UI_TESTS: uiTests, COMPLIANCE_PORT: String(port), COMPLIANCE_ROOT_DIR: options['root-dir'] ?? path.join(os.tmpdir(), 'conformance-root') },
-    stdio: ['ignore', log, log],
-    detached: true
-  });
+  const logFile = path.join(out, 'server.log');
+  const log = fs.openSync(logFile, 'w');
+  const env = { ...process.env, CONFORMANCE_PORT: String(port) };
+  let rootDir = options['root-dir'];
+  let command;
+  let args;
+  if (options.start) {
+    command = 'sh';
+    args = ['-c', options.start.replaceAll('{port}', String(port))];
+  } else {
+    const pythonEnv = options.env ?? process.env.JSD_ENV ?? findPythonEnv();
+    if (!pythonEnv) {
+      fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  conformance run --env /path/to/env');
+    }
+    rootDir ??= path.join(os.tmpdir(), 'conformance-root');
+    fs.rmSync(rootDir, { recursive: true, force: true });
+    fs.mkdirSync(rootDir, { recursive: true });
+    env.CONFORMANCE_CONTROL = 'jsd_control';
+    command = path.join(pythonEnv, 'bin', 'jupyter');
+    args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
+  }
+  const server = spawn(command, args, { env, cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-')), stdio: ['ignore', log, log], detached: true });
   let exited = false;
   server.on('exit', () => (exited = true));
 
@@ -97,11 +109,11 @@ async function startJsd(suite, options, port, out) {
   for (let i = 0; i < 900; i++) {
     if (await serving(`http://localhost:${port}`)) {
       process.stdout.write('\r\u001b[2K');
-      return server;
+      return { server, rootDir };
     }
     if (exited) {
       stop(server);
-      const tail = fs.readFileSync(path.join(out, 'server.log'), 'utf8').trim().split('\n').slice(-12).join('\n');
+      const tail = fs.readFileSync(logFile, 'utf8').trim().split('\n').slice(-12).join('\n');
       fail('The server stopped before it was ready', tail);
     }
     if (process.stdout.isTTY) {
@@ -110,7 +122,7 @@ async function startJsd(suite, options, port, out) {
     await new Promise(r => setTimeout(r, 200));
   }
   stop(server);
-  fail('The server did not come up in 3 minutes', `Its log is ${path.join(out, 'server.log')}`);
+  fail('The server did not come up in 3 minutes', `Its log is ${logFile}`);
 }
 
 function stop(server) {
@@ -149,18 +161,21 @@ async function run(suite, stories, options) {
   console.log(`\n  ${bold('conformance')} ${dim(`v${VERSION}`)}`);
 
   let server;
+  let rootDir = options['root-dir'];
   if (!baseURL) {
-    if (backend !== 'jsd') {
-      fail(`The "${backend}" backend needs a running server`, 'conformance run --backend generic --url http://localhost:8888');
+    if (!options.start && backend !== 'jsd') {
+      fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  conformance run --start "<command that serves JupyterLab on {port}>"\n  conformance run --url http://localhost:8888');
     }
     baseURL = `http://localhost:${port}`;
     if (await serving(baseURL)) {
       fail(`Something is already serving ${baseURL}`, 'Stop it, or run the tests against it:\n  conformance run --url ' + baseURL);
     }
-    console.log(`  ${dim(backend)}\n`);
-    server = await startJsd(suite, options, port, out);
+    console.log(`  ${dim(options.start ? 'your server' : backend)}\n`);
+    const started = await startServer(suite, options, port, out);
+    server = started.server;
+    rootDir = rootDir ?? started.rootDir;
   } else {
-    console.log(`  ${dim(`${backend} · ${baseURL}`)}\n`);
+    console.log(`  ${dim(baseURL)}\n`);
   }
   const quit = () => server && stop(server);
   process.on('SIGINT', () => (quit(), process.exit(130)));
@@ -183,8 +198,8 @@ async function run(suite, stories, options) {
     env: {
       ...process.env,
       COMPLIANCE_BASE_URL: baseURL,
-      COMPLIANCE_ADAPTER: backend,
-      COMPLIANCE_ROOT_DIR: options['root-dir'] ?? process.env.COMPLIANCE_ROOT_DIR ?? path.join(os.tmpdir(), 'conformance-root'),
+      COMPLIANCE_ADAPTER: options.adapter ?? 'http',
+      ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
       ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
       PLAYWRIGHT_HTML_OPEN: 'never'
     }

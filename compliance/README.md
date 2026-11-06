@@ -2,7 +2,7 @@
 
 Tests that check **what a person experiences** in JupyterLab when documents are shared in real time, whatever server-side implementation sits behind it. They are generated from the [storyboards](../examples/storyboards/), so the page people read and the tests a backend must pass are the same stories.
 
-> **Status: generated and type-checked, not yet run against a live backend.** The generator, the runtime and the adapters are tested without a browser (matching, planning, freshness, types). The first run against a real server is the next step; until then treat a failure as "either the backend or the harness", and expect harness fixes. See [Running it](#running-it).
+> **Status:** the generator, the runtime and the adapter are tested without a browser. Runs against jupyter-server-documents have found real differences and harness bugs; see [Running it](#running-it). For how to run the tests against a codebase, start with [`docs/running-against-a-backend.md`](../docs/running-against-a-backend.md); to add another backend, [`docs/backend-contract.md`](../docs/backend-contract.md).
 
 ## The idea
 
@@ -47,49 +47,57 @@ A story needs the backend's help only to *cause* an event: the server letting go
 
 | adapter | does | use |
 |---|---|---|
-| `generic` | nothing beyond the browser and the Contents API (and `fileSystem` if `COMPLIANCE_ROOT_DIR` is set) | any JupyterLab with real-time collaboration |
-| `jsd` | adds `serverState` and `releaseRoom`, through the test-only endpoints of jupyter-server-documents' own UI tests | jupyter-server-documents |
-| your own | `COMPLIANCE_ADAPTER=./path/to/adapter.ts` — a module whose default export is a [`BackendAdapter`](runtime/adapter.ts) | anything else |
+| `http` (default) | asks the server what it can do (`GET /conformance/capabilities`) and uses the [control contract](../docs/backend-contract.md) for it; with no answer it does nothing beyond the browser and the Contents API | any backend, with or without the contract |
+| `generic` | never asks the server for anything | a server you know has no contract |
+| your own | `--adapter ./path/to/adapter.ts` (`COMPLIANCE_ADAPTER`): a module whose default export is a [`BackendAdapter`](runtime/adapter.ts) | a backend that needs more than HTTP, such as one that can crash and restart its server |
+
+The suite takes nothing from a backend's repo. For jupyter-server-documents it brings its own server config
+([`server/conformance_config.py`](server/conformance_config.py)) and its own side of the contract
+([`server/jsd_control.py`](server/jsd_control.py)).
 
 ## Running it
 
-**The short way**, for jupyter-server-documents: one command starts a server, runs the tests, and stops the server.
-
 ```sh
-sh compliance/scripts/run-jsd.sh                      # story Z3, browsers showing
-sh compliance/scripts/run-jsd.sh -g "Z1|Z2|Z3|Z4"     # any Playwright arguments
+conformance run                 # start jupyter-server-documents, run every story, stop it
+conformance run Z3 C2           # just these
+conformance run --url http://localhost:8888      # a server that is already running
+conformance run --start "my-server --port {port}"  # your own command that starts one
 ```
 
-It finds an environment that has jupyter_server_documents in a checkout of jupyter-server-documents (`DEV_REPO` if yours is
-elsewhere), or use `JSD_ENV` and `JSD_UI_TESTS`. The server's log is `/tmp/compliance-server.log`. The long way, step by step:
+The command is `bin/conformance.mjs` (`node compliance/bin/conformance.mjs` in a checkout); see
+[`docs/running-against-a-backend.md`](../docs/running-against-a-backend.md). Behind it is Playwright, which you can
+also run yourself against a server that is already up:
 
-1. **Start a JupyterLab** the way JupyterLab's own UI tests do: no login, and the app exposed to the page (`from jupyterlab.galata import configure_jupyter_server; configure_jupyter_server(c)` in its config). For jupyter-server-documents, [`scripts/start-jsd-server.sh`](scripts/start-jsd-server.sh) does it from its `ui-tests`. A server with extensions that pop modals on start will time every test out: disable them.
-2. **Run**:
+```sh
+cd compliance
+npm install && npx playwright install chromium
+npm run generate
+COMPLIANCE_BASE_URL=http://localhost:8899 COMPLIANCE_ROOT_DIR=/tmp/compliance-root npx playwright test
+npx playwright test -g "Z3"                       # one story
+npx playwright test --grep @group-residual        # one group
+npx playwright test --grep-invert @needs-alignment  # only the settled stories
+```
 
-   ```sh
-   cd compliance
-   npm install && npx playwright install chromium
-   COMPLIANCE_ADAPTER=jsd COMPLIANCE_ROOT_DIR=/tmp/compliance-root npx playwright test
-   npx playwright test -g "Z3"                       # one story
-   npx playwright test --grep @group-residual        # one group
-   npx playwright test --grep-invert @needs-alignment  # only the settled stories
-   ```
+The server must be set up the way JupyterLab's own UI tests set one up (no login, the app exposed to the page):
+`server/conformance_config.py` does it for a Jupyter Server based backend, with `CONFORMANCE_CONTROL=jsd_control` to load
+the backend's side of the contract.
 
 | variable | |
 |---|---|
 | `COMPLIANCE_BASE_URL` | where the server is (default `http://localhost:8899`) |
-| `COMPLIANCE_ADAPTER` | `generic` (default), `jsd`, or a path |
+| `COMPLIANCE_ADAPTER` | `http` (default), `generic`, or a path |
+| `COMPLIANCE_KNOWN_GAPS` | a JSON file of accepted stories this backend is known not to meet yet |
 | `COMPLIANCE_ROOT_DIR` | the folder the server serves; lets tests change the file from outside Jupyter |
 | `COMPLIANCE_DECISIONS` | `'{"Z3":1}'` holds Z3 to its second option instead of the proposed one |
 | `COMPLIANCE_TIMEOUT_MS`, `COMPLIANCE_SAVE_TIMEOUT_MS`, `COMPLIANCE_STABLE_MS`, `COMPLIANCE_SETTLE_MS` | waits (default 20 s, 40 s, 1.5 s, 0.75 s) |
 
 ## Reading a run
 
-`run-jsd.sh` ends with a summary, also available after any run with `python3 -I compliance/scripts/summarize.py`: one line per story (passed, or failed with the first line of why), what was skipped and what each skip lacked, and, for every story that is still an open question, **which of the storyboard's options the backend does**. A failing step names the storyboard step it was in, and every open tab is photographed at that moment.
+`conformance run` ends with a summary; the same is available after any run with `python3 -I compliance/scripts/summarize.py`: one line per story (passed, or failed with the first line of why), what was skipped and what each skip lacked, and, for every story that is still an open question, **which of the storyboard's options the backend does**. A failing step names the storyboard step it was in, and every open tab is photographed at that moment.
 
 ## Watching a story
 
-A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `run-jsd.sh` prints where they are and opens the page when you ran a single story.
+A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `conformance run` prints where the pages of failed stories are, and `--open` opens them.
 
 ## Going offline
 
@@ -110,7 +118,6 @@ For each step the generator knows what to do (`kind`) and, by comparing the cell
 
 ## What is not here yet
 
-- A live run, and the harness fixes that will bring.
 - `restartServer` / a portable `releaseRoom`: today only an adapter that has an endpoint can release a room.
 - Wire faults (`wireFaults`): lose or delay one message of the handshake. `page.routeWebSocket` can do it from the browser, but the message to lose is protocol-specific, so it belongs in an adapter.
 - Agents, and history records: adapter-specific by nature.
@@ -123,8 +130,11 @@ compliance/
   generate.py            the storyboards → tests/generated/*.spec.ts, stories.json, COVERAGE.md   (--check for CI)
   oracle.yaml            what the storyboards leave to words
   runtime/               Tab, Story, the matcher, the adapter interface
-  adapters/              generic, jsd
+  adapters/              http (the default: speaks the control contract), generic
+  server/                what the tests bring to a Jupyter Server backend: its config, and the jsd side of the contract
+  bin/                   the `conformance` command
+  known-gaps/            accepted stories a backend is known not to meet yet
   tests/generated/       GENERATED: one spec per group of stories. Do not edit.
   unit/                  tests of the matcher (no browser)
-  scripts/               start a jupyter-server-documents server for the tests
+  scripts/               package.py (the npm package), summarize.py
 ```

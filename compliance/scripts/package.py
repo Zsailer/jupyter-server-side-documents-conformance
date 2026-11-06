@@ -32,8 +32,7 @@ COPY = [
     "bin",
     "runtime",
     "known-gaps",
-    "scripts/run-jsd.sh",
-    "scripts/start-jsd-server.sh",
+    "server",
     "scripts/summarize.py",
     "playwright.config.ts",
     "tsconfig.json",
@@ -55,7 +54,7 @@ def build(out: Path, stage: Path) -> Path:
         dst = stage / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
         if src.is_dir():
-            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("node_modules", "*.map"))
+            shutil.copytree(src, dst, ignore=shutil.ignore_patterns("node_modules", "*.map", "__pycache__", "*.pyc"))
         else:
             shutil.copy2(src, dst)
     shutil.copytree(COMPLIANCE / "tests" / "generated", stage / "tests" / "generated")
