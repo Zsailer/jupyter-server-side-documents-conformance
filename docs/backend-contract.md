@@ -6,7 +6,7 @@ the story describes. This is the contract a backend implements to give it, small
 test-only server extension.
 
 Nothing here names an implementation, and the tests take nothing from a backend's repository: not its test folder, not
-its config. A backend that implements the contract is run with `jupyter conformance run --start "<command>"` or `--url`.
+its config. A backend that implements the contract is run with `rtc-conformance run --start "<command>"` or `--url`.
 
 ## The endpoints
 

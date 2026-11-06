@@ -34,12 +34,11 @@ That starts a JupyterLab with your tree, runs every story in real browsers, stop
 
 The first run unpacks the tests into `~/.cache` and installs their dependencies, which takes a few minutes. After that it
 starts straight away. To keep a copy on your machine, `npm install -g @jupyter-ai-contrib/jupyter-server-side-documents-conformance`
-gives you the program `jupyter-conformance`, which Jupyter runs as `jupyter conformance` like any other
-`jupyter-<name>` program on your PATH. Run it with nothing after it for a welcome screen and the places to start.
+gives you the `rtc-conformance` command. Run it with nothing after it for a welcome screen and the places to start.
 
 ## Choosing what to run
 
-Not sure which story you want? `jupyter conformance pick` shows them in a list, grouped as on the page, with what each needs from
+Not sure which story you want? `rtc-conformance pick` shows them in a list, grouped as on the page, with what each needs from
 a backend, and runs the ones you choose:
 
 ```
@@ -65,23 +64,23 @@ a backend, and runs the ones you choose:
 | `enter` | run what is selected, or the story under the arrow if nothing is |
 | `q` | leave without running |
 
-`jupyter conformance run -i` is the same thing with the run options you give it (`--env`, `--headed`, ...). It needs a terminal:
+`rtc-conformance run -i` is the same thing with the run options you give it (`--env`, `--headed`, ...). It needs a terminal:
 in a script, name the stories.
 
 ## Commands
 
 ```sh
-jupyter conformance help                   # what it is, and where to start
-jupyter conformance help run               # every option, with examples
-jupyter conformance list                   # every story, grouped, and what it needs from a backend
-jupyter conformance list --filter offline  # only the stories about offline
-jupyter conformance pick                   # choose stories from a list
-jupyter conformance run                    # every story
-jupyter conformance run Z3 C2              # just these
-jupyter conformance run 'AI*'              # a prefix
-jupyter conformance run --group handshake  # one group of the page
-jupyter conformance run --headed           # watch the browsers
-jupyter conformance run --open             # open the side-by-side video of each failed story
+rtc-conformance help                   # what it is, and where to start
+rtc-conformance help run               # every option, with examples
+rtc-conformance list                   # every story, grouped, and what it needs from a backend
+rtc-conformance list --filter offline  # only the stories about offline
+rtc-conformance pick                   # choose stories from a list
+rtc-conformance run                    # every story
+rtc-conformance run Z3 C2              # just these
+rtc-conformance run 'AI*'              # a prefix
+rtc-conformance run --group handshake  # one group of the page
+rtc-conformance run --headed           # watch the browsers
+rtc-conformance run --open             # open the side-by-side video of each failed story
 ```
 
 A mistyped command or option gets a suggestion (`Did you mean --headed?`).
@@ -89,14 +88,14 @@ A mistyped command or option gets a suggestion (`Did you mean --headed?`).
 Another backend, or a server you already started:
 
 ```sh
-jupyter conformance run --url http://localhost:8888                 # a server that is already running
-jupyter conformance run --start "my-server --port {port}"           # your own command that starts one
+rtc-conformance run --url http://localhost:8888                 # a server that is already running
+rtc-conformance run --start "my-server --port {port}"           # your own command that starts one
 ```
 
 A server that does not implement the [control contract](backend-contract.md) still runs every story that needs nothing
 from the backend; the rest are skipped, and the summary says how many and why.
 
-`jupyter conformance --help` has the rest (`--env`, `--known-gaps`, `--out`, `--root-dir`, `--adapter`).
+`rtc-conformance --help` has the rest (`--env`, `--known-gaps`, `--out`, `--root-dir`, `--adapter`).
 
 ## Reading a result
 

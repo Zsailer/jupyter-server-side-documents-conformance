@@ -159,10 +159,10 @@ test('the welcome screen has the logo, the name, the version and where to start'
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
   assert.match(text, /▄██████▄/); // the planet
   assert.match(text, /╭─+╮/); // its orbits
-  assert.match(text, /jupyter conformance v9\.8\.7/);
-  assert.match(text, /jupyter conformance pick/);
-  assert.match(text, /jupyter conformance run Z3/);
-  assert.match(text, /jupyter conformance help/);
+  assert.match(text, /rtc-conformance v9\.8\.7/);
+  assert.match(text, /rtc-conformance pick/);
+  assert.match(text, /rtc-conformance run Z3/);
+  assert.match(text, /rtc-conformance help/);
   assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
 });
 

@@ -1,4 +1,4 @@
-// The interactive story picker of `jupyter conformance pick`: a list grouped by topic, in which a person selects several stories.
+// The interactive story picker of `rtc-conformance pick`: a list grouped by topic, in which a person selects several stories.
 // The behaviour is pure functions (createPicker, reduce, render), so it is tested without a terminal; `pick` is the thin
 // part that reads keys and draws.
 import readline from 'node:readline';
