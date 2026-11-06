@@ -501,6 +501,7 @@ def generate(data: Path = DATA) -> dict:
             manifest.append({
                 "id": sid,
                 "group": gid,
+                "groupTitle": src["groups"][gid]["title"],
                 "title": st["title"],
                 "requires": sorted(c.requires),
                 "needsAlignment": bool(st.get("decision")),

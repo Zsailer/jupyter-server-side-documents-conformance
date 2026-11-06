@@ -4,6 +4,10 @@ The user-experience cases for real-time notebook collaboration, as a page people
 backend can be held to. Both are generated from the same stories (`stories/`); to add one, see
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+![Choosing stories and running one with the conformance command](docs/assets/conformance.gif)
+
+To run the tests against a backend: [`docs/running-against-a-backend.md`](docs/running-against-a-backend.md).
+
 The page is made with a small library of live, side-by-side notebook demos for documenting **what a product does in each scenario**.
 
 Instead of describing a scenario in a paragraph, you show it: real-looking Jupyter windows, one per tab, server and
@@ -31,7 +35,7 @@ holds after every step, and how the story ends.
 | [`docs/`](docs/) | How to write a good scenario page. Start with [the guide](docs/01-why-and-when.md). |
 | [`examples/minimal/`](examples/minimal/) | The smallest useful page: one picture and one live scenario. **Start here.** |
 | [`examples/storyboards/`](examples/storyboards/) | A real page: the 69 stories of the multi-tab acceptance suite, built from YAML. |
-| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. |
+| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. To run them against a backend, see [running against a backend](docs/running-against-a-backend.md) (`npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run`). |
 | [`tools/`](tools/) | The scenario grammar as a validator (`nbscenario_spec.py`). |
 | [`tests/`](tests/) | Tests of the core, of the built page in a simulated browser, and of the spec. |
 

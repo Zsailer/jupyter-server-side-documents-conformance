@@ -11,6 +11,7 @@
     "deploy": "npm test",
     "test:compliance": "npm --prefix compliance run generate && npm --prefix compliance run typecheck && npm --prefix compliance run test:unit",
     "preview": "npm run build",
+    "demo": "sh scripts/demo.sh",
     "package": "python3 -I compliance/scripts/package.py",
     "check": "npm test && npm run test:compliance"
   },
