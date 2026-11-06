@@ -191,7 +191,7 @@ export function render(state, { width = 100, budget = 14, color = true } = {}) {
   const below = Math.max(0, list.length - state.top - shown);
   const more = [above ? `↑ ${above} above` : '', below ? `↓ ${below} below` : ''].filter(Boolean).join('   ');
   lines.push('');
-  lines.push(`  ${state.selected.size ? yellow(`${state.selected.size} selected`) : dim('none selected: enter runs the one under the arrow')}${more ? `   ${dim(more)}` : ''}`);
+  lines.push(`  ${state.selected.size ? yellow(`${state.selected.size} selected`) : dim('space selects several · enter runs the one under the arrow')}${more ? `   ${dim(more)}` : ''}`);
   if (state.hint) {
     lines.push(`  ${yellow(state.hint)}`);
   }
