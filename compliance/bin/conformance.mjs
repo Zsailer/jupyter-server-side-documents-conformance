@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// `conformance`: run the real-time collaboration conformance tests against a backend. See --help.
+// `jupyter conformance`: run the real-time collaboration conformance tests against a backend. See --help.
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { grepFor, helpFor, parse } from './args.mjs';
 import { pick } from './picker.mjs';
+import { welcome } from './welcome.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(HERE, '..');
@@ -91,13 +92,13 @@ function list(suite, options) {
   }
   const free = stories.filter(s => !s.internal && !s.requires.length).length;
   console.log(`\n  ${dim(`${stories.length} stories · ${free} need nothing special from a backend`)}`);
-  console.log(`  ${dim('conformance pick  to choose some   ·   conformance run <id>  to run one')}\n`);
+  console.log(`  ${dim('jupyter conformance pick  to choose some   ·   jupyter conformance run <id>  to run one')}\n`);
 }
 
 /** The interactive way in: a list to choose from. Resolves with the ids chosen, or exits if the person leaves. */
 async function choose(suite) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    fail('Picking stories needs a terminal', 'Name the stories instead:\n  conformance run Z3 C2\nor see them with:\n  conformance list');
+    fail('Picking stories needs a terminal', 'Name the stories instead:\n  jupyter conformance run Z3 C2\nor see them with:\n  jupyter conformance list');
   }
   const chosen = await pick(loadStories(suite));
   if (!chosen) {
@@ -140,7 +141,7 @@ async function startServer(suite, options, port, out) {
   } else {
     const pythonEnv = options.env ?? process.env.JSD_ENV ?? findPythonEnv();
     if (!pythonEnv) {
-      fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  conformance run --env /path/to/env');
+      fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  jupyter conformance run --env /path/to/env');
     }
     rootDir ??= path.join(os.tmpdir(), 'conformance-root');
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -206,17 +207,17 @@ async function run(suite, stories, options) {
   const port = Number(process.env.COMPLIANCE_PORT ?? 8899);
   let baseURL = options.url?.replace(/\/$/, '');
 
-  console.log(`\n  ${bold('conformance')} ${dim(`v${VERSION}`)}`);
+  console.log(`\n  ${bold('jupyter conformance')} ${dim(`v${VERSION}`)}`);
 
   let server;
   let rootDir = options['root-dir'];
   if (!baseURL) {
     if (!options.start && backend !== 'jsd') {
-      fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  conformance run --start "<command that serves JupyterLab on {port}>"\n  conformance run --url http://localhost:8888');
+      fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  jupyter conformance run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance run --url http://localhost:8888');
     }
     baseURL = `http://localhost:${port}`;
     if (await serving(baseURL)) {
-      fail(`Something is already serving ${baseURL}`, 'Stop it, or run the tests against it:\n  conformance run --url ' + baseURL);
+      fail(`Something is already serving ${baseURL}`, 'Stop it, or run the tests against it:\n  jupyter conformance run --url ' + baseURL);
     }
     console.log(`  ${dim(options.start ? 'your server' : backend)}\n`);
     const started = await startServer(suite, options, port, out);
@@ -275,10 +276,12 @@ let parsed;
 try {
   parsed = parse(process.argv.slice(2));
 } catch (error) {
-  fail(error.message, 'conformance help');
+  fail(error.message, 'jupyter conformance help');
 }
 const { command, stories, options, topic } = parsed;
-if (command === 'help') {
+if (command === 'welcome') {
+  console.log(welcome({ version: VERSION, color }).join('\n'));
+} else if (command === 'help') {
   console.log(`\n${helpFor(topic)}`);
 } else if (command === 'version') {
   console.log(VERSION);

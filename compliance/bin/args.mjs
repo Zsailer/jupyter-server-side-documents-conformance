@@ -1,7 +1,7 @@
-// Argument parsing and help for the `conformance` command. No dependencies, and nothing here touches the machine.
+// Argument parsing and help for the `jupyter conformance` command. No dependencies, and nothing here touches the machine.
 
 // Help is written to fit an ordinary terminal: no line is longer than 78 characters (a test keeps it so).
-const MAIN = `conformance: hold a collaboration backend to what people should see
+const MAIN = `jupyter conformance: hold a collaboration backend to what people should see
 
 What it does
   Starts your server (or uses one that is running), opens real browsers and
@@ -11,9 +11,9 @@ What it does
   doesn't.
 
 Start here
-  conformance pick               choose stories from a list, then run them
-  conformance run Z3             run one story
-  conformance run                run every story (takes a while)
+  jupyter conformance pick       choose stories from a list, then run them
+  jupyter conformance run Z3     run one story
+  jupyter conformance run        run every story (takes a while)
 
 Commands
   run [story ...]    run the stories named, or all of them
@@ -22,21 +22,21 @@ Commands
   help [command]     more about a command, with examples
 
 Learn more
-  conformance help run    every option for running, and examples
-  docs/running-against-a-backend.md    a longer guide
+  jupyter conformance help run   every option for running, and examples
+  docs/running-against-a-backend.md   a longer guide
 `;
 
-const RUN = `conformance run: run the stories against a backend
+const RUN = `jupyter conformance run: run the stories against a backend
 
 Usage
-  conformance run [story ...] [options]
+  jupyter conformance run [story ...] [options]
 
 Which stories
-  conformance run                 every story
-  conformance run Z3 C2           these two
-  conformance run 'AI*'           every story whose id starts with AI
-  conformance run --group edges   one group of the page (see \`list\`)
-  conformance run -i              pick them from a list first (same as \`pick\`)
+  jupyter conformance run                every story
+  jupyter conformance run Z3 C2          these two
+  jupyter conformance run 'AI*'          every story whose id starts with AI
+  jupyter conformance run --group edges  one group of the page (see \`list\`)
+  jupyter conformance run -i             pick them from a list first
 
 Which server
   --backend <name>     how to start the server: jsd (default), the built-in
@@ -62,10 +62,10 @@ What you see
                        (default ./conformance-known-gaps.json)
 
 Examples
-  conformance run Z3 --env ~/envs/jsd
-  conformance run --group handshake --headed
-  conformance run --url http://localhost:8888
-  conformance run --start "my-server --port {port}"
+  jupyter conformance run Z3 --env ~/envs/jsd
+  jupyter conformance run --group handshake --headed
+  jupyter conformance run --url http://localhost:8888
+  jupyter conformance run --start "my-server --port {port}"
 
 A run ends with a line per story and a summary. The exit code is 0 when no
 story failed, so it works as a CI step.
@@ -77,10 +77,11 @@ story failed, so it works as a CI step.
   what
 `;
 
-const PICK = `conformance pick: choose stories from a list, then run them
+const PICK = `jupyter conformance pick: choose stories from a list, then run them
 
 Usage
-  conformance pick [options]      takes the same options as \`conformance run\`
+  jupyter conformance pick [options]
+  It takes the same options as \`jupyter conformance run\`.
 
 In the list
   ↑ ↓  (or j k)    move
@@ -94,13 +95,14 @@ In the list
                    nothing is)
   q  or  escape    leave without running
 
-Needs a terminal. In a script, name the stories: \`conformance run Z3 C2\`.
+Needs a terminal. In a script, name the stories:
+  jupyter conformance run Z3 C2
 `;
 
-const LIST = `conformance list: see every story and what each needs from a backend
+const LIST = `jupyter conformance list: see every story and what each needs from a backend
 
 Usage
-  conformance list [--group <name>] [--filter <text>]
+  jupyter conformance list [--group <name>] [--filter <text>]
 
   --group <name>    only the stories of one group
   --filter <text>   only the stories whose id, title or needs contain the text
@@ -166,6 +168,9 @@ export function parse(argv) {
     } else {
       positional.push(arg);
     }
+  }
+  if (positional.length === 0 && !options.help && !options.version) {
+    return { command: 'welcome', stories: [], options, topic: 'main' };
   }
   const [first = 'help', ...rest] = positional;
   if (options.version && !options.help) {

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPicker, fitCount, reduce, render, visible } from '../bin/picker.mjs';
 import { helpFor, parse, suggest } from '../bin/args.mjs';
+import { welcome } from '../bin/welcome.mjs';
 
 const stories = [
   { id: 'A', group: 'handshake', groupTitle: 'Reconnecting', title: 'Control: a tab reconnects', requires: ['releaseRoom'] },
@@ -130,7 +131,8 @@ test('help is there for the whole command and for each part of it', () => {
 test('arguments: help in every form, and the picker', () => {
   assert.deepEqual([parse(['help', 'run']).command, parse(['help', 'run']).topic], ['help', 'run']);
   assert.deepEqual([parse(['run', '--help']).command, parse(['run', '--help']).topic], ['help', 'run']);
-  assert.equal(parse([]).topic, 'main');
+  assert.equal(parse([]).command, 'welcome'); // nothing to do: say hello
+  assert.equal(parse(['help']).topic, 'main');
   assert.equal(parse(['pick']).command, 'pick');
   assert.equal(parse(['run', '-i']).options.interactive, true);
   assert.equal(parse(['list', '--filter', 'offline']).options.filter, 'offline');
@@ -150,5 +152,24 @@ test('help fits an ordinary terminal', () => {
     for (const line of helpFor(topic).split('\n')) {
       assert.ok(line.length <= 78, `${topic}: "${line}" is ${line.length} characters`);
     }
+  }
+});
+
+test('the welcome screen has the logo, the name, the version and where to start', () => {
+  const text = welcome({ version: '9.8.7', color: false }).join('\n');
+  assert.match(text, /▄██████▄/); // the planet
+  assert.match(text, /╭─+╮/); // its orbits
+  assert.match(text, /jupyter conformance v9\.8\.7/);
+  assert.match(text, /jupyter conformance pick/);
+  assert.match(text, /jupyter conformance run Z3/);
+  assert.match(text, /jupyter conformance help/);
+  assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
+});
+
+test('the welcome screen has colour when asked, and fits an ordinary terminal', () => {
+  const coloured = welcome({ version: '1.0.0', color: true }).join('\n');
+  assert.match(coloured, /\u001b\[38;5;208m/); // the orange planet
+  for (const line of welcome({ version: '10.20.30', color: false })) {
+    assert.ok(line.length <= 78, `"${line}" is ${line.length} characters`);
   }
 });

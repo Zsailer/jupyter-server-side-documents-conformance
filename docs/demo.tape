@@ -17,24 +17,24 @@ Set Padding 20
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 60ms
 
-# `conformance` for the length of the demo, from this checkout
+# `jupyter conformance` for the length of the demo, from this checkout (installed, Jupyter finds `jupyter-conformance`)
 Hide
-Type "alias conformance='node compliance/bin/conformance.mjs'" Enter
+Type `jupyter() { if [ "$1" = conformance ]; then shift; node compliance/bin/conformance.mjs "$@"; else command jupyter "$@"; fi; }` Enter
 Type "export PS1='$ '" Enter
 Type "clear" Enter
 Show
 
-# 1. What is it, and where do I start?
-Type "conformance help"
+# 1. Say hello: what is it, and where do I start?
+Type "jupyter conformance"
 Sleep 400ms
 Enter
-Sleep 5s
+Sleep 6s
 Hide
 Type "clear" Enter
 Show
 
 # 2. Choose stories from a list, filtering by a word
-Type "conformance pick"
+Type "jupyter conformance pick"
 Sleep 400ms
 Enter
 Sleep 1500ms
@@ -56,7 +56,7 @@ Type "clear" Enter
 Show
 
 # 3. Run one story against a real server
-Type "conformance pick"
+Type "jupyter conformance pick"
 Sleep 400ms
 Enter
 Sleep 1s

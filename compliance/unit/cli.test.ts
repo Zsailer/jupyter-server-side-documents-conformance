@@ -58,7 +58,7 @@ test('arguments: mistakes say what is wrong', () => {
   assert.throws(() => parse(['run', '--bogus']), /unknown option --bogus/);
   assert.throws(() => parse(['run', '--url']), /--url needs a value/);
   assert.throws(() => parse(['go']), /unknown command "go"/);
-  assert.equal(parse([]).command, 'help');
+  assert.equal(parse([]).command, 'welcome');
   assert.equal(parse(['-v']).command, 'version');
 });
 

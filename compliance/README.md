@@ -58,10 +58,10 @@ The suite takes nothing from a backend's repo. For jupyter-server-documents it b
 ## Running it
 
 ```sh
-conformance run                 # start jupyter-server-documents, run every story, stop it
-conformance run Z3 C2           # just these
-conformance run --url http://localhost:8888      # a server that is already running
-conformance run --start "my-server --port {port}"  # your own command that starts one
+jupyter conformance run                 # start jupyter-server-documents, run every story, stop it
+jupyter conformance run Z3 C2           # just these
+jupyter conformance run --url http://localhost:8888      # a server that is already running
+jupyter conformance run --start "my-server --port {port}"  # your own command that starts one
 ```
 
 The command is `bin/conformance.mjs` (`node compliance/bin/conformance.mjs` in a checkout); see
@@ -93,11 +93,11 @@ the backend's side of the contract.
 
 ## Reading a run
 
-`conformance run` ends with a summary; the same is available after any run with `python3 -I compliance/scripts/summarize.py`: one line per story (passed, or failed with the first line of why), what was skipped and what each skip lacked, and, for every story that is still an open question, **which of the storyboard's options the backend does**. A failing step names the storyboard step it was in, and every open tab is photographed at that moment.
+`jupyter conformance run` ends with a summary; the same is available after any run with `python3 -I compliance/scripts/summarize.py`: one line per story (passed, or failed with the first line of why), what was skipped and what each skip lacked, and, for every story that is still an open question, **which of the storyboard's options the backend does**. A failing step names the storyboard step it was in, and every open tab is photographed at that moment.
 
 ## Watching a story
 
-A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `conformance run` prints where the pages of failed stories are, and `--open` opens them.
+A story happens in several browsers at once, and Playwright films only the page it makes itself. So the tests film every tab (`runtime/recording.ts`) and write, next to the results of each story, **`watch.html`**: the videos of all the tabs side by side, on one clock, with the storyboard step shown underneath and a list of the steps. It is also attached to the report. `jupyter conformance run` prints where the pages of failed stories are, and `--open` opens them.
 
 ## Going offline
 
@@ -132,7 +132,7 @@ compliance/
   runtime/               Tab, Story, the matcher, the adapter interface
   adapters/              http (the default: speaks the control contract), generic
   server/                what the tests bring to a Jupyter Server backend: its config, and the jsd side of the contract
-  bin/                   the `conformance` command
+  bin/                   the `jupyter conformance` command
   known-gaps/            accepted stories a backend is known not to meet yet
   tests/generated/       GENERATED: one spec per group of stories. Do not edit.
   unit/                  tests of the matcher (no browser)
