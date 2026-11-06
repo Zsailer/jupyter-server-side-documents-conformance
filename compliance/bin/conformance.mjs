@@ -153,6 +153,14 @@ async function startServer(suite, options, port, out) {
   const server = spawn(command, args, { env, cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-')), stdio: ['ignore', log, log], detached: true });
   let exited = false;
   server.on('exit', () => (exited = true));
+  // from the moment it exists, the server goes when this command does, however that happens (also during start-up)
+  process.once('exit', () => stop(server));
+  for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]]) {
+    process.on(signal, () => {
+      stop(server);
+      process.exit(code);
+    });
+  }
 
   const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
   for (let i = 0; i < 900; i++) {
