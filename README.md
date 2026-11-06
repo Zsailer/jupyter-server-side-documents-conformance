@@ -4,7 +4,7 @@ The user-experience cases for real-time notebook collaboration, as a page people
 backend can be held to. Both are generated from the same stories (`stories/`); to add one, see
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-<!-- conformance-demo -->
+![Choosing stories and running one with the conformance command](docs/assets/conformance.gif)
 
 To run the tests against a backend: [`docs/running-against-a-backend.md`](docs/running-against-a-backend.md).
 
