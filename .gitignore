@@ -7,5 +7,7 @@ examples/storyboards/site/
 compliance/tests/generated/
 compliance/stories.json
 compliance/COVERAGE.md
+dist/
+.package/
 compliance/playwright-report/
 compliance/test-results/

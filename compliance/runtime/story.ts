@@ -406,10 +406,14 @@ interface Fixtures {
  *
  * The test is skipped, with the reason, if the backend adapter lacks something the story needs.
  */
-/** The accepted stories a backend is known not to meet yet, with why (known-gaps/<adapter>.json). */
+/**
+ * The accepted stories a backend is known not to meet yet, with why: the file named by COMPLIANCE_KNOWN_GAPS (so the
+ * backend's own repo can keep it), else known-gaps/<adapter>.json.
+ */
 function knownGaps(adapterName: string): Record<string, string> {
+  const file = process.env.COMPLIANCE_KNOWN_GAPS || nodePath.join(__dirname, '..', 'known-gaps', `${adapterName}.json`);
   try {
-    return JSON.parse(fs.readFileSync(nodePath.join(__dirname, '..', 'known-gaps', `${adapterName}.json`), 'utf-8'));
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
   } catch {
     return {};
   }
