@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createPicker, fitCount, reduce, render, visible } from '../bin/picker.mjs';
 import { helpFor, parse, suggest } from '../bin/args.mjs';
-import { welcome } from '../bin/welcome.mjs';
+import { logo, welcome } from '../bin/welcome.mjs';
 
 const stories = [
   { id: 'A', group: 'handshake', groupTitle: 'Reconnecting', title: 'Control: a tab reconnects', requires: ['releaseRoom'] },
@@ -157,8 +157,7 @@ test('help fits an ordinary terminal', () => {
 
 test('the welcome screen has the logo, the name, the version and where to start', () => {
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
-  assert.match(text, /▄██████▄/); // the planet
-  assert.match(text, /╭─+╮/); // its orbits
+  assert.match(text, /[▀▄█]/); // the logo is drawn in half blocks
   assert.match(text, /rtc-conformance v9\.8\.7/);
   assert.match(text, /rtc-conformance pick/);
   assert.match(text, /rtc-conformance run Z3/);
@@ -166,9 +165,18 @@ test('the welcome screen has the logo, the name, the version and where to start'
   assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
 });
 
+test('the logo is a block of the same width on every row', () => {
+  const rows = logo({ color: false });
+  assert.equal(rows.length, 11);
+  assert.ok(new Set(rows.map(r => r.length)).size === 1, 'every row has the same width');
+  assert.equal(rows[0].length, 30);
+  assert.ok(rows[5].includes('█'), 'the planet is solid in the middle');
+});
+
 test('the welcome screen has colour when asked, and fits an ordinary terminal', () => {
   const coloured = welcome({ version: '1.0.0', color: true }).join('\n');
-  assert.match(coloured, /\u001b\[38;5;208m/); // the orange planet
+  assert.match(coloured, /\u001b\[38;5;208m/); // the orange crescents
+  assert.match(coloured, /\u001b\[38;5;243m/); // the gray planet
   for (const line of welcome({ version: '10.20.30', color: false })) {
     assert.ok(line.length <= 78, `"${line}" is ${line.length} characters`);
   }
