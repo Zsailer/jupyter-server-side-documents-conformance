@@ -1,6 +1,10 @@
-# Notebook scenario docs
+# Jupyter server-side documents: conformance
 
-Live, side-by-side notebook demos for documenting **what a product does in each scenario**.
+The user-experience cases for real-time notebook collaboration, as a page people can read and as compliance tests any
+backend can be held to. Both are generated from the same stories (`stories/`); to add one, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+The page is made with a small library of live, side-by-side notebook demos for documenting **what a product does in each scenario**.
 
 Instead of describing a scenario in a paragraph, you show it: real-looking Jupyter windows, one per tab, server and
 file, that play the story step by step, with typing and a live cursor. The reader sees what each copy of the notebook
