@@ -10,7 +10,12 @@ import { pick } from './picker.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(HERE, '..');
-const VERSION = JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'package.json'), 'utf8')).version;
+// in a checkout the version is the repo's; in the published package it is the package's own
+const VERSION = (() => {
+  const read = file => (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
+  const repo = read(path.join(PACKAGE_ROOT, '..', 'package.json'));
+  return (repo.name === 'notebook-scenario-docs' ? repo : read(path.join(PACKAGE_ROOT, 'package.json'))).version;
+})();
 
 const color = Boolean(process.stdout.isTTY) && !process.env.NO_COLOR;
 const paint = (code, s) => (color ? `\u001b[${code}m${s}\u001b[0m` : s);

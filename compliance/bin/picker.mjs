@@ -18,14 +18,36 @@ export function visible(state) {
   return state.stories.filter(s => [s.id, s.title, s.group, s.groupTitle ?? '', ...(s.requires ?? [])].join(' ').toLowerCase().includes(q));
 }
 
-function clamp(state, rows) {
-  const n = visible(state).length;
-  const cursor = Math.max(0, Math.min(state.cursor, n - 1));
-  let top = Math.min(state.top, cursor);
-  if (cursor >= top + rows) {
-    top = cursor - rows + 1;
+/**
+ * How many stories, from `top`, fit in `budget` lines. A group's title takes a line, and a blank line before it unless
+ * it is the first, so a window of a few groups shows fewer stories than lines.
+ */
+export function fitCount(list, top, budget) {
+  let used = 0;
+  let n = 0;
+  let group;
+  for (let i = top; i < list.length; i++) {
+    const extra = list[i].group === group ? 0 : group === undefined ? 1 : 2;
+    if (used + extra + 1 > budget) {
+      break;
+    }
+    used += extra + 1;
+    n++;
+    group = list[i].group;
   }
-  return { ...state, cursor: n ? cursor : 0, top: Math.max(0, top) };
+  return Math.max(1, n);
+}
+
+function clamp(state, budget) {
+  const list = visible(state);
+  const n = list.length;
+  const cursor = Math.max(0, Math.min(state.cursor, n - 1));
+  let top = Math.max(0, Math.min(state.top, cursor));
+  // scroll until the arrow is inside the window
+  while (top < cursor && cursor >= top + fitCount(list, top, budget)) {
+    top++;
+  }
+  return { ...state, cursor: n ? cursor : 0, top };
 }
 
 function toggle(selected, ids, on) {
@@ -39,9 +61,9 @@ function toggle(selected, ids, on) {
  * Keys are 'up', 'down', 'pageup', 'pagedown', 'home', 'end', 'space', 'enter', 'escape', 'backspace', 'ctrl-c', or the
  * character typed.
  */
-export function reduce(state, key, rows = 10) {
+export function reduce(state, key, budget = 14) {
   const list = visible(state);
-  const go = next => ({ state: clamp({ ...state, hint: '', ...next }, rows) });
+  const go = next => ({ state: clamp({ ...state, hint: '', ...next }, budget) });
 
   if (key === 'ctrl-c') {
     return { state, done: 'cancel' };
@@ -73,9 +95,9 @@ export function reduce(state, key, rows = 10) {
     case 'j':
       return go({ cursor: state.cursor + 1 });
     case 'pageup':
-      return go({ cursor: state.cursor - rows });
+      return go({ cursor: state.cursor - fitCount(list, state.top, budget) });
     case 'pagedown':
-      return go({ cursor: state.cursor + rows });
+      return go({ cursor: state.cursor + fitCount(list, state.top, budget) });
     case 'home':
       return go({ cursor: 0 });
     case 'end':
@@ -120,8 +142,8 @@ export function reduce(state, key, rows = 10) {
 
 const paint = (on, code, s) => (on ? `\u001b[${code}m${s}\u001b[0m` : s);
 
-/** The lines to draw. `rows` is how many stories fit; headers of groups are drawn in between. */
-export function render(state, { width = 100, rows = 10, color = true } = {}) {
+/** The lines to draw. `budget` is how many lines the list may take, the titles of groups included. */
+export function render(state, { width = 100, budget = 14, color = true } = {}) {
   const dim = s => paint(color, '2', s);
   const bold = s => paint(color, '1', s);
   const green = s => paint(color, '32', s);
@@ -137,7 +159,8 @@ export function render(state, { width = 100, rows = 10, color = true } = {}) {
   }
   lines.push('');
 
-  const slice = list.slice(state.top, state.top + rows);
+  const shown = fitCount(list, state.top, budget);
+  const slice = list.slice(state.top, state.top + shown);
   if (!slice.length) {
     lines.push(`  ${dim('No story matches')}`);
   }
@@ -165,7 +188,7 @@ export function render(state, { width = 100, rows = 10, color = true } = {}) {
   });
 
   const above = state.top;
-  const below = Math.max(0, list.length - state.top - rows);
+  const below = Math.max(0, list.length - state.top - shown);
   const more = [above ? `↑ ${above} above` : '', below ? `↓ ${below} below` : ''].filter(Boolean).join('   ');
   lines.push('');
   lines.push(`  ${state.selected.size ? yellow(`${state.selected.size} selected`) : dim('none selected: enter runs the one under the arrow')}${more ? `   ${dim(more)}` : ''}`);
@@ -181,12 +204,13 @@ const NAMES = { return: 'enter', escape: 'escape', backspace: 'backspace', up: '
 export function pick(stories, { stdin = process.stdin, stdout = process.stdout, preselected = [] } = {}) {
   return new Promise(resolve => {
     const color = !process.env.NO_COLOR;
-    const rowsFor = () => Math.max(5, (stdout.rows || 30) - 10);
+    // the title, the keys, the filter, two blank lines, the count and a line for the cursor are not the list
+    const budgetFor = () => Math.max(8, (stdout.rows || 30) - 9);
     let state = createPicker(stories, { preselected });
     let drawn = 0;
 
     const draw = () => {
-      const lines = render(state, { width: stdout.columns || 100, rows: rowsFor(), color });
+      const lines = render(state, { width: stdout.columns || 100, budget: budgetFor(), color });
       if (drawn) {
         stdout.write(`\u001b[${drawn}A\r\u001b[J`);
       }
@@ -215,7 +239,7 @@ export function pick(stories, { stdin = process.stdin, stdout = process.stdout, 
       if (!name) {
         return;
       }
-      const out = reduce(state, name, rowsFor());
+      const out = reduce(state, name, budgetFor());
       state = out.state;
       if (out.done === 'run') {
         finish([...state.selected]);
