@@ -4,6 +4,10 @@ The user-experience cases for real-time notebook collaboration, as a page people
 backend can be held to. Both are generated from the same stories (`stories/`); to add one, see
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+<!-- conformance-demo -->
+
+To run the tests against a backend: [`docs/running-against-a-backend.md`](docs/running-against-a-backend.md).
+
 The page is made with a small library of live, side-by-side notebook demos for documenting **what a product does in each scenario**.
 
 Instead of describing a scenario in a paragraph, you show it: real-looking Jupyter windows, one per tab, server and
