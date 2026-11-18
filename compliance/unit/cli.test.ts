@@ -72,3 +72,11 @@ test('the grep picks exactly the stories named, and a prefix with a star', () =>
   assert.ok(grouped.test(' generated/h.spec.ts C2 · x @compliance @group-handshake'));
   assert.ok(!grouped.test(' generated/e.spec.ts C2 · x @compliance @group-edges'));
 });
+
+test('a leading ssd names the suite, and is optional', () => {
+  assert.deepEqual(parse(['ssd', 'run', 'Z3']).stories, ['Z3']);
+  assert.equal(parse(['ssd', 'run', 'Z3']).command, 'run');
+  assert.deepEqual(parse(['run', 'Z3']), parse(['ssd', 'run', 'Z3']));
+  assert.equal(parse(['ssd']).command, 'welcome');
+  assert.equal(parse(['ssd', 'help', 'run']).topic, 'run');
+});

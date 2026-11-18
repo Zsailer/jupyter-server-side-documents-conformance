@@ -17,15 +17,15 @@ Set Padding 20
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 60ms
 
-# `rtc-conformance` for the length of the demo, from this checkout (installed, it is on the PATH)
+# `jupyter conformance ssd` for the length of the demo, from this checkout (installed, it is on the PATH)
 Hide
-Type "alias rtc-conformance='node compliance/bin/conformance.mjs'" Enter
+Type "alias jupyter conformance ssd='node compliance/bin/conformance.mjs'" Enter
 Type "export PS1='$ '" Enter
 Type "clear" Enter
 Show
 
 # 1. Say hello: what is it, and where do I start?
-Type "rtc-conformance"
+Type "jupyter conformance ssd"
 Sleep 400ms
 Enter
 Sleep 6s
@@ -34,7 +34,7 @@ Type "clear" Enter
 Show
 
 # 2. Choose stories from a list, filtering by a word
-Type "rtc-conformance pick"
+Type "jupyter conformance ssd pick"
 Sleep 400ms
 Enter
 Sleep 1500ms
@@ -56,7 +56,7 @@ Type "clear" Enter
 Show
 
 # 3. Run one story against a real server
-Type "rtc-conformance pick"
+Type "jupyter conformance ssd pick"
 Sleep 400ms
 Enter
 Sleep 1s

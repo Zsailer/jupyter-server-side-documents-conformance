@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Draw the Jupyter logo as an outline in braille, for the welcome screen of rtc-conformance (compliance/bin/welcome.mjs).
+"""Draw the Jupyter logo as an outline in braille, for the welcome screen of jupyter conformance ssd (compliance/bin/welcome.mjs).
 
     python3 -I compliance/scripts/draw-logo.py            # prints the text to paste into welcome.mjs, and a preview
     python3 -I compliance/scripts/draw-logo.py logo.ppm   # also writes the dots as an image (ffmpeg -i logo.ppm logo.png)
