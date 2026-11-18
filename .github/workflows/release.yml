@@ -1,37 +1,51 @@
 name: Release
-# Publishes @zsailer/jupyter-server-side-documents-conformance to npm when a version tag is pushed.
+# Releases @zsailer/jupyter-server-side-documents-conformance from the Actions tab:
 #
-#   1. Bump the version in a pull request:   npm version minor --no-git-tag-version   (then merge it)
-#   2. Tag the merge commit and push the tag:   git tag 0.3.0 && git push origin 0.3.0
+#   Actions > Release > Run workflow > pick patch, minor or major
 #
-# Publishing uses npm trusted publishing (OIDC): there is no npm token to store. Set it up once, on npmjs.com, in the
-# package's Settings > Trusted Publisher: GitHub Actions, this repository, workflow `release.yml`, environment `npm`,
-# and leave "Allow npm publish" unchecked. The workflow only STAGES the version (`npm stage publish`); a maintainer
-# approves it on npmjs.com or with `npm stage approve`, using 2FA, and only then is it public.
-# (npm only offers trusted publishing for a package that exists, so the first version is published by hand, and a new
-# configuration must complete its first publish within 2 days.)
+# It bumps the version, runs the tests, packs the package and stages it on npm. When that works it commits the bump to
+# main, tags it and drafts a GitHub release. Nothing is committed if an earlier step fails. A maintainer then approves the
+# staged version on npmjs.com (2FA) and publishes the draft release.
+#
+# One-time setup:
+#   - npmjs.com > the package's Settings > Trusted Publisher: GitHub Actions, this repository, workflow `release.yml`,
+#     environment `npm`; leave "Allow npm publish" unchecked, so the workflow can only STAGE a version (`npm stage publish`).
+#   - GitHub > Settings > Environments: an environment named `npm`.
+#   - If main is protected, let the GitHub Actions app bypass the rule that blocks direct pushes.
 on:
-  push:
-    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch:
+    inputs:
+      version_part:
+        description: How should we bump the version?
+        type: choice
+        options: [patch, minor, major]
+        default: patch
 
 permissions:
-  contents: write   # the GitHub release
-  id-token: write   # npm trusted publishing and provenance
+  contents: write   # the version commit, the tag and the GitHub release
+  id-token: write   # npm trusted publishing (and provenance, once the repository is public)
+
+# never two releases at once
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   release:
+    # a release is always cut from main
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    # a maintainer approves the publish: add required reviewers to the `npm` environment in the repository settings
     environment: npm
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false   # never cache in a release build
       - name: Use the latest npm (staged publishing needs a recent one)
         run: npm install -g npm@latest
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install pyyaml
@@ -39,21 +53,34 @@ jobs:
       - run: npm ci --prefix compliance
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
-      - name: The tag must be the version in package.json
+      - name: Bump the version
+        id: version
         run: |
+          npm version "${{ inputs.version_part }}" --no-git-tag-version
           version=$(node -p "require('./package.json').version")
-          if [ "$version" != "$GITHUB_REF_NAME" ]; then
-            echo "tag $GITHUB_REF_NAME does not match package.json version $version" >&2
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" >/dev/null 2>&1; then
+            echo "the tag $version already exists" >&2
             exit 1
           fi
+          # keep the version in the CI example of the docs current
+          sed -i -E "s/(VERSION: )[0-9]+\.[0-9]+\.[0-9]+/\1$version/" docs/running-in-ci.md
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: npm run check
       - name: Pack
         run: python3 -I compliance/scripts/package.py
       # provenance is added automatically once the repository is public
       - name: Stage the version on npm
         run: npm stage publish ./dist/*.tgz
+      # only now, with the version staged, does main move: a failure above leaves nothing behind
+      - name: Commit the version and tag it
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "Bump to version ${{ steps.version.outputs.version }}"
+          git tag "${{ steps.version.outputs.version }}"
+          git push --atomic origin HEAD:main "refs/tags/${{ steps.version.outputs.version }}"
       # a draft: publish it after approving the staged version on npm
       - name: Draft the GitHub release
-        run: gh release create "$GITHUB_REF_NAME" dist/*.tgz --draft --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "${{ steps.version.outputs.version }}" ./dist/*.tgz --verify-tag --draft --title "${{ steps.version.outputs.version }}" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
