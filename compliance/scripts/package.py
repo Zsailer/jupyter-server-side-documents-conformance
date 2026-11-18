@@ -7,7 +7,7 @@ The tests are generated from stories/, not committed, so what a consumer needs i
 the runtime and the adapters, the Playwright config and the scripts that start a server and summarize a run. The version
 is the one in the root package.json; a release bumps it.
 
-Playwright does not compile TypeScript inside node_modules, so the `rtc-conformance` command unpacks the package into a cache
+Playwright does not compile TypeScript inside node_modules, so the `jupyter conformance ssd` command unpacks the package into a cache
 the first time it runs from there.
 
     npx @zsailer/jupyter-server-side-documents-conformance run     # unpacks itself into a cache on first use
@@ -64,7 +64,7 @@ def build(out: Path, stage: Path) -> Path:
         "name": NAME,
         "version": version,
         "description": own["description"],
-        "bin": {"rtc-conformance": "bin/conformance.mjs"},
+        "bin": {"jupyter-conformance": "bin/conformance.mjs"},
         "license": "BSD-3-Clause",
         "repository": {"type": "git", "url": "git+https://github.com/Zsailer/jupyter-server-side-documents-conformance.git"},
         "homepage": "https://github.com/Zsailer/jupyter-server-side-documents-conformance",

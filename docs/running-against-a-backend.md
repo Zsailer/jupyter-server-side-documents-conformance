@@ -9,7 +9,7 @@ point them at any implementation. Today there is an adapter for jupyter-server-d
 Inside the Python environment jupyter-server-documents is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
 
 ```sh
-npx @zsailer/jupyter-server-side-documents-conformance run
+npx @zsailer/jupyter-server-side-documents-conformance ssd run
 ```
 
 That starts a JupyterLab with your tree, runs every story in real browsers, stops the server and tells you how it went (an illustration, not a real result):
@@ -34,11 +34,16 @@ That starts a JupyterLab with your tree, runs every story in real browsers, stop
 
 The first run unpacks the tests into `~/.cache` and installs their dependencies, which takes a few minutes. After that it
 starts straight away. To keep a copy on your machine, `npm install -g @zsailer/jupyter-server-side-documents-conformance`
-gives you the `rtc-conformance` command. Run it with nothing after it for a welcome screen and the places to start.
+gives you the `jupyter conformance ssd` command. Run it with nothing after it for a welcome screen and the places to start.
+
+`jupyter conformance` works because `jupyter` runs any `jupyter-<name>` program it finds on your `PATH`, whatever language
+it is written in, as JupyterLab, Jupyter Server and the others do. This package adds a `jupyter-conformance` program and
+does not change `jupyter` or any other subcommand. It needs the global install: `npx` runs the program directly, so there
+you leave out `jupyter conformance` and start with `ssd`, as above. The word `ssd` picks the suite (server-side documents).
 
 ## Choosing what to run
 
-Not sure which story you want? `rtc-conformance pick` shows them in a list, grouped as on the page, with what each needs from
+Not sure which story you want? `jupyter conformance ssd pick` shows them in a list, grouped as on the page, with what each needs from
 a backend, and runs the ones you choose:
 
 ```
@@ -64,23 +69,23 @@ a backend, and runs the ones you choose:
 | `enter` | run what is selected, or the story under the arrow if nothing is |
 | `q` | leave without running |
 
-`rtc-conformance run -i` is the same thing with the run options you give it (`--env`, `--headed`, ...). It needs a terminal:
+`jupyter conformance ssd run -i` is the same thing with the run options you give it (`--env`, `--headed`, ...). It needs a terminal:
 in a script, name the stories.
 
 ## Commands
 
 ```sh
-rtc-conformance help                   # what it is, and where to start
-rtc-conformance help run               # every option, with examples
-rtc-conformance list                   # every story, grouped, and what it needs from a backend
-rtc-conformance list --filter offline  # only the stories about offline
-rtc-conformance pick                   # choose stories from a list
-rtc-conformance run                    # every story
-rtc-conformance run Z3 C2              # just these
-rtc-conformance run 'AI*'              # a prefix
-rtc-conformance run --group handshake  # one group of the page
-rtc-conformance run --headed           # watch the browsers
-rtc-conformance run --open             # open the side-by-side video of each failed story
+jupyter conformance ssd help                   # what it is, and where to start
+jupyter conformance ssd help run               # every option, with examples
+jupyter conformance ssd list                   # every story, grouped, and what it needs from a backend
+jupyter conformance ssd list --filter offline  # only the stories about offline
+jupyter conformance ssd pick                   # choose stories from a list
+jupyter conformance ssd run                    # every story
+jupyter conformance ssd run Z3 C2              # just these
+jupyter conformance ssd run 'AI*'              # a prefix
+jupyter conformance ssd run --group handshake  # one group of the page
+jupyter conformance ssd run --headed           # watch the browsers
+jupyter conformance ssd run --open             # open the side-by-side video of each failed story
 ```
 
 A mistyped command or option gets a suggestion (`Did you mean --headed?`).
@@ -88,14 +93,14 @@ A mistyped command or option gets a suggestion (`Did you mean --headed?`).
 Another backend, or a server you already started:
 
 ```sh
-rtc-conformance run --url http://localhost:8888                 # a server that is already running
-rtc-conformance run --start "my-server --port {port}"           # your own command that starts one
+jupyter conformance ssd run --url http://localhost:8888                 # a server that is already running
+jupyter conformance ssd run --start "my-server --port {port}"           # your own command that starts one
 ```
 
 A server that does not implement the [control contract](backend-contract.md) still runs every story that needs nothing
 from the backend; the rest are skipped, and the summary says how many and why.
 
-`rtc-conformance --help` has the rest (`--env`, `--known-gaps`, `--out`, `--root-dir`, `--adapter`).
+`jupyter conformance ssd --help` has the rest (`--env`, `--known-gaps`, `--out`, `--root-dir`, `--adapter`).
 
 ## Reading a result
 
