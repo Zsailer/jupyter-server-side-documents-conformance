@@ -40,8 +40,9 @@ Which stories
 
 Which server
   --backend <name>     how to start the server: jsd (default), the built-in
-                       way to start jupyter-server-documents
-  --env <dir>          the Python environment with jupyter_server_documents
+                       way to start jupyter-server-documents, or jcollab, to
+                       start jupyter-collaboration (and nbmodel)
+  --env <dir>          the Python environment with the backend installed
                        (default: the one on your PATH)
   --start <command>    your own command that starts a JupyterLab on {port}.
                        The backend must implement the control contract

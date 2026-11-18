@@ -117,8 +117,17 @@ async function serving(url) {
   }
 }
 
-function findPythonEnv() {
-  const found = spawnSync('python3', ['-c', 'import jupyter_server_documents, sys; print(sys.prefix)'], { encoding: 'utf8' });
+/**
+ * The backends the suite knows how to start: the Python package that tells an environment has it, the variable that
+ * names an environment, and the module in server/ that is the backend's side of the control contract.
+ */
+const BACKENDS = {
+  jsd: { label: 'jupyter-server-documents', module: 'jupyter_server_documents', envVar: 'JSD_ENV', control: 'jsd_control' },
+  jcollab: { label: 'jupyter-collaboration', module: 'jupyter_server_ydoc', envVar: 'JCOLLAB_ENV', control: 'jcollab_control' }
+};
+
+function findPythonEnv(backend) {
+  const found = spawnSync('python3', ['-c', `import ${backend.module}, sys; print(sys.prefix)`], { encoding: 'utf8' });
   return found.status === 0 ? found.stdout.trim() : undefined;
 }
 
@@ -139,14 +148,15 @@ async function startServer(suite, options, port, out) {
     command = 'sh';
     args = ['-c', options.start.replaceAll('{port}', String(port))];
   } else {
-    const pythonEnv = options.env ?? process.env.JSD_ENV ?? findPythonEnv();
+    const backend = BACKENDS[options.backend ?? 'jsd'];
+    const pythonEnv = options.env ?? process.env[backend.envVar] ?? findPythonEnv(backend);
     if (!pythonEnv) {
-      fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --env /path/to/env');
+      fail(`Can't find a Python environment with ${backend.module}`, `Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --backend ${options.backend ?? 'jsd'} --env /path/to/env`);
     }
     rootDir ??= path.join(os.tmpdir(), 'conformance-root');
     fs.rmSync(rootDir, { recursive: true, force: true });
     fs.mkdirSync(rootDir, { recursive: true });
-    env.CONFORMANCE_CONTROL = 'jsd_control';
+    env.CONFORMANCE_CONTROL = backend.control;
     command = path.join(pythonEnv, 'bin', 'jupyter');
     args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
   }
@@ -220,7 +230,7 @@ async function run(suite, stories, options) {
   let server;
   let rootDir = options['root-dir'];
   if (!baseURL) {
-    if (!options.start && backend !== 'jsd') {
+    if (!options.start && !BACKENDS[backend]) {
       fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  jupyter conformance ssd run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance ssd run --url http://localhost:8888');
     }
     baseURL = `http://localhost:${port}`;
