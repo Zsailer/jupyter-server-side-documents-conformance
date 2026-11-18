@@ -71,6 +71,7 @@ skipped, with the reason.
 1. Implement the three endpoints as a test-only extension of the backend, in its own repo or in `compliance/server/`.
    [`compliance/server/jsd_control.py`](../compliance/server/jsd_control.py) is the example for jupyter-server-documents:
    about a hundred lines, and the only file that knows how that backend keeps its rooms.
+   [`jcollab_control.py`](../compliance/server/jcollab_control.py) is the same for jupyter-collaboration.
 2. Start the backend with the server config of the tests and your extension, and run the tests against it.
 3. Keep a `conformance-known-gaps.json` for the accepted stories it does not meet yet.
 
