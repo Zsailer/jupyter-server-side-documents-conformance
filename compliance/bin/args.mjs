@@ -31,7 +31,7 @@ const RUN = `jupyter conformance ssd run: run the stories against a backend
 Usage
   jupyter conformance ssd run [story ...] [options]
 
-Which stories
+Which stories (each needs a server too: see below)
   jupyter conformance ssd run                every story
   jupyter conformance ssd run Z3 C2          these two
   jupyter conformance ssd run 'AI*'          every story whose id starts AI
@@ -39,11 +39,12 @@ Which stories
   jupyter conformance ssd run -i             pick them from a list first
 
 Which server
-  --backend <name>     how to start the server: jsd (default), the built-in
-                       way to start jupyter-server-documents, or jcollab, to
-                       start jupyter-collaboration (and nbmodel)
+  --backend <name>     how to start the server, so no backend is assumed:
+                       jsd (jupyter-server-documents) or jcollab
+                       (jupyter-collaboration and nbmodel). Or use --start
+                       or --url
   --env <dir>          the Python environment with the backend installed
-                       (default: the one on your PATH)
+                       (default: the one on your PATH that has it)
   --start <command>    your own command that starts a JupyterLab on {port}.
                        The backend must implement the control contract
                        (docs/backend-contract.md) for the stories that need
@@ -63,7 +64,7 @@ What you see
                        (default ./conformance-known-gaps.json)
 
 Examples
-  jupyter conformance ssd run Z3 --env ~/envs/jsd
+  jupyter conformance ssd run Z3 --backend jsd --env ~/envs/jsd
   jupyter conformance ssd run --group handshake --headed
   jupyter conformance ssd run --url http://localhost:8888
   jupyter conformance ssd run --start "my-server --port {port}"

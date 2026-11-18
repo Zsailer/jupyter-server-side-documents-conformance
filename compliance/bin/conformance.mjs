@@ -148,12 +148,12 @@ async function startServer(suite, options, port, out) {
     command = 'sh';
     args = ['-c', options.start.replaceAll('{port}', String(port))];
   } else {
-    const backend = BACKENDS[options.backend ?? 'jsd'];
+    const backend = BACKENDS[options.backend];
     const given = options.env ?? process.env[backend.envVar];
     // the server starts in a folder of its own, so a relative path to the environment would no longer lead to it
     const pythonEnv = given ? path.resolve(given) : findPythonEnv(backend);
     if (!pythonEnv) {
-      fail(`Can't find a Python environment with ${backend.module}`, `Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --backend ${options.backend ?? 'jsd'} --env /path/to/env`);
+      fail(`Can't find a Python environment with ${backend.module}`, `Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --backend ${options.backend} --env /path/to/env`);
     }
     rootDir ??= path.join(os.tmpdir(), 'conformance-root');
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -223,7 +223,7 @@ function watchPages(results) {
 async function run(suite, stories, options) {
   const out = path.resolve(options.out ?? 'conformance-results');
   const results = path.join(out, 'results');
-  const backend = options.backend ?? 'jsd';
+  const backend = options.backend;
   const port = Number(process.env.COMPLIANCE_PORT ?? 8899);
   let baseURL = options.url?.replace(/\/$/, '');
 
@@ -232,6 +232,9 @@ async function run(suite, stories, options) {
   let server;
   let rootDir = options['root-dir'];
   if (!baseURL) {
+    if (!options.start && !backend) {
+      fail('Say which backend to run against', `No backend is assumed. Name one: ${Object.keys(BACKENDS).map(n => `\n  jupyter conformance ssd run --backend ${n}`).join('')}\nor give a command that starts yours, or a server that is already running:\n  jupyter conformance ssd run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance ssd run --url http://localhost:8888`);
+    }
     if (!options.start && !BACKENDS[backend]) {
       fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  jupyter conformance ssd run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance ssd run --url http://localhost:8888');
     }

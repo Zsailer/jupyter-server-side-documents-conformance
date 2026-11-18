@@ -6,10 +6,10 @@ point them at any implementation. There is a built-in way to start jupyter-serve
 
 ## Quick start
 
-Inside the Python environment jupyter-server-documents is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
+Name the backend: no backend is assumed. Run inside the Python environment it is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
 
 ```sh
-npx @zsailer/jupyter-server-side-documents-conformance ssd run
+npx @zsailer/jupyter-server-side-documents-conformance ssd run --backend jsd
 ```
 
 That starts a JupyterLab with your tree, runs every story in real browsers, stops the server and tells you how it went (an illustration, not a real result):
@@ -80,7 +80,7 @@ jupyter conformance ssd help run               # every option, with examples
 jupyter conformance ssd list                   # every story, grouped, and what it needs from a backend
 jupyter conformance ssd list --filter offline  # only the stories about offline
 jupyter conformance ssd pick                   # choose stories from a list
-jupyter conformance ssd run                    # every story
+jupyter conformance ssd run --backend jsd       # every story (every example below also needs --backend, --start or --url)
 jupyter conformance ssd run Z3 C2              # just these
 jupyter conformance ssd run 'AI*'              # a prefix
 jupyter conformance ssd run --group handshake  # one group of the page
