@@ -73,3 +73,7 @@ Actions publishes it to GitHub Pages from `main`, and a preview of every pull re
 It was built to document the scenarios of jupyter-server-documents PR #100:
 a storyboard of what Jupyter should do when connections drop, servers let go of notebooks, files change underneath,
 and AI agents edit. The same grammar and player work for any "who does what to a shared notebook" documentation.
+
+## License
+
+[BSD 3-Clause](LICENSE).

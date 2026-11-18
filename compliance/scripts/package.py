@@ -5,7 +5,7 @@
 
 The tests are generated from stories/, not committed, so what a consumer needs is a snapshot of them: the generated tests,
 the runtime and the adapters, the Playwright config and the scripts that start a server and summarize a run. The version
-is the one in the root package.json; the release pipeline bumps it.
+is the one in the root package.json; a release bumps it.
 
 Playwright does not compile TypeScript inside node_modules, so the `rtc-conformance` command unpacks the package into a cache
 the first time it runs from there.
@@ -65,6 +65,9 @@ def build(out: Path, stage: Path) -> Path:
         "version": version,
         "description": own["description"],
         "bin": {"rtc-conformance": "bin/conformance.mjs"},
+        "license": "BSD-3-Clause",
+        "repository": {"type": "git", "url": "git+https://github.com/Zsailer/jupyter-server-side-documents-conformance.git"},
+        "homepage": "https://github.com/Zsailer/jupyter-server-side-documents-conformance",
         "publishConfig": {"access": "public"},
         "scripts": {"test": "playwright test", "typecheck": "tsc --noEmit"},
         "dependencies": own["devDependencies"],

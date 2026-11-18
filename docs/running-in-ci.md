@@ -24,7 +24,7 @@ jobs:
       - run: pip install -e ".[test]" jupyterlab   # your backend, installed into the Python that runs the server
       - name: Run the conformance tests
         env:
-          VERSION: 0.2.1   # the version of the conformance tests this tree is held to
+          VERSION: 0.0.1   # the version of the conformance tests this tree is held to
         run: npx --yes "@zsailer/jupyter-server-side-documents-conformance@$VERSION" run
       - uses: actions/upload-artifact@v4
         if: always()
@@ -57,6 +57,10 @@ A listed story still runs and is expected to fail. The day it passes, the job fa
 
 ## Releasing a new version of the tests
 
-Run the `Release` workflow of this repo from the Actions tab (`version_part`: major, minor or patch). It bumps
-`package.json`, packs the tests, publishes the package to npm and tags the commit. To look at what would be published, run
+1. Bump the version in a pull request (`npm version minor --no-git-tag-version`, or `patch` or `major`) and merge it.
+2. Tag the merge commit and push the tag: `git tag 0.3.0 && git push origin 0.3.0`.
+
+The `Release` workflow checks that the tag is the version in `package.json`, runs the tests, publishes the package to npm
+with provenance and creates a GitHub release with the tarball. It needs no npm token: npm trusts this workflow
+(see the comment at the top of `.github/workflows/release.yml`). To look at what would be published, run
 `npm run package` and open `dist/`.
