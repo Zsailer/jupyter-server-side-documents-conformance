@@ -1,5 +1,5 @@
 name: Release
-# Publishes @jupyter-ai-contrib/jupyter-server-side-documents-conformance to npm. Started by hand from the Actions tab.
+# Publishes @zsailer/jupyter-server-side-documents-conformance to npm. Started by hand from the Actions tab.
 on:
   workflow_dispatch:
     inputs:

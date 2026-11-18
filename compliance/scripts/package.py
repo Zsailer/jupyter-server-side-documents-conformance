@@ -10,7 +10,7 @@ is the one in the root package.json; the release pipeline bumps it.
 Playwright does not compile TypeScript inside node_modules, so the `rtc-conformance` command unpacks the package into a cache
 the first time it runs from there.
 
-    npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run     # unpacks itself into a cache on first use
+    npx @zsailer/jupyter-server-side-documents-conformance run     # unpacks itself into a cache on first use
 
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 COMPLIANCE = HERE.parent
 ROOT = COMPLIANCE.parent
-NAME = "@jupyter-ai-contrib/jupyter-server-side-documents-conformance"
+NAME = "@zsailer/jupyter-server-side-documents-conformance"
 
 # what goes in, relative to compliance/
 COPY = [
@@ -73,7 +73,7 @@ def build(out: Path, stage: Path) -> Path:
 
     out.mkdir(parents=True, exist_ok=True)
     subprocess.run(["npm", "pack", "--silent", "--pack-destination", str(out)], check=True, cwd=stage, stdout=subprocess.DEVNULL)
-    packed = out / f"jupyter-ai-contrib-{NAME.split('/')[1]}-{version}.tgz"
+    packed = out / f"zsailer-{NAME.split('/')[1]}-{version}.tgz"
     # the registry path wants the name without the scope's prefix, as the other extensions do
     final = out / f"{NAME.split('/')[1]}-{version}.tgz"
     packed.replace(final)

@@ -1,6 +1,6 @@
 # Running the conformance tests in another repo's CI
 
-The tests are published to npm as `@jupyter-ai-contrib/jupyter-server-side-documents-conformance`, with a
+The tests are published to npm as `@zsailer/jupyter-server-side-documents-conformance`, with a
 `rtc-conformance` command (see [running against a backend](running-against-a-backend.md)). A backend's workflow runs a
 pinned version. It takes new cases when it bumps the version, so a case accepted here cannot turn its CI red by surprise.
 
@@ -25,7 +25,7 @@ jobs:
       - name: Run the conformance tests
         env:
           VERSION: 0.2.1   # the version of the conformance tests this tree is held to
-        run: npx --yes "@jupyter-ai-contrib/jupyter-server-side-documents-conformance@$VERSION" run
+        run: npx --yes "@zsailer/jupyter-server-side-documents-conformance@$VERSION" run
       - uses: actions/upload-artifact@v4
         if: always()
         with:
