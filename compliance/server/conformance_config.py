@@ -9,7 +9,8 @@ It is what the tests need of any Jupyter Server based backend:
 - when CONFORMANCE_CONTROL names a module in this folder, that module is loaded as a server extension. It is the
   backend's side of the control contract (docs/backend-contract.md), and it is what lets a test make the server let go
   of a notebook;
-- the frontend extensions that open a blocking modal on load are switched off when they are installed.
+- frontend extensions that open a blocking modal on load can be switched off: list them in CONFORMANCE_DISABLED_EXTENSIONS
+  (comma-separated labextension names, or a scope such as `@my-org` to switch off every extension in it).
 """
 import json
 import os
@@ -32,12 +33,15 @@ if control:
 
 # JupyterLab reads labconfig/page_config.json from the config path on each page load, so a generated one is put first.
 disabled = {}
-for root in jupyter_path("labextensions"):
-    scoped = Path(root) / "@vendor"
-    if scoped.is_dir():
-        disabled.update({f"@vendor/{p.name}": True for p in scoped.iterdir()})
+for entry in filter(None, (e.strip() for e in os.environ.get("CONFORMANCE_DISABLED_EXTENSIONS", "").split(","))):
+    if entry.startswith("@") and "/" not in entry:
+        for root in jupyter_path("labextensions"):
+            scope = Path(root) / entry
+            if scope.is_dir():
+                disabled.update({f"{entry}/{p.name}": True for p in scope.iterdir()})
+    else:
+        disabled[entry] = True
 if disabled:
-    disabled["@jupyterlab/scheduler"] = True
     config_dir = Path(tempfile.mkdtemp(prefix="conformance-config-"))
     (config_dir / "labconfig").mkdir()
     (config_dir / "labconfig" / "page_config.json").write_text(json.dumps({"disabledExtensions": disabled}))

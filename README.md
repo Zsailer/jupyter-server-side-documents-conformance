@@ -53,13 +53,8 @@ npm run build                              # writes examples/storyboards/site/in
 npm test
 ```
 
-To publish the storyboards page, after `npm install`:
-
-```sh
-npm run deploy                             # builds, runs every test, and publishes nothing
-```
-
-The built page is the folder `examples/storyboards/site/`, which `npm run build` writes.
+The built page is the folder `examples/storyboards/site/`, which `npm run build` writes. It is a static site: GitHub
+Actions publishes it to GitHub Pages from `main`, and a preview of every pull request (see [CONTRIBUTING](CONTRIBUTING.md)).
 
 ## The idea in four moves
 
