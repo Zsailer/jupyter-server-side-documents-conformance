@@ -35,7 +35,7 @@ holds after every step, and how the story ends.
 | [`docs/`](docs/) | How to write a good scenario page. Start with [the guide](docs/01-why-and-when.md). |
 | [`examples/minimal/`](examples/minimal/) | The smallest useful page: one picture and one live scenario. **Start here.** |
 | [`examples/storyboards/`](examples/storyboards/) | A real page: the 69 stories of the multi-tab acceptance suite, built from YAML. |
-| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. To run them against a backend, see [running against a backend](docs/running-against-a-backend.md) (`npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run`). |
+| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. To run them against a backend, see [running against a backend](docs/running-against-a-backend.md) (`npx @zsailer/jupyter-server-side-documents-conformance run`). |
 | [`tools/`](tools/) | The scenario grammar as a validator (`nbscenario_spec.py`). |
 | [`tests/`](tests/) | Tests of the core, of the built page in a simulated browser, and of the spec. |
 
@@ -53,13 +53,8 @@ npm run build                              # writes examples/storyboards/site/in
 npm test
 ```
 
-To publish the storyboards page, after `npm install`:
-
-```sh
-npm run deploy                             # builds, runs every test, and publishes nothing
-```
-
-The built page is the folder `examples/storyboards/site/`, which `npm run build` writes.
+The built page is the folder `examples/storyboards/site/`, which `npm run build` writes. It is a static site: GitHub
+Actions publishes it to GitHub Pages from `main`, and a preview of every pull request (see [CONTRIBUTING](CONTRIBUTING.md)).
 
 ## The idea in four moves
 

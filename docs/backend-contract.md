@@ -49,7 +49,7 @@ notebook again from the file. `200` when done, also when there was nothing to re
 ## What the tests bring themselves
 
 - **A server configuration** for Jupyter Server based backends: no login, the app exposed to the page, root allowed, and
-  the frontend extensions that open modals on load switched off (`server/conformance_config.py`). Load your side of
+  the frontend extensions named in `CONFORMANCE_DISABLED_EXTENSIONS` switched off (`server/conformance_config.py`). Load your side of
   the contract through it by setting `CONFORMANCE_CONTROL=<module in server/>`.
 - **A start command**, when you give one: `--start "<command>"`, run with `{port}` replaced and `CONFORMANCE_PORT` set. It
   must serve JupyterLab, with the server configured as above, on that port.
