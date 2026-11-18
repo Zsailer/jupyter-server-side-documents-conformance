@@ -149,7 +149,9 @@ async function startServer(suite, options, port, out) {
     args = ['-c', options.start.replaceAll('{port}', String(port))];
   } else {
     const backend = BACKENDS[options.backend ?? 'jsd'];
-    const pythonEnv = options.env ?? process.env[backend.envVar] ?? findPythonEnv(backend);
+    const given = options.env ?? process.env[backend.envVar];
+    // the server starts in a folder of its own, so a relative path to the environment would no longer lead to it
+    const pythonEnv = given ? path.resolve(given) : findPythonEnv(backend);
     if (!pythonEnv) {
       fail(`Can't find a Python environment with ${backend.module}`, `Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --backend ${options.backend ?? 'jsd'} --env /path/to/env`);
     }
