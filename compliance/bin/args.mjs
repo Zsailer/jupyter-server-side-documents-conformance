@@ -1,7 +1,7 @@
-// Argument parsing and help for the `rtc-conformance` command. No dependencies, and nothing here touches the machine.
+// Argument parsing and help for the `jupyter conformance ssd` command. No dependencies, and nothing here touches the machine.
 
 // Help is written to fit an ordinary terminal: no line is longer than 78 characters (a test keeps it so).
-const MAIN = `rtc-conformance: hold a collaboration backend to what people should see
+const MAIN = `jupyter conformance ssd: hold a backend to what people should see
 
 What it does
   Starts your server (or uses one that is running), opens real browsers and
@@ -11,9 +11,9 @@ What it does
   doesn't.
 
 Start here
-  rtc-conformance pick    choose stories from a list, then run them
-  rtc-conformance run Z3  run one story
-  rtc-conformance run     run every story (takes a while)
+  jupyter conformance ssd pick    choose stories from a list, then run them
+  jupyter conformance ssd run Z3  run one story
+  jupyter conformance ssd run     run every story (takes a while)
 
 Commands
   run [story ...]    run the stories named, or all of them
@@ -22,21 +22,21 @@ Commands
   help [command]     more about a command, with examples
 
 Learn more
-  rtc-conformance help run    every option for running, and examples
+  jupyter conformance ssd help run    every option for running, and examples
   docs/running-against-a-backend.md   a longer guide
 `;
 
-const RUN = `rtc-conformance run: run the stories against a backend
+const RUN = `jupyter conformance ssd run: run the stories against a backend
 
 Usage
-  rtc-conformance run [story ...] [options]
+  jupyter conformance ssd run [story ...] [options]
 
 Which stories
-  rtc-conformance run                every story
-  rtc-conformance run Z3 C2          these two
-  rtc-conformance run 'AI*'          every story whose id starts with AI
-  rtc-conformance run --group edges  one group of the page (see \`list\`)
-  rtc-conformance run -i             pick them from a list first
+  jupyter conformance ssd run                every story
+  jupyter conformance ssd run Z3 C2          these two
+  jupyter conformance ssd run 'AI*'          every story whose id starts AI
+  jupyter conformance ssd run --group edges  one group (see \`list\`)
+  jupyter conformance ssd run -i             pick them from a list first
 
 Which server
   --backend <name>     how to start the server: jsd (default), the built-in
@@ -62,10 +62,10 @@ What you see
                        (default ./conformance-known-gaps.json)
 
 Examples
-  rtc-conformance run Z3 --env ~/envs/jsd
-  rtc-conformance run --group handshake --headed
-  rtc-conformance run --url http://localhost:8888
-  rtc-conformance run --start "my-server --port {port}"
+  jupyter conformance ssd run Z3 --env ~/envs/jsd
+  jupyter conformance ssd run --group handshake --headed
+  jupyter conformance ssd run --url http://localhost:8888
+  jupyter conformance ssd run --start "my-server --port {port}"
 
 A run ends with a line per story and a summary. The exit code is 0 when no
 story failed, so it works as a CI step.
@@ -77,11 +77,11 @@ story failed, so it works as a CI step.
   what
 `;
 
-const PICK = `rtc-conformance pick: choose stories from a list, then run them
+const PICK = `jupyter conformance ssd pick: choose stories from a list, then run them
 
 Usage
-  rtc-conformance pick [options]
-  It takes the same options as \`rtc-conformance run\`.
+  jupyter conformance ssd pick [options]
+  It takes the same options as \`jupyter conformance ssd run\`.
 
 In the list
   ↑ ↓  (or j k)    move
@@ -96,13 +96,13 @@ In the list
   q  or  escape    leave without running
 
 Needs a terminal. In a script, name the stories:
-  rtc-conformance run Z3 C2
+  jupyter conformance ssd run Z3 C2
 `;
 
-const LIST = `rtc-conformance list: see every story and what each needs from a backend
+const LIST = `jupyter conformance ssd list: every story, and what each needs
 
 Usage
-  rtc-conformance list [--group <name>] [--filter <text>]
+  jupyter conformance ssd list [--group <name>] [--filter <text>]
 
   --group <name>    only the stories of one group
   --filter <text>   only the stories whose id, title or needs contain the text
@@ -113,6 +113,8 @@ server let go of a notebook.
 `;
 
 const TOPICS = { main: MAIN, run: RUN, pick: PICK, list: LIST };
+/** The suite this command runs: the real-time collaboration of server-side documents. */
+export const SUITE = 'ssd';
 export const COMMANDS = ['run', 'pick', 'list', 'help'];
 
 export function helpFor(topic = 'main') {
@@ -168,6 +170,10 @@ export function parse(argv) {
     } else {
       positional.push(arg);
     }
+  }
+  // `jupyter conformance ssd run`: the first word names the suite (the only one so far). `jupyter conformance run` is the same
+  if (positional[0] === SUITE) {
+    positional.shift();
   }
   if (positional.length === 0 && !options.help && !options.version) {
     return { command: 'welcome', stories: [], options, topic: 'main' };
