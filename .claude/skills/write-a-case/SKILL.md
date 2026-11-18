@@ -24,7 +24,7 @@ story. Do not hand-write tests, and do not edit anything under `compliance/tests
 4. **Mark it `status: proposed`** (a line in the story). A proposed case is shown on the page with a badge, and its test
    reports a miss instead of failing. Reviewers change it to `accepted` when the group agrees. Do not mark it accepted yourself.
 5. **Check it:** `npm run check`. A story that is not well formed fails with a message naming it.
-6. **Preview it:** open a pull request; a preview of the page is published and linked on it. Do not claim there is a preview until the link is there.
+6. **Preview it:** the preview is published by CI when the pull request is open, and linked in a comment on it. Do not claim there is a preview until the link is there.
 7. **Open a draft pull request** against `main` from the author's fork, following the template. The description is about
    the UX: the question, the proposed answer, the alternatives, and who needs to weigh in. It does not list files.
 

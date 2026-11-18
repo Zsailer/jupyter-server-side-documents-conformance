@@ -60,7 +60,7 @@ the first visit; the stories are for every visit after.
 
 ## Hosting
 
-The page is static. Put `index.html` anywhere that serves files: an internal static site, GitHub Pages, an artifact
+The page is static. Put `index.html` anywhere that serves files: GitHub Pages, any static host, an artifact
 store, or an attachment. Rebuild when the stories change, in CI if you like:
 
 ```sh
