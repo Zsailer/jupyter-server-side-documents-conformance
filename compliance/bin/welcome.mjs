@@ -1,4 +1,4 @@
-// The welcome screen of `rtc-conformance`: what is shown when it is run with nothing to do. A pure function of the
+// The welcome screen of `jupyter conformance ssd`: what is shown when it is run with nothing to do. A pure function of the
 // version and whether to use colour, so it is tested without a terminal.
 
 // The Jupyter logo as an outline in braille (two crescents and three small circles), drawn by scripts/draw-logo.py:
@@ -68,14 +68,14 @@ export function welcome({ version, color = true } = {}) {
   // the name sits inside the arcs, like a wordmark
   const art = logo({
     color,
-    labels: { 5: { text: 'rtc-conformance', paint: bold }, 6: { text: `v${version}`, paint: dim } }
+    labels: { 5: { text: 'conformance', paint: bold }, 6: { text: `v${version}`, paint: dim } }
   }).map(row => `  ${row}`);
 
   const commands = [
-    ['rtc-conformance pick', 'choose stories from a list, then run them'],
-    ['rtc-conformance run Z3', 'run one story'],
-    ['rtc-conformance list', 'see every story, and what each needs'],
-    ['rtc-conformance help', 'everything it can do']
+    ['jupyter conformance ssd pick', 'choose stories from a list, then run them'],
+    ['jupyter conformance ssd run Z3', 'run one story'],
+    ['jupyter conformance ssd list', 'see every story, and what each needs'],
+    ['jupyter conformance ssd help', 'everything it can do']
   ];
   const width = Math.max(...commands.map(([c]) => c.length)) + 2;
 

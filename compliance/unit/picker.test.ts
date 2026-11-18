@@ -159,11 +159,11 @@ test('the welcome screen has the logo, the name, the version and where to start'
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
   assert.match(text, /[\u2801-\u28ff]/); // the logo is drawn in braille
   assert.doesNotMatch(text, /[█▀▄]/); // and only as an outline: nothing is filled in
-  assert.match(text, /rtc-conformance\s*\n/); // the name sits inside the arcs
+  assert.match(text, /conformance\s*\n/); // the name sits inside the arcs
   assert.match(text, /v9\.8\.7/);
-  assert.match(text, /rtc-conformance pick/);
-  assert.match(text, /rtc-conformance run Z3/);
-  assert.match(text, /rtc-conformance help/);
+  assert.match(text, /jupyter conformance ssd pick/);
+  assert.match(text, /jupyter conformance ssd run Z3/);
+  assert.match(text, /jupyter conformance ssd help/);
   assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
 });
 
