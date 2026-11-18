@@ -9,7 +9,7 @@ point them at any implementation. Today there is an adapter for jupyter-server-d
 Inside the Python environment jupyter-server-documents is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
 
 ```sh
-npx @jupyter-ai-contrib/jupyter-server-side-documents-conformance run
+npx @zsailer/jupyter-server-side-documents-conformance run
 ```
 
 That starts a JupyterLab with your tree, runs every story in real browsers, stops the server and tells you how it went (an illustration, not a real result):
@@ -33,7 +33,7 @@ That starts a JupyterLab with your tree, runs every story in real browsers, stop
 ```
 
 The first run unpacks the tests into `~/.cache` and installs their dependencies, which takes a few minutes. After that it
-starts straight away. To keep a copy on your machine, `npm install -g @jupyter-ai-contrib/jupyter-server-side-documents-conformance`
+starts straight away. To keep a copy on your machine, `npm install -g @zsailer/jupyter-server-side-documents-conformance`
 gives you the `rtc-conformance` command. Run it with nothing after it for a welcome screen and the places to start.
 
 ## Choosing what to run
