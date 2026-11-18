@@ -51,7 +51,7 @@ jobs:
         run: python3 -I compliance/scripts/package.py
       # provenance is added automatically once the repository is public
       - name: Stage the version on npm
-        run: npm stage publish dist/*.tgz
+        run: npm stage publish ./dist/*.tgz
       # a draft: publish it after approving the staged version on npm
       - name: Draft the GitHub release
         run: gh release create "$GITHUB_REF_NAME" dist/*.tgz --draft --title "$GITHUB_REF_NAME" --generate-notes
