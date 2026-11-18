@@ -24,7 +24,7 @@ jobs:
       - run: pip install -e ".[test]" jupyterlab   # your backend, installed into the Python that runs the server
       - name: Run the conformance tests
         env:
-          VERSION: 0.0.3   # the version of the conformance tests this tree is held to
+          VERSION: 0.0.4   # the version of the conformance tests this tree is held to
         run: npx --yes "@zsailer/jupyter-server-side-documents-conformance@$VERSION" run
       - uses: actions/upload-artifact@v4
         if: always()
