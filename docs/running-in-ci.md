@@ -57,13 +57,10 @@ A listed story still runs and is expected to fail. The day it passes, the job fa
 
 ## Releasing a new version of the tests
 
-1. Bump the version in a pull request (`npm version minor --no-git-tag-version`, or `patch` or `major`) and merge it.
-2. Tag the merge commit and push the tag: `git tag 0.3.0 && git push origin 0.3.0`.
+In the Actions tab of this repo, choose **Release > Run workflow** and pick `patch`, `minor` or `major`. No pull request is
+needed. The workflow bumps the version, runs the tests, packs the package and stages it on npm. If that works it commits the
+bump to `main`, tags it and drafts a GitHub release with the tarball.
 
-3. Approve the staged version on npmjs.com (the package's staged versions) or with `npm stage approve`, using 2FA. Then
-   publish the draft GitHub release.
-
-The `Release` workflow checks that the tag is the version in `package.json`, runs the tests, stages the package on npm
-(`npm stage publish`) and drafts a GitHub release with the tarball. Nothing is public until a maintainer approves it. It
-needs no npm token: npm trusts this workflow (see the comment at the top of `.github/workflows/release.yml`). To look at what would be published, run
-`npm run package` and open `dist/`.
+Then a maintainer approves the staged version on npmjs.com, using 2FA, and publishes the draft GitHub release. Nothing is
+public until the approval. npm trusts the workflow, so there is no npm token (see the comment at the top of
+`.github/workflows/release.yml`). To look at what would be published, run `npm run package` and open `dist/`.
