@@ -11,8 +11,8 @@ previews it. To do it by hand:
    [`docs/02-spec-reference.md`](docs/02-spec-reference.md); how to design a good one is in
    [`docs/03-designing-a-good-scenario.md`](docs/03-designing-a-good-scenario.md).
 2. `npm run check` validates it and runs the tests of the tooling.
-3. `npm run build` builds the page; open `examples/storyboards/site/index.html`.
-4. Open a draft pull request against `main` from your fork and put the link in it.
+3. `npm run build` builds the page; open `examples/storyboards/site/index.html` to look at it.
+4. Open a draft pull request against `main`. A preview of the page is published and linked on the pull request.
 
 Discuss the case on the pull request, looking at the preview. When the group agrees, change the story to
 `status: accepted`, in the same pull request. From then on a backend that does not do what it says fails its compliance
@@ -21,3 +21,13 @@ test, unless the gap is listed in `compliance/known-gaps/<adapter>.json`.
 Nothing you write names an implementation. If the case needs the backend to do something to get set up (let go of a
 notebook, crash), say it in the steps; the adapter for each backend says whether it can.
 
+## Previews of pull requests
+
+`.github/workflows/preview.yml` builds the page for every pull request and publishes it to GitHub Pages under
+`pr-preview/pr-<number>/`, with a comment on the pull request that links it. The preview is updated on every push and
+removed when the pull request is closed. The live page of `main` is published by `.github/workflows/pages.yml`.
+
+Pull requests from a fork get no preview, because GitHub gives them a read-only token. The build and the tests still run
+(`.github/workflows/ci.yml`); a maintainer can push the branch to this repository to get a preview.
+
+Set up once by a maintainer: in Settings > Pages, publish from the `gh-pages` branch (root). The workflows create the branch.

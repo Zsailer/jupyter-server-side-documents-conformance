@@ -1,0 +1,37 @@
+name: Preview
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    # a pull request from a fork has a read-only token: it can neither push the preview nor comment
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: github.event.action != 'closed'
+        with:
+          python-version: "3.12"
+      - name: Build the page
+        if: github.event.action != 'closed'
+        run: |
+          pip install pyyaml
+          npm run build
+      # deploys examples/storyboards/site to gh-pages/pr-preview/pr-<number>/ and comments the link;
+      # on `closed` it removes the folder and updates the comment
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: examples/storyboards/site
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto

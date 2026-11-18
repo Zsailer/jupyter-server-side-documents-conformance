@@ -1,0 +1,30 @@
+name: Publish the page
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+# one publisher at a time, so a preview and the live page do not race for the gh-pages branch
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - run: npm run build
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: examples/storyboards/site
+          # keep the previews of the open pull requests
+          clean-exclude: pr-preview/
+          force: false

@@ -4,7 +4,7 @@ What does a person see in this case, and what should they see? (One sentence.)
 
 ### The case
 
-Story id(s), and the preview link from `npm run preview`:
+Story id(s). The preview link is commented on the pull request:
 
 ### Proposed answer, and the alternatives
 
