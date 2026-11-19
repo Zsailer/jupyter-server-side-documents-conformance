@@ -2,14 +2,14 @@
 
 The tests say what a person should experience when a notebook is shared in real time: a tab goes offline and keeps typing,
 the server lets go of a notebook, a file changes underneath. They know nothing about how a backend does it, so you can
-point them at any implementation. Today there is an adapter for jupyter-server-documents.
+point them at any implementation. There is a built-in way to start jupyter-server-documents (`jsd`) and jupyter-collaboration (`jcollab`, with jupyter-server-nbmodel).
 
 ## Quick start
 
-Inside the Python environment jupyter-server-documents is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
+Name the backend: no backend is assumed. Run inside the Python environment it is installed in (or with `--env <dir>` pointing at it). The tests need nothing from the codebase: they start the server with their own config.
 
 ```sh
-npx @zsailer/jupyter-server-side-documents-conformance ssd run
+npx @zsailer/jupyter-server-side-documents-conformance ssd run --backend jsd
 ```
 
 That starts a JupyterLab with your tree, runs every story in real browsers, stops the server and tells you how it went (an illustration, not a real result):
@@ -80,10 +80,11 @@ jupyter conformance ssd help run               # every option, with examples
 jupyter conformance ssd list                   # every story, grouped, and what it needs from a backend
 jupyter conformance ssd list --filter offline  # only the stories about offline
 jupyter conformance ssd pick                   # choose stories from a list
-jupyter conformance ssd run                    # every story
+jupyter conformance ssd run --backend jsd       # every story (every example below also needs --backend, --start or --url)
 jupyter conformance ssd run Z3 C2              # just these
 jupyter conformance ssd run 'AI*'              # a prefix
 jupyter conformance ssd run --group handshake  # one group of the page
+jupyter conformance ssd run --workers 4         # four stories at once: much faster, and heavier on the machine
 jupyter conformance ssd run --headed           # watch the browsers
 jupyter conformance ssd run --open             # open the side-by-side video of each failed story
 ```
@@ -93,6 +94,7 @@ A mistyped command or option gets a suggestion (`Did you mean --headed?`).
 Another backend, or a server you already started:
 
 ```sh
+jupyter conformance ssd run --backend jcollab --env environments/jupyter-collaboration/.venv  # jupyter-collaboration (see environments/)
 jupyter conformance ssd run --url http://localhost:8888                 # a server that is already running
 jupyter conformance ssd run --start "my-server --port {port}"           # your own command that starts one
 ```

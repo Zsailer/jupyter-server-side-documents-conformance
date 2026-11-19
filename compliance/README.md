@@ -58,7 +58,7 @@ The suite takes nothing from a backend's repo. For jupyter-server-documents it b
 ## Running it
 
 ```sh
-jupyter conformance ssd run                 # start jupyter-server-documents, run every story, stop it
+jupyter conformance ssd run --backend jsd   # start jupyter-server-documents, run every story, stop it (--backend is required)
 jupyter conformance ssd run Z3 C2           # just these
 jupyter conformance ssd run --url http://localhost:8888      # a server that is already running
 jupyter conformance ssd run --start "my-server --port {port}"  # your own command that starts one

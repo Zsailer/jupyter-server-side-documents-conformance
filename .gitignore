@@ -14,3 +14,4 @@ docs/assets/*.mp4
 .package/
 compliance/playwright-report/
 compliance/test-results/
+.venv/

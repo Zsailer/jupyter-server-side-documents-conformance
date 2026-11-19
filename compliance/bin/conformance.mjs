@@ -117,8 +117,17 @@ async function serving(url) {
   }
 }
 
-function findPythonEnv() {
-  const found = spawnSync('python3', ['-c', 'import jupyter_server_documents, sys; print(sys.prefix)'], { encoding: 'utf8' });
+/**
+ * The backends the suite knows how to start: the Python package that tells an environment has it, the variable that
+ * names an environment, and the module in server/ that is the backend's side of the control contract.
+ */
+const BACKENDS = {
+  jsd: { label: 'jupyter-server-documents', module: 'jupyter_server_documents', envVar: 'JSD_ENV', control: 'jsd_control' },
+  jcollab: { label: 'jupyter-collaboration', module: 'jupyter_server_ydoc', envVar: 'JCOLLAB_ENV', control: 'jcollab_control' }
+};
+
+function findPythonEnv(backend) {
+  const found = spawnSync('python3', ['-c', `import ${backend.module}, sys; print(sys.prefix)`], { encoding: 'utf8' });
   return found.status === 0 ? found.stdout.trim() : undefined;
 }
 
@@ -139,20 +148,36 @@ async function startServer(suite, options, port, out) {
     command = 'sh';
     args = ['-c', options.start.replaceAll('{port}', String(port))];
   } else {
-    const pythonEnv = options.env ?? process.env.JSD_ENV ?? findPythonEnv();
+    const backend = BACKENDS[options.backend];
+    const given = options.env ?? process.env[backend.envVar];
+    // the server starts in a folder of its own, so a relative path to the environment would no longer lead to it
+    const pythonEnv = given ? path.resolve(given) : findPythonEnv(backend);
     if (!pythonEnv) {
-      fail("Can't find a Python environment with jupyter_server_documents", 'Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --env /path/to/env');
+      fail(`Can't find a Python environment with ${backend.module}`, `Run this inside the environment you develop it in, or point at one:\n  jupyter conformance ssd run --backend ${options.backend} --env /path/to/env`);
     }
     rootDir ??= path.join(os.tmpdir(), 'conformance-root');
     fs.rmSync(rootDir, { recursive: true, force: true });
     fs.mkdirSync(rootDir, { recursive: true });
-    env.CONFORMANCE_CONTROL = 'jsd_control';
+    env.CONFORMANCE_CONTROL = backend.control;
     command = path.join(pythonEnv, 'bin', 'jupyter');
     args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
   }
-  const server = spawn(command, args, { env, cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-')), stdio: ['ignore', log, log], detached: true });
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-'));
+  // one process at a time; `server.pid` is the current one, so everything that stops the server stops the right one
+  let current;
   let exited = false;
-  server.on('exit', () => (exited = true));
+  const launch = () => {
+    exited = false;
+    const child = spawn(command, args, { env, cwd, stdio: ['ignore', log, log], detached: true });
+    child.on('exit', () => child === current && (exited = true));
+    current = child;
+  };
+  const server = {
+    get pid() {
+      return current.pid;
+    }
+  };
+  launch();
   // from the moment it exists, the server goes when this command does, however that happens (also during start-up)
   process.once('exit', () => stop(server));
   for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]]) {
@@ -163,28 +188,51 @@ async function startServer(suite, options, port, out) {
   }
 
   const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
-  for (let i = 0; i < 900; i++) {
-    if (await serving(`http://localhost:${port}`)) {
-      process.stdout.write('\r\u001b[2K');
-      return { server, rootDir };
+  const ready = async spin => {
+    for (let i = 0; i < 900; i++) {
+      if (await serving(`http://localhost:${port}`)) {
+        spin && process.stdout.write('\r\u001b[2K');
+        return;
+      }
+      if (exited) {
+        stop(server);
+        const tail = fs.readFileSync(logFile, 'utf8').trim().split('\n').slice(-12).join('\n');
+        throw new Error(`The server stopped before it was ready\n${tail}`);
+      }
+      if (spin && process.stdout.isTTY) {
+        process.stdout.write(`\r  ${dim(`${frames[i % frames.length]} Starting the server…`)}`);
+      }
+      await new Promise(r => setTimeout(r, 200));
     }
-    if (exited) {
-      stop(server);
-      const tail = fs.readFileSync(logFile, 'utf8').trim().split('\n').slice(-12).join('\n');
-      fail('The server stopped before it was ready', tail);
-    }
-    if (process.stdout.isTTY) {
-      process.stdout.write(`\r  ${dim(`${frames[i % frames.length]} Starting the server…`)}`);
-    }
-    await new Promise(r => setTimeout(r, 200));
+    stop(server);
+    throw new Error(`The server did not come up in 3 minutes. Its log is ${logFile}`);
+  };
+  try {
+    await ready(true);
+  } catch (error) {
+    const [what, ...rest] = error.message.split('\n');
+    fail(what, rest.join('\n') || undefined);
   }
-  stop(server);
-  fail('The server did not come up in 3 minutes', `Its log is ${logFile}`);
+
+  // what a story asks of the command: kill the server without a save, and start it again on the same port and files
+  const gone = () => new Promise(resolve => (exited ? resolve() : current.once('exit', resolve)));
+  const crash = async () => {
+    stop(server, 'SIGKILL');
+    await gone();
+  };
+  const restart = async () => {
+    if (!exited) {
+      await crash();
+    }
+    launch();
+    await ready(false);
+  };
+  return { server, rootDir, crash, restart };
 }
 
-function stop(server) {
+function stop(server, signal = 'SIGTERM') {
   try {
-    process.kill(-server.pid);
+    process.kill(-server.pid, signal);
   } catch {
     /* already gone */
   }
@@ -211,16 +259,21 @@ function watchPages(results) {
 async function run(suite, stories, options) {
   const out = path.resolve(options.out ?? 'conformance-results');
   const results = path.join(out, 'results');
-  const backend = options.backend ?? 'jsd';
+  const backend = options.backend;
   const port = Number(process.env.COMPLIANCE_PORT ?? 8899);
   let baseURL = options.url?.replace(/\/$/, '');
 
   console.log(`\n  ${bold('jupyter conformance ssd')} ${dim(`v${VERSION}`)}`);
 
   let server;
+  let controlDir;
+  let stopControl;
   let rootDir = options['root-dir'];
   if (!baseURL) {
-    if (!options.start && backend !== 'jsd') {
+    if (!options.start && !backend) {
+      fail('Say which backend to run against', `No backend is assumed. Name one: ${Object.keys(BACKENDS).map(n => `\n  jupyter conformance ssd run --backend ${n}`).join('')}\nor give a command that starts yours, or a server that is already running:\n  jupyter conformance ssd run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance ssd run --url http://localhost:8888`);
+    }
+    if (!options.start && !BACKENDS[backend]) {
       fail(`Don't know how to start "${backend}"`, 'Give a command that starts it, or a server that is already running:\n  jupyter conformance ssd run --start "<command that serves JupyterLab on {port}>"\n  jupyter conformance ssd run --url http://localhost:8888');
     }
     baseURL = `http://localhost:${port}`;
@@ -231,6 +284,9 @@ async function run(suite, stories, options) {
     const started = await startServer(suite, options, port, out);
     server = started.server;
     rootDir = rootDir ?? started.rootDir;
+    // a story that kills the server asks this command to do it, and to start it again (runtime/supervisor.ts)
+    controlDir = path.join(out, 'control');
+    stopControl = watchControl(controlDir, started);
   } else {
     console.log(`  ${dim(baseURL)}\n`);
   }
@@ -242,26 +298,39 @@ async function run(suite, stories, options) {
 
   const knownGaps = path.resolve(options['known-gaps'] ?? 'conformance-known-gaps.json');
   const grep = grepFor(stories, options.group);
-  const args = ['playwright', 'test', '--reporter', path.join(suite, 'runtime', 'reporter.ts'), '--output', results];
-  if (grep) {
-    args.push('--grep', grep);
-  }
-  if (options.headed) {
-    args.push('--headed');
-  }
-  const child = spawn('npx', args, {
-    cwd: suite,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      COMPLIANCE_BASE_URL: baseURL,
-      COMPLIANCE_ADAPTER: options.adapter ?? 'http',
-      ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
-      ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
-      PLAYWRIGHT_HTML_OPEN: 'never'
+  const rowsFile = path.join(out, 'rows.json');
+  fs.rmSync(rowsFile, { force: true });
+  const phases = phasesFor(loadStories(suite), stories, options.group, Number(options.workers ?? 1));
+  let code = 0;
+  for (const phase of phases) {
+    const args = ['playwright', 'test', '--reporter', path.join(suite, 'runtime', 'reporter.ts'), '--output', results, '--workers', String(phase.workers)];
+    if (phase.project) {
+      args.push('--project', phase.project);
     }
-  });
-  const code = await new Promise(resolve => child.on('exit', c => resolve(c ?? 1)));
+    if (grep) {
+      args.push('--grep', grep);
+    }
+    if (options.headed) {
+      args.push('--headed');
+    }
+    const child = spawn('npx', args, {
+      cwd: suite,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        COMPLIANCE_BASE_URL: baseURL,
+        COMPLIANCE_ADAPTER: options.adapter ?? 'http',
+        ...(controlDir ? { COMPLIANCE_CONTROL_DIR: path.resolve(controlDir) } : {}),
+        ...(phases.length > 1 ? { COMPLIANCE_ROWS_FILE: rowsFile, COMPLIANCE_LAST_PHASE: phase.last ? '1' : '' } : {}),
+        ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
+        ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
+        PLAYWRIGHT_HTML_OPEN: 'never'
+      }
+    });
+    const exit = await new Promise(resolve => child.on('exit', c => resolve(c ?? 1)));
+    code = code || exit;
+  }
+  stopControl?.();
   quit();
 
   const pages = watchPages(results);
