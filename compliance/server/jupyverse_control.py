@@ -249,6 +249,51 @@ def link_galata_extension():
         target.symlink_to(source, target_is_directory=True)
 
 
+def keep_server_up_when_a_file_goes():
+    """Do not let a room whose file was removed or replaced stop the whole of jupyverse.
+
+    A room's background tasks (watching its file, saving it, closing) `assert` that the file still has a path. When the
+    file was deleted or replaced from outside, one fails and, as the room's tasks belong to the application's, takes
+    jupyverse down with it: every story after that one fails with "connection refused". The stories that remove or put back
+    a file are about what the room does next, so the server has to be there to be asked. Each task now gives up on its own
+    instead. (That jupyverse stops is a finding about jupyverse, and it is in compliance/known-gaps/jupyverse.json.)
+    """
+    from fps_yrooms.yrooms import YRoom
+
+    watch, write_later, close = YRoom._watch_file, YRoom._write_to_file_later, YRoom.close
+
+    async def safe_watch(self, *, task_status):
+        started = False
+
+        def started_once(*args):
+            nonlocal started
+            started = True
+            task_status.started(*args)
+
+        class Status:
+            started = staticmethod(started_once)
+
+        try:
+            await watch(self, task_status=Status)
+        except Exception:
+            if not started:
+                task_status.started()
+
+    async def safe_write_later(self):
+        try:
+            await write_later(self)
+        except Exception:
+            pass
+
+    async def safe_close(self):
+        try:
+            await close(self)
+        except Exception:
+            self._close_event.set()
+
+    YRoom._watch_file, YRoom._write_to_file_later, YRoom.close = safe_watch, safe_write_later, safe_close
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--port", type=int, default=8000)
@@ -256,6 +301,7 @@ def main():
     args = parser.parse_args()
 
     link_galata_extension()
+    keep_server_up_when_a_file_goes()
     config = get_pluggin_config(())
     config["jupyverse"]["modules"][MODULE] = {"type": f"{MODULE}:ControlModule"}
     settings = [
