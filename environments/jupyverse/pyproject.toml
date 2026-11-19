@@ -1,0 +1,11 @@
+[project]
+name = "conformance-env-jupyverse"
+version = "0"
+description = "The environment the conformance suite runs jupyverse in"
+requires-python = ">=3.10"
+dependencies = [
+    "jupyverse[jupyterlab,noauth,collaboration]",
+]
+
+[tool.uv]
+package = false
