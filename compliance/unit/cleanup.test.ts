@@ -13,9 +13,13 @@ for (const [signal, code, marker] of [
   ['SIGTERM', 143, 'sleep 41702']
 ] as const) {
   test(`${signal} while the server is starting stops the server`, async () => {
+    spawnSync('pkill', ['-f', marker]); // one left by an earlier run would look like the one this test starts
     const child = spawn('node', [CLI, 'run', 'Z3', '--start', marker], { stdio: 'ignore' });
     const exited = new Promise<number | null>(resolve => child.on('exit', c => resolve(c)));
-    await new Promise(r => setTimeout(r, 1500)); // the stand-in "server" is running and never answers
+    // the stand-in "server" is running and never answers: give the command time to start it
+    for (let i = 0; i < 50 && !alive(marker); i++) {
+      await new Promise(r => setTimeout(r, 100));
+    }
     assert.ok(alive(marker), 'the stand-in server was started');
     child.kill(signal);
     assert.equal(await exited, code);

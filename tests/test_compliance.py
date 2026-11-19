@@ -169,9 +169,20 @@ class GeneratedTest(unittest.TestCase):
         x4 = text[text.index('"id": "X4"'):]
         self.assertNotIn("server:", x4[x4.index("await s.ends(["):])
         # Z6 ends after the server dies and starts again and a tab opens: it holds the notebook
-        residual = self.result["files"]["residual.spec.ts"]
-        z6 = residual[residual.index('"id": "Z6"'):residual.index('"id": "Z7"')]
+        serial = self.result["files"]["serial.spec.ts"]
+        z6 = serial[serial.index('"id": "Z6"'):]
+        z6 = z6[: z6.find('"id":', 1)] if '"id":' in z6[1:] else z6
         self.assertIn("server:", z6[z6.index("await s.ends(["):])
+
+    def test_the_stories_that_kill_the_server_are_in_a_file_of_their_own_and_only_they(self):
+        # they run alone, after the others (playwright.config.ts), so nothing else may be in that file
+        serial = {s["id"] for s in self.result["manifest"] if "crashServer" in s["requires"]}
+        self.assertTrue(serial)
+        in_file = set(re.findall(r'"id": "([^"]+)"', self.result["files"]["serial.spec.ts"]))
+        self.assertEqual(in_file, serial)
+        for name, text in self.result["files"].items():
+            if name != "serial.spec.ts":
+                self.assertFalse(serial & set(re.findall(r'"id": "([^"]+)"', text)), name)
 
     def test_a_proposed_case_added_to_a_group_is_generated_and_marked(self):
         with tempfile.TemporaryDirectory() as d:

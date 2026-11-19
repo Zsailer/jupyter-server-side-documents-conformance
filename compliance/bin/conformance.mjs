@@ -162,9 +162,22 @@ async function startServer(suite, options, port, out) {
     command = path.join(pythonEnv, 'bin', 'jupyter');
     args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
   }
-  const server = spawn(command, args, { env, cwd: fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-')), stdio: ['ignore', log, log], detached: true });
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-'));
+  // one process at a time; `server.pid` is the current one, so everything that stops the server stops the right one
+  let current;
   let exited = false;
-  server.on('exit', () => (exited = true));
+  const launch = () => {
+    exited = false;
+    const child = spawn(command, args, { env, cwd, stdio: ['ignore', log, log], detached: true });
+    child.on('exit', () => child === current && (exited = true));
+    current = child;
+  };
+  const server = {
+    get pid() {
+      return current.pid;
+    }
+  };
+  launch();
   // from the moment it exists, the server goes when this command does, however that happens (also during start-up)
   process.once('exit', () => stop(server));
   for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]]) {
@@ -175,28 +188,51 @@ async function startServer(suite, options, port, out) {
   }
 
   const frames = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
-  for (let i = 0; i < 900; i++) {
-    if (await serving(`http://localhost:${port}`)) {
-      process.stdout.write('\r\u001b[2K');
-      return { server, rootDir };
+  const ready = async spin => {
+    for (let i = 0; i < 900; i++) {
+      if (await serving(`http://localhost:${port}`)) {
+        spin && process.stdout.write('\r\u001b[2K');
+        return;
+      }
+      if (exited) {
+        stop(server);
+        const tail = fs.readFileSync(logFile, 'utf8').trim().split('\n').slice(-12).join('\n');
+        throw new Error(`The server stopped before it was ready\n${tail}`);
+      }
+      if (spin && process.stdout.isTTY) {
+        process.stdout.write(`\r  ${dim(`${frames[i % frames.length]} Starting the server…`)}`);
+      }
+      await new Promise(r => setTimeout(r, 200));
     }
-    if (exited) {
-      stop(server);
-      const tail = fs.readFileSync(logFile, 'utf8').trim().split('\n').slice(-12).join('\n');
-      fail('The server stopped before it was ready', tail);
-    }
-    if (process.stdout.isTTY) {
-      process.stdout.write(`\r  ${dim(`${frames[i % frames.length]} Starting the server…`)}`);
-    }
-    await new Promise(r => setTimeout(r, 200));
+    stop(server);
+    throw new Error(`The server did not come up in 3 minutes. Its log is ${logFile}`);
+  };
+  try {
+    await ready(true);
+  } catch (error) {
+    const [what, ...rest] = error.message.split('\n');
+    fail(what, rest.join('\n') || undefined);
   }
-  stop(server);
-  fail('The server did not come up in 3 minutes', `Its log is ${logFile}`);
+
+  // what a story asks of the command: kill the server without a save, and start it again on the same port and files
+  const gone = () => new Promise(resolve => (exited ? resolve() : current.once('exit', resolve)));
+  const crash = async () => {
+    stop(server, 'SIGKILL');
+    await gone();
+  };
+  const restart = async () => {
+    if (!exited) {
+      await crash();
+    }
+    launch();
+    await ready(false);
+  };
+  return { server, rootDir, crash, restart };
 }
 
-function stop(server) {
+function stop(server, signal = 'SIGTERM') {
   try {
-    process.kill(-server.pid);
+    process.kill(-server.pid, signal);
   } catch {
     /* already gone */
   }
@@ -230,6 +266,8 @@ async function run(suite, stories, options) {
   console.log(`\n  ${bold('jupyter conformance ssd')} ${dim(`v${VERSION}`)}`);
 
   let server;
+  let controlDir;
+  let stopControl;
   let rootDir = options['root-dir'];
   if (!baseURL) {
     if (!options.start && !backend) {
@@ -246,6 +284,9 @@ async function run(suite, stories, options) {
     const started = await startServer(suite, options, port, out);
     server = started.server;
     rootDir = rootDir ?? started.rootDir;
+    // a story that kills the server asks this command to do it, and to start it again (runtime/supervisor.ts)
+    controlDir = path.join(out, 'control');
+    stopControl = watchControl(controlDir, started);
   } else {
     console.log(`  ${dim(baseURL)}\n`);
   }
@@ -257,27 +298,39 @@ async function run(suite, stories, options) {
 
   const knownGaps = path.resolve(options['known-gaps'] ?? 'conformance-known-gaps.json');
   const grep = grepFor(stories, options.group);
-  const args = ['playwright', 'test', '--reporter', path.join(suite, 'runtime', 'reporter.ts'), '--output', results];
-  if (grep) {
-    args.push('--grep', grep);
-  }
-  if (options.headed) {
-    args.push('--headed');
-  }
-  const child = spawn('npx', args, {
-    cwd: suite,
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      COMPLIANCE_BASE_URL: baseURL,
-      COMPLIANCE_ADAPTER: options.adapter ?? 'http',
-      ...(options.workers ? { COMPLIANCE_WORKERS: options.workers } : {}),
-      ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
-      ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
-      PLAYWRIGHT_HTML_OPEN: 'never'
+  const rowsFile = path.join(out, 'rows.json');
+  fs.rmSync(rowsFile, { force: true });
+  const phases = phasesFor(loadStories(suite), stories, options.group, Number(options.workers ?? 1));
+  let code = 0;
+  for (const phase of phases) {
+    const args = ['playwright', 'test', '--reporter', path.join(suite, 'runtime', 'reporter.ts'), '--output', results, '--workers', String(phase.workers)];
+    if (phase.project) {
+      args.push('--project', phase.project);
     }
-  });
-  const code = await new Promise(resolve => child.on('exit', c => resolve(c ?? 1)));
+    if (grep) {
+      args.push('--grep', grep);
+    }
+    if (options.headed) {
+      args.push('--headed');
+    }
+    const child = spawn('npx', args, {
+      cwd: suite,
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        COMPLIANCE_BASE_URL: baseURL,
+        COMPLIANCE_ADAPTER: options.adapter ?? 'http',
+        ...(controlDir ? { COMPLIANCE_CONTROL_DIR: path.resolve(controlDir) } : {}),
+        ...(phases.length > 1 ? { COMPLIANCE_ROWS_FILE: rowsFile, COMPLIANCE_LAST_PHASE: phase.last ? '1' : '' } : {}),
+        ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
+        ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
+        PLAYWRIGHT_HTML_OPEN: 'never'
+      }
+    });
+    const exit = await new Promise(resolve => child.on('exit', c => resolve(c ?? 1)));
+    code = code || exit;
+  }
+  stopControl?.();
   quit();
 
   const pages = watchPages(results);
