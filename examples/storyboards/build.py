@@ -48,6 +48,34 @@ NAV = [
 ]
 REPO = "https://github.com/Zsailer/jupyter-server-side-documents-conformance"
 
+BRANCH = "main"
+STORIES_DIR = "stories/storyboards"
+
+
+def edit_story_url(group: str) -> str:
+    """Where a story is edited on GitHub: the file of its group, in the editor."""
+    return f"{REPO}/edit/{BRANCH}/{STORIES_DIR}/{group}.yaml"
+
+
+def edit_story_link(group: str, css: str = "edit-story") -> str:
+    return f'<a class="{css}" href="{e(edit_story_url(group))}" rel="noopener">Edit this story on GitHub</a>'
+
+
+def site_footer(edit: str) -> str:
+    """The foot of every page: where this page comes from, to change it, and where to report or ask.
+    `edit` is "stories" for a page built from the stories, else the template file the page is written in."""
+    if edit == "stories":
+        url, label = f"{REPO}/tree/{BRANCH}/{STORIES_DIR}", "Edit the stories on GitHub"
+    else:
+        url, label = f"{REPO}/edit/{BRANCH}/examples/storyboards/{edit}", "Edit this page on GitHub"
+    return (
+        '<footer class="site-foot">'
+        f'<a href="{e(url)}" rel="noopener">{label}</a> · '
+        f'<a href="{REPO}/issues/new" rel="noopener">Report a problem</a> · '
+        f'<a href="{REPO}/blob/{BRANCH}/CONTRIBUTING.md" rel="noopener">How to contribute</a></footer>'
+    )
+
+
 SETTLED, PROVISIONAL, OPEN = "settled", "provisional", "open"
 STATUS_TEXT = {SETTLED: "Settled", PROVISIONAL: "Provisional", OPEN: "No answer yet"}
 STATUS_HELP = {
@@ -219,7 +247,7 @@ def current_page(src: dict, order: list[str], all_stories: dict) -> str:
                 f'<span class="state-main"><b class="state-title">{e(st["title"])}</b><span class="state-result">{e(st["result"])}</span></span>'
                 f'<span class="tag tag-{status}" title="{e(STATUS_HELP[status])}">{STATUS_TEXT[status]}</span></summary>'
                 f'<div class="state-demo"><article class="story-card" data-story="{e(sid)}" data-nbs>{static_card(st)}</article>'
-                f'<p class="state-more"><a href="stories.html#{e(sid)}">Open it among all the stories</a></p></div></details></li>'
+                f'<p class="state-more"><a href="stories.html#{e(sid)}">Open it among all the stories</a> · {edit_story_link(st["group"], "")}</p></div></details></li>'
             )
         sections.append(
             f'<section class="state-group" id="g-{e(gid)}"><h2>{e(src["groups"][gid]["title"])}</h2><ul class="state-list">{"".join(rows)}</ul></section>'
@@ -251,7 +279,7 @@ def discussion_page(src: dict, order: list[str], all_stories: dict) -> str:
         links = ""
         if talk.get("link"):
             links += f'<a class="talk-join" href="{e(talk["link"])}" rel="noopener">Join the discussion</a>'
-        links += f'<a href="stories.html#{e(sid)}">Open it among all the stories</a>'
+        links += f'<a href="stories.html#{e(sid)}">Open it among all the stories</a>' + edit_story_link(st["group"], "")
         note = f'<p class="talk-note">{e(talk["note"])}</p>' if talk.get("note") else ""
         cards.append(
             f'<article class="talk" id="d-{e(sid)}"><header><span class="state-id">{e(sid)}</span><h3>{e(st["title"])}</h3></header>'
@@ -359,6 +387,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         )
         cards = "".join(
             f'<article class="story-card{" has-decision" if all_stories[s].get("decision") else ""}" id="{e(s)}" data-search="{e(" ".join([s, all_stories[s]["title"], all_stories[s]["story"], all_stories[s]["result"]]).lower())}" data-need="{int(bool(all_stories[s].get("decision")))}" data-features="{e(" ".join(b["feature"] for b in all_stories[s]["badges"] if b.get("feature")))}" data-nbs>{static_card(all_stories[s])}</article>'
+            f'<p class="edit-story-row" data-for="{e(s)}">{edit_story_link(all_stories[s]["group"])}</p>'
             for s in ids
         )
         body.append(
@@ -397,6 +426,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         return text
 
     stories_page = render("template.html", {
+        "{{FOOTER}}": site_footer("stories"),
         "{{TOPBAR}}": topbar("stories.html", home, side_toggle=True, extra=extra),
         "{{TITLE}}": e(page["title"]),
         "{{HEADING}}": e(page["title"]),
@@ -409,6 +439,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         ),
     })
     about = render("about.template.html", {
+        "{{FOOTER}}": site_footer("about.template.html"),
         "{{TOPBAR}}": topbar("about.html", home, extra=extra),
         "{{INTRO}}": e(fill(page["intro"])),
         "{{PRINCIPLES}}": principles,
@@ -417,6 +448,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
     })
     out_dir.mkdir(parents=True, exist_ok=True)
     welcome = render("welcome.template.html", {
+        "{{FOOTER}}": site_footer("welcome.template.html"),
         "{{TOPBAR}}": topbar("welcome.html" if change else "index.html", home, extra=extra),
         "{{DISCUSSED_COUNT}}": str(sum(1 for s in src["stories"].values() if discussed(s))),
     })
@@ -425,7 +457,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         ("discussion.html", "Up for discussion", discussion_page(src, order, all_stories)),
     ):
         (out_dir / name).write_text(render("doc.template.html", {
-            "{{TITLE}}": title, "{{TOPBAR}}": topbar(name, home, extra=extra), "{{CONTENT}}": content,
+            "{{TITLE}}": title, "{{TOPBAR}}": topbar(name, home, extra=extra), "{{CONTENT}}": content, "{{FOOTER}}": site_footer("stories"),
             "{{PLAYER}}": '<script id="data" type="application/json">{{DATA}}</script><script>{{PLAYER_JS}}</script><script>{{DEMO_JS}}</script>',
         }))
     (out_dir / home).write_text(welcome)
@@ -436,6 +468,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
             "{{TOPBAR}}": topbar("index.html", home, extra=extra),
             "{{CONTENT}}": changes_page(change, base_src, all_stories, pr),
             "{{CHANGES_DATA}}": changes_data,
+            "{{FOOTER}}": site_footer("stories"),
         })
         (out_dir / "index.html").write_text(page_html)
     (out_dir / "stories.html").write_text(stories_page)
