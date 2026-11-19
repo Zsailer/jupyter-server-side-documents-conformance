@@ -161,17 +161,36 @@ FIELD_NAMES = {
 
 
 def diff_stories(base: dict, head: dict) -> dict:
-    """What a change did to the stories, by id: {"new": [...], "changed": {id: [fields]}, "removed": [...]}."""
+    """What a change did to the stories, by id: {"new": [...], "changed": {id: [fields]}, "removed": [...]}.
+
+    A story that has a new name is the same story: the name it had is in its `aliases`. It is not new and removed, and its
+    old and new name are not a change. They are told apart in "renamed": {new id: old id}, which is there only if a story was.
+    """
 
     def same(a, b) -> bool:
         return json.dumps(a, sort_keys=True, default=str) == json.dumps(b, sort_keys=True, default=str)
 
+    renamed = {}
+    for sid in head.keys() - base.keys():
+        before = next((a for a in head[sid].get("aliases") or [] if a in base and a not in head), None)
+        if before is not None:
+            renamed[sid] = before
+    # the fields that say what a story is called and where it is are not a change of what it says
+    names = {"aliases", "group"}
     changed = {}
-    for sid in head.keys() & base.keys():
-        fields = sorted(k for k in head[sid].keys() | base[sid].keys() if not same(head[sid].get(k), base[sid].get(k)))
+    for sid in head.keys() & base.keys() | renamed.keys():
+        old = base[renamed.get(sid, sid)]
+        fields = sorted(k for k in head[sid].keys() | old.keys() if not (sid in renamed and k in names) and not same(head[sid].get(k), old.get(k)))
         if fields:
             changed[sid] = fields
-    return {"new": sorted(head.keys() - base.keys()), "changed": dict(sorted(changed.items())), "removed": sorted(base.keys() - head.keys())}
+    out = {
+        "new": sorted(head.keys() - base.keys() - renamed.keys()),
+        "changed": dict(sorted(changed.items())),
+        "removed": sorted(base.keys() - head.keys() - set(renamed.values())),
+    }
+    if renamed:
+        out["renamed"] = dict(sorted(renamed.items()))
+    return out
 
 
 def changes_page(change: dict, base_src: dict, all_stories: dict, number: str | None) -> str:
@@ -186,7 +205,7 @@ def changes_page(change: dict, base_src: dict, all_stories: dict, number: str | 
             f'<article class="story-card" id="{e(sid)}" data-nbs>{static_card(all_stories[sid])}</article></section>'
         )
     for sid, fields in change["changed"].items():
-        old = base_src["stories"][sid]
+        old = base_src["stories"][change.get("renamed", {}).get(sid, sid)]
         now = all_stories[sid]
         moved = ", ".join(FIELD_NAMES.get(f, f) for f in fields)
         before_after = ""

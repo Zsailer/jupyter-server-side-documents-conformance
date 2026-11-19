@@ -90,6 +90,13 @@ class ExpectTest(unittest.TestCase):
         self.assertEqual(loose, [], "the oracle says what it means")
 
 
+def story_text(text, sid):
+    """The generated test of one story: from its id to the next story's."""
+    start = text.index('"id": "%s"' % sid)
+    nxt = text.find('"id": "', start + 1)
+    return text[start : nxt if nxt != -1 else len(text)]
+
+
 class GeneratedTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -104,34 +111,32 @@ class GeneratedTest(unittest.TestCase):
 
     def test_what_a_story_needs_follows_from_its_steps(self):
         need = lambda sid: set(self.manifest[sid]["requires"])
-        self.assertEqual(need("Z3"), set(), "people typing, deleting and going offline: any JupyterLab")
-        self.assertEqual(need("A"), {"releaseRoom"}, "the server lets go of the notebook")
-        self.assertIn("crashServer", need("S2"))
-        self.assertIn("fileSystem", need("Z5"), "the file is changed from outside")
-        self.assertIn("agent", need("AI1"))
-        self.assertIn("historyRecord", need("S12"))
-        self.assertIn("wireFaults", need("B"), "a message is lost")
+        self.assertEqual(need("conflict/delete-while-typing"), set(), "people typing, deleting and going offline: any JupyterLab")
+        self.assertEqual(need("handshake/reconnect-after-rebuild-control"), {"releaseRoom"}, "the server lets go of the notebook")
+        self.assertIn("crashServer", need("crash/dies-before-save"))
+        self.assertIn("fileSystem", need("files/changed-outside-while-typing"), "the file is changed from outside")
+        self.assertIn("agent", need("agent/edits-open-notebook"))
+        self.assertIn("historyRecord", need("history/notebook-too-big"))
+        self.assertIn("wireFaults", need("handshake/answer-lost"), "a message is lost")
 
     def test_the_stories_that_ask_a_question_are_marked(self):
-        self.assertTrue(self.manifest["Z3"]["needsAlignment"])
-        self.assertFalse(self.manifest["A"]["needsAlignment"])
+        self.assertTrue(self.manifest["conflict/delete-while-typing"]["needsAlignment"])
+        self.assertFalse(self.manifest["handshake/reconnect-after-rebuild-control"]["needsAlignment"])
 
-    def test_the_first_person_to_move_a_cell_does_so_in_z1(self):
-        text = self.result["files"]["residual.spec.ts"]
+    def test_the_first_person_to_move_a_cell_does_so_in_the_move_while_typing_story(self):
+        text = self.result["files"]["conflict.spec.ts"]
         self.assertIn("await tab.moveCell(1, 2);", text, "c1 goes to the end, as the story says")
 
     def test_a_decision_gives_its_endings_proposed_first_each_with_its_name(self):
-        text = self.result["files"]["residual.spec.ts"]
-        z3 = text[text.index('"id": "Z3"'):text.index('"id": "Z4"')]
+        z3 = story_text(self.result["files"]["conflict.spec.ts"], "conflict/delete-while-typing")
         ends = z3[z3.index("await s.ends(["):]
         # proposed: the deletion wins; the alternative: the typing comes back as a recovered copy
         self.assertLess(ends.index('label: "The deletion wins"'), ends.index('label: "The typing is kept as a recovered copy"'))
         self.assertLess(ends.index('"c0", "c2"'), ends.index("E.contains"))
 
     def test_an_alternative_expects_what_the_proposed_answer_rules_out(self):
-        # Z2: the proposed answer has the cell once; "the merge decides" is the cell twice, which the page marks "!"
-        text = self.result["files"]["residual.spec.ts"]
-        z2 = text[text.index('"id": "Z2"'):text.index('"id": "Z3"')]
+        # conflict/move-same-cell: the proposed answer has the cell once; "the merge decides" is the cell twice, which the page marks "!"
+        z2 = story_text(self.result["files"]["conflict.spec.ts"], "conflict/move-same-cell")
         proposed, alternative = z2.split('label: "The merge decides"')
         self.assertIn('label: "The cell exists once"', proposed)
         self.assertNotIn('"c1", "c0", "c0", "c2"', proposed)
@@ -142,36 +147,31 @@ class GeneratedTest(unittest.TestCase):
         self.assertIn('label: "As the story ends"', text)
 
     def test_a_collaborator_who_adds_a_cell_the_storyboard_only_names_adds_it(self):
-        # H3: "W adds a cell “X-1”" has no cells; without the cell in quotes nothing would ever be added
-        text = self.result["files"]["edges.spec.ts"]
-        h3 = text[text.index('"id": "H3"'):text.index('"id": "H4"')]
+        # offline/stale-tabs-plus-collaborator: "W adds a cell “X-1”" has no cells; without the cell in quotes nothing would ever be added
+        h3 = story_text(self.result["files"]["offline.spec.ts"], "offline/stale-tabs-plus-collaborator")
         self.assertIn('await tab3.addCell(3, "X-1");', h3)
         self.assertIn('await tab3.addCell(4, "X-2");', h3)
         self.assertIn('await tab4.addCell(5, "Y-1");', h3)
 
     def test_a_tab_that_closes_and_later_comes_back_stays_open_offline(self):
-        # H2: "B and W close their tabs" ... "B comes back second"
-        text = self.result["files"]["handshake.spec.ts"]
-        h2 = text[text.index('"id": "H2"'):text.index('"id": "C1"')]
+        # offline/stale-tabs-different-amounts: "B and W close their tabs" ... "B comes back second"
+        h2 = story_text(self.result["files"]["offline.spec.ts"], "offline/stale-tabs-different-amounts")
         self.assertIn("await tab2.goOffline(); // it goes away", h2)
         self.assertIn("await tab3.close();", h2, "W never comes back: it really closes")
         self.assertNotIn("await tab2.close();", h2)
 
     def test_stories_about_the_servers_inside_are_not_checked_from_the_outside(self):
-        for sid in ("X1", "X2", "X3", "X4"):
+        for sid in ("shutdown/update-waiting", "shutdown/damaged-message-first", "shutdown/waits-for-cleanup", "shutdown/update-from-left-tab"):
             self.assertTrue(self.manifest[sid]["internal"], sid)
-        self.assertFalse(self.manifest["Z3"]["internal"])
-        self.assertIn('"internal":', self.result["files"]["stop.spec.ts"])
+        self.assertFalse(self.manifest["conflict/delete-while-typing"]["internal"])
+        self.assertIn('"internal":', self.result["files"]["shutdown.spec.ts"])
 
     def test_a_server_that_has_let_go_of_the_notebook_is_not_asked_what_it_holds(self):
-        # X4 ends after "the server is told to shut the notebook down": its copy is gone
-        text = self.result["files"]["stop.spec.ts"]
-        x4 = text[text.index('"id": "X4"'):]
+        # shutdown/update-from-left-tab ends after "the server is told to shut the notebook down": its copy is gone
+        x4 = story_text(self.result["files"]["shutdown.spec.ts"], "shutdown/update-from-left-tab")
         self.assertNotIn("server:", x4[x4.index("await s.ends(["):])
-        # Z6 ends after the server dies and starts again and a tab opens: it holds the notebook
-        serial = self.result["files"]["serial.spec.ts"]
-        z6 = serial[serial.index('"id": "Z6"'):]
-        z6 = z6[: z6.find('"id":', 1)] if '"id":' in z6[1:] else z6
+        # crash/dies-before-save-no-tab-left ends after the server dies and starts again and a tab opens: it holds the notebook
+        z6 = story_text(self.result["files"]["serial.spec.ts"], "crash/dies-before-save-no-tab-left")
         self.assertIn("server:", z6[z6.index("await s.ends(["):])
 
     def test_the_stories_that_kill_the_server_are_in_a_file_of_their_own_and_only_they(self):
@@ -198,14 +198,14 @@ class GeneratedTest(unittest.TestCase):
                 "result": "Nothing happens.",
                 "ends": {"all": ["c0"]},
             }
-            body["scenarios"]["NEW1"] = new
+            body["scenarios"]["rebuild/a-new-case"] = new
             path.write_text(yaml.safe_dump(body, sort_keys=False))
             result = g.generate(copy)
         manifest = {m["id"]: m for m in result["manifest"]}
-        self.assertTrue(manifest["NEW1"]["proposed"])
-        self.assertFalse(manifest["Z3"]["proposed"])
+        self.assertTrue(manifest["rebuild/a-new-case"]["proposed"])
+        self.assertFalse(manifest["conflict/delete-while-typing"]["proposed"])
         text = result["files"]["rebuild.spec.ts"]
-        mine = text[text.index('"id": "NEW1"') :]
+        mine = story_text(text, "rebuild/a-new-case")
         self.assertIn('"proposed": true', mine[: mine.index("async s =>")])
 
     def test_generating_twice_gives_the_same_files(self):

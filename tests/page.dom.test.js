@@ -12,12 +12,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const opened = [];
 test.after(() => opened.forEach(w => w.close()));
 
-function open() {
+function open(url = 'http://localhost/') {
   const errors = [];
   const vc = new VirtualConsole();
   vc.on('jsdomError', e => errors.push(String(e.stack || e)));
   vc.on('error', (...a) => errors.push(a.join(' ')));
-  const dom = new JSDOM(fs.readFileSync(SITE, 'utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/', virtualConsole: vc });
+  const dom = new JSDOM(fs.readFileSync(SITE, 'utf8'), { runScripts: 'dangerously', pretendToBeVisual: true, url, virtualConsole: vc });
   opened.push(dom.window);
   return { dom, win: dom.window, doc: dom.window.document, errors };
 }
@@ -36,9 +36,19 @@ test('every story mounts without an error', async () => {
   assert.deepEqual(errors, []);
 });
 
+test('a link with the name a story had before goes to the story under its name now', async () => {
+  const { win, doc, errors } = open('http://localhost/stories.html#Z3');
+  await sleep(100);
+  assert.equal(decodeURIComponent(win.location.hash), '#conflict/delete-while-typing');
+  assert.ok(doc.getElementById('conflict/delete-while-typing'), 'the story is there');
+  // a link that names nothing stays as it is
+  assert.equal(decodeURIComponent(open('http://localhost/stories.html#nothing-like-it').win.location.hash), '#nothing-like-it');
+  assert.deepEqual(errors, []);
+});
+
 test('pause freezes the story, play resumes it', async () => {
   const { doc } = open();
-  const card = doc.getElementById('Z1');
+  const card = doc.getElementById('conflict/move-while-typing');
   await sleep(300);
   const play = card.querySelector('.nbs-play');
   play.click(); // pause
@@ -55,7 +65,7 @@ test('pause freezes the story, play resumes it', async () => {
 
 test('clicking a step jumps to it', async () => {
   const { doc } = open();
-  const card = doc.getElementById('Z1');
+  const card = doc.getElementById('conflict/move-while-typing');
   await sleep(100);
   card.querySelectorAll('.nbs-seg')[3].click();
   assert.ok(card.querySelectorAll('.nbs-seg')[3].classList.contains('on'));
@@ -67,7 +77,7 @@ test('clicking a step jumps to it', async () => {
 
 test('the reconnect step is drawn as a blip', async () => {
   const { doc } = open();
-  const card = doc.getElementById('Z1');
+  const card = doc.getElementById('conflict/move-while-typing');
   const blips = [...card.querySelectorAll('.nbs-seg.nbs-blip')];
   assert.ok(blips.length >= 1);
   blips[0].click();
@@ -105,7 +115,7 @@ test('search and the needs-alignment filter hide what does not match', async () 
 
 test('choosing another option of a decision shows its ending', async () => {
   const { doc } = open();
-  const card = doc.getElementById('Z3');
+  const card = doc.getElementById('conflict/delete-while-typing');
   const opts = card.querySelectorAll('.nbs-opt');
   assert.ok(opts.length >= 2);
   const text = () => card.querySelector('.nbs-board').textContent;
@@ -121,7 +131,7 @@ test('with reduced motion a story starts at its end and nothing types', async ()
   const { win, doc } = open();
   const el = doc.createElement('div');
   doc.body.appendChild(el);
-  const st = JSON.parse(doc.getElementById('data').textContent).stories.Z1;
+  const st = JSON.parse(doc.getElementById('data').textContent).stories['conflict/move-while-typing'];
   win.NbScenario.mount(el, st, { reduced: true });
   assert.ok(el.classList.contains('nbs-ended'));
   assert.equal(el.querySelectorAll('.nbs-tw').length, 0);
@@ -156,7 +166,7 @@ test('every window of a story gets the height of the tallest, so nothing grows o
   });
   const el = doc.createElement('div');
   doc.body.appendChild(el);
-  const st = JSON.parse(doc.getElementById('data').textContent).stories.Z3;
+  const st = JSON.parse(doc.getElementById('data').textContent).stories['conflict/delete-while-typing'];
   const ctrl = win.NbScenario.mount(el, st, { autoplay: false });
   ctrl.measure();
   const h = parseInt(el.querySelector('.nbs-board').style.getPropertyValue('--nbs-h'), 10);
@@ -167,7 +177,7 @@ test('every window of a story gets the height of the tallest, so nothing grows o
 
 test('what a lane does is said above its window, in a row every lane has, so no window\'s cells move', async () => {
   const { doc } = open();
-  const card = doc.getElementById('Z1');
+  const card = doc.getElementById('conflict/move-while-typing');
   const segs = card.querySelectorAll('.nbs-seg');
   segs[3].click(); // a step in which a tab goes offline
   const board = card.querySelector('.nbs-board');
@@ -210,7 +220,7 @@ test('the stories page has no explainer above the stories, only a way to it', as
 
 test('the end says whether every copy holds the same cells', async () => {
   const { doc } = open();
-  const a = doc.getElementById('A');
+  const a = doc.getElementById('handshake/reconnect-after-rebuild-control');
   a.querySelectorAll('.nbs-seg')[a.querySelectorAll('.nbs-seg').length - 1].click();
   assert.match(a.querySelector('.nbs-caption').textContent, /every copy holds the same 3 cells/);
 });
@@ -220,7 +230,7 @@ test('a message is drawn as an envelope that gets lost on the way when the story
   win.Element.prototype.animate = function () { return { pause() {}, currentTime: 0 }; };
   const el = doc.createElement('div');
   doc.body.appendChild(el);
-  const st = JSON.parse(doc.getElementById('data').textContent).stories.B;
+  const st = JSON.parse(doc.getElementById('data').textContent).stories['handshake/answer-lost'];
   const ctrl = win.NbScenario.mount(el, st, { autoplay: false });
   const frames = [...st.steps.keys()].map(i => i + 1);
   const lostAt = frames.find(i => st.steps[i - 1].kind === 'fault');
@@ -275,9 +285,9 @@ test('searching shows every match even in a folded group; going to a story opens
   q.value = '';
   q.dispatchEvent(new win.Event('input'));
   assert.ok(!doc.getElementById('side').classList.contains('filtering'));
-  const z3 = doc.querySelector('.nav-story[data-id="Z3"]').closest('.nav-group');
+  const z3 = doc.querySelector('.nav-story[data-id="conflict/delete-while-typing"]').closest('.nav-group');
   assert.ok(z3.classList.contains('folded'));
-  win.location.hash = '#Z3';
+  win.location.hash = '#conflict/delete-while-typing';
   win.dispatchEvent(new win.HashChangeEvent('hashchange'));
   assert.ok(!z3.classList.contains('folded'), 'the group of the story you went to is open');
 });
@@ -327,7 +337,7 @@ test('the current state lists every story once, with a tag, and the tags filter 
 test('a story of the current state plays where it is, once its row is opened', async () => {
   const doc = await read('current.html');
   await sleep(100);
-  const row = doc.getElementById('C2');
+  const row = doc.getElementById('offline/second-tab-adds-cell');
   assert.ok(row.matches('details.state-row') && !row.open, 'a row starts folded');
   assert.equal(doc.querySelectorAll('.nbs-board').length, 0, 'nothing is played until a row is opened');
   row.open = true;
@@ -336,7 +346,7 @@ test('a story of the current state plays where it is, once its row is opened', a
   assert.ok(row.querySelector('.nbs-board'), 'the story is mounted');
   assert.ok(row.querySelector('.nbs-play'), 'and can be played');
   assert.equal(doc.querySelectorAll('.nbs-board').length, 1, 'only the opened one');
-  assert.ok(row.querySelector('a[href="stories.html#C2"]'), 'with a way to it among all the stories');
+  assert.ok(row.querySelector('a[href="stories.html#offline/second-tab-adds-cell"]'), 'with a way to it among all the stories');
 });
 
 test('up for discussion plays each story on the page, with its question and a way to the story', async () => {
@@ -367,8 +377,8 @@ test('a preview of a change plays the new and the changed stories and says what 
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'preview-'));
   const head = path.join(tmp, 'head');
   fs.cpSync(path.join(root, 'stories'), head, { recursive: true });
-  const file = path.join(head, 'storyboards', 'residual.yaml');
-  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/(  Z2:[\s\S]*?\n    result: )"[^\n]*"/, '$1"A different result."'));
+  const file = path.join(head, 'storyboards', 'conflict.yaml');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/(  conflict\/move-same-cell:[\s\S]*?\n    result: )"[^\n]*"/, '$1"A different result."'));
   const run = spawnSync('python3', ['-I', path.join(root, 'examples', 'storyboards', 'build.py'), '--data', head, '--base-data', path.join(root, 'stories'), '--pr', '9', '-o', path.join(tmp, 'out')], { encoding: 'utf8' });
   assert.equal(run.status, 0, run.stderr);
   const dom = await JSDOM.fromFile(path.join(tmp, 'out', 'index.html'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
@@ -377,7 +387,7 @@ test('a preview of a change plays the new and the changed stories and says what 
   const doc = dom.window.document;
   assert.match(doc.querySelector('.preview-banner').textContent, /pull request #9/);
   const cards = [...doc.querySelectorAll('.story-card')];
-  assert.deepEqual(cards.map(c => c.id), ['Z2']);
+  assert.deepEqual(cards.map(c => c.id), ['conflict/move-same-cell']);
   assert.ok(cards[0].querySelector('.nbs-board'), 'the changed story is mounted and played');
   assert.match(doc.querySelector('.change-diff').textContent, /A different result\./);
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -4,6 +4,13 @@
   'use strict';
   var NB = window.NbScenario;
   var data = JSON.parse(document.getElementById('data').textContent);
+  // a link written with a name a story had before (stories.html#Z3) goes to the story under the name it has now
+  (function () {
+    var id = decodeURIComponent(location.hash.slice(1));
+    if (!id || document.getElementById(id)) return;
+    var now = Object.keys(data.stories).filter(function (k) { return (data.stories[k].aliases || []).indexOf(id) >= 0; })[0];
+    if (now) location.replace('#' + now);
+  })();
   function mount(card) {
     if (!card || card.dataset.mounted) return;
     card.dataset.mounted = '1';
@@ -14,7 +21,7 @@
   rows.forEach(function (row) {
     row.addEventListener('toggle', function () { if (row.open) mount(row.querySelector('.story-card')); });
   });
-  // a link to current.html#Z3 opens that story
+  // a link to current.html#conflict/delete-while-typing opens that story
   function reveal() {
     var row = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
     if (row && row.matches('details.state-row')) { row.open = true; row.scrollIntoView(); }

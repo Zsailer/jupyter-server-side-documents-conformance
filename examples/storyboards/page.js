@@ -4,6 +4,14 @@
   var data = JSON.parse(document.getElementById('data').textContent);
   var NB = window.NbScenario;
 
+  // a link written with a name a story had before (stories.html#Z3) goes to the story under the name it has now
+  (function () {
+    var id = decodeURIComponent(location.hash.slice(1));
+    if (!id || document.getElementById(id)) return;
+    var now = Object.keys(data.stories).filter(function (k) { return (data.stories[k].aliases || []).indexOf(id) >= 0; })[0];
+    if (now) location.replace('#' + now);
+  })();
+
   /* ---- the stories: mounted up front, so the page does not jump; each plays only while it is on screen ---- */
   var cards = Array.prototype.slice.call(document.querySelectorAll('.story-card'));
   cards.forEach(function (card) {

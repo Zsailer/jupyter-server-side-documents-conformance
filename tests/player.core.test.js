@@ -59,7 +59,7 @@ test('every frame draws every lane, and never leaks undefined', () => {
 });
 
 test('the end frame holds what the story says it ends with', () => {
-  const st = data.stories.Z1;
+  const st = data.stories['conflict/move-while-typing'];
   const tl = NB.buildTimeline(st, cfg);
   const end = tl.frames[tl.frames.length - 1];
   const names = end.lanes.tab.cells.map(c => c.key);
@@ -69,7 +69,7 @@ test('the end frame holds what the story says it ends with', () => {
 });
 
 test('a person typing is animated; the system changing a cell is not', () => {
-  const tl = NB.buildTimeline(data.stories.Z1, cfg);
+  const tl = NB.buildTimeline(data.stories['conflict/move-while-typing'], cfg);
   const typing = tl.frames.find(f => f.kind === 'type');
   assert.ok(NB.boardHTML(tl, typing).includes('nbs-tw'), 'typing frame has typed text');
   const merge = tl.frames.find(f => f.kind === 'note');
@@ -77,7 +77,7 @@ test('a person typing is animated; the system changing a cell is not', () => {
 });
 
 test('a reconnect is a blip and previews what differs before the jump', () => {
-  const tl = NB.buildTimeline(data.stories.Z1, cfg);
+  const tl = NB.buildTimeline(data.stories['conflict/move-while-typing'], cfg);
   const rec = tl.frames.find(f => f.kind === 'reconnect');
   assert.equal(rec.blip, true);
   assert.ok(NB.boardHTML(tl, rec).includes('nbs-diff'));
@@ -85,7 +85,7 @@ test('a reconnect is a blip and previews what differs before the jump', () => {
 });
 
 test('a decision option replaces the ending', () => {
-  const st = data.stories.Z3;
+  const st = data.stories['conflict/delete-while-typing'];
   const tl = NB.buildTimeline(st, cfg);
   const alt = st.decision.options.find(o => !o.proposed);
   const tl2 = NB.withEnding(tl, st, alt.ends);
@@ -110,14 +110,14 @@ test('the triptych draws static windows with the typed text kept', () => {
 });
 
 test('when a story is over the file is saved again, whatever changed it on the way', () => {
-  const tl = NB.buildTimeline(data.stories.AI4, cfg);
+  const tl = NB.buildTimeline(data.stories['agent/last-person-leaves'], cfg);
   const before = tl.frames[tl.frames.length - 2].lanes.file.status;
   assert.equal(before, 'changed');
   assert.equal(tl.frames[tl.frames.length - 1].lanes.file.status, 'saved');
 });
 
 test('the server holds nothing until a tab opens the notebook, then what the file holds', () => {
-  const tl = NB.buildTimeline(data.stories.Z3, cfg);
+  const tl = NB.buildTimeline(data.stories['conflict/delete-while-typing'], cfg);
   const server = f => f.lanes.server;
   assert.equal(server(tl.frames[0]).status, 'idle');
   assert.equal(server(tl.frames[0]).cells.length, 0);
@@ -138,19 +138,19 @@ test('a server that holds the notebook never shows a blank notebook; one that le
 });
 
 test('an empty server window says why', () => {
-  const tl = NB.buildTimeline(data.stories.Z3, cfg);
+  const tl = NB.buildTimeline(data.stories['conflict/delete-while-typing'], cfg);
   assert.match(NB.boardHTML(tl, tl.frames[0]), /Not holding the notebook/);
 });
 
 test('a tab that opens the notebook shows what it loaded, not what it held before it closed', () => {
-  const tl = NB.buildTimeline(data.stories.AI4, cfg);
+  const tl = NB.buildTimeline(data.stories['agent/last-person-leaves'], cfg);
   const open = tl.frames.find(f => f.kind === 'open' && f.index > 5);
   assert.equal(open.lanes.tab.cells.length, 5);
   assert.deepEqual(open.lanes.tab.cells.map(c => c.code), open.lanes.server.cells.map(c => c.code));
 });
 
 test('a reconnect or rebuild that leaves a copy as it was says so: the non-event is shown', () => {
-  const tl = NB.buildTimeline(data.stories.A, cfg);
+  const tl = NB.buildTimeline(data.stories['handshake/reconnect-after-rebuild-control'], cfg);
   const rebuild = tl.frames.find(f => f.kind === 'rebuild');
   assert.equal(rebuild.lanes.server.unchanged, true);
   assert.match(NB.boardHTML(tl, rebuild), /nothing lost/);
@@ -161,12 +161,12 @@ test('a reconnect or rebuild that leaves a copy as it was says so: the non-event
 });
 
 test('it does not claim nothing was lost where the tab differs from the server', () => {
-  const tl = NB.buildTimeline(data.stories.Z1, cfg);
+  const tl = NB.buildTimeline(data.stories['conflict/move-while-typing'], cfg);
   const reconnect = tl.frames.find(f => f.kind === 'reconnect');
   assert.ok(!NB.boardHTML(tl, reconnect).includes('nothing lost'));
 });
 
 test('every window says how many cells it holds', () => {
-  const tl = NB.buildTimeline(data.stories.A, cfg);
+  const tl = NB.buildTimeline(data.stories['handshake/reconnect-after-rebuild-control'], cfg);
   assert.match(NB.boardHTML(tl, tl.frames[1]), /3 cells/);
 });

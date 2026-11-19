@@ -101,7 +101,7 @@ class BuildTest(unittest.TestCase):
             self.assertNotIn(section, index, "moved to about.html: " + section)
             self.assertIn(section, about)
         self.assertIn('href="about.html"', index, "the stories page says where the explanation is")
-        self.assertIn('href="stories.html#Z3"', about, "the explanation links back to the stories")
+        self.assertIn('href="stories.html#conflict/delete-while-typing"', about, "the explanation links back to the stories")
         self.assertIn('href="stories.html"', about)
 
     def test_the_page_has_every_story_once_with_a_text_version(self):
@@ -121,9 +121,9 @@ class BuildTest(unittest.TestCase):
 
     def test_a_decision_is_labelled_suggested_only_when_nobody_has_discussed_it(self):
         src = build.load(DATA)
-        for sid in ("AI5", "AI6", "AI7"):
+        for sid in ("agent/rewrites-cell-person-typing", "agent/deletes-cell-person-edited", "agent/crash-before-autosave"):
             self.assertEqual(build.story_json(src, sid)["decision"]["answerLabel"], "Suggested", sid)
-        self.assertEqual(build.story_json(src, "Z3")["decision"]["answerLabel"], "Proposed")
+        self.assertEqual(build.story_json(src, "conflict/delete-while-typing")["decision"]["answerLabel"], "Proposed")
 
     def test_the_minimal_example_points_at_files_that_exist(self):
         html = (ROOT / "examples" / "minimal" / "index.html").read_text()
@@ -156,7 +156,7 @@ class DiscussionTest(unittest.TestCase):
         for sid in src["stories"]:
             by_status.setdefault(build.status_of(src, sid), []).append(sid)
         self.assertEqual(len(by_status["provisional"]), 8)
-        self.assertEqual(sorted(by_status["open"]), ["AI5", "AI6", "AI7"])
+        self.assertEqual(sorted(by_status["open"]), ["agent/crash-before-autosave", "agent/deletes-cell-person-edited", "agent/rewrites-cell-person-typing"])
         with tempfile.TemporaryDirectory() as d:
             build.build(DATA, Path(d))
             current = (Path(d) / "current.html").read_text()
@@ -172,7 +172,7 @@ class DiscussionTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             data = Path(d) / "data"
             shutil.copytree(DATA, data)
-            path = data / "storyboards" / "residual.yaml"
+            path = data / "storyboards" / "conflict.yaml"
             text = path.read_text().replace("    discussion: true\n    decision:", "    discussion: {link: 'https://github.com/o/r/issues/7', note: 'Leaning to the first.'}\n    decision:", 1)
             path.write_text(text)
             build.build(data, Path(d) / "out")
@@ -192,27 +192,41 @@ class PreviewTest(unittest.TestCase):
 
         head = d / "head"
         shutil.copytree(DATA, head)
-        path = head / "storyboards" / "residual.yaml"
+        path = head / "storyboards" / "conflict.yaml"
         body = yaml.safe_load(path.read_text())
         scenarios = body["scenarios"]
-        new = copy.deepcopy(scenarios["Z1"])
+        new = copy.deepcopy(scenarios["conflict/move-while-typing"])
         new.update(title="A tab loses its connection a moment after typing", status="proposed")
         new.pop("decision"), new.pop("discussion")
-        scenarios["NEW1"] = new
-        scenarios["Z2"]["result"] = "The newer typing is kept in every copy."
-        del scenarios["Z4"]
+        scenarios["conflict/new-story"] = new
+        scenarios["conflict/move-same-cell"]["result"] = "The newer typing is kept in every copy."
+        del scenarios["conflict/rewrite-same-cell"]
         path.write_text(yaml.safe_dump(body, sort_keys=False, width=200))
         return head
 
     def test_the_diff_sorts_stories_into_new_changed_and_removed(self):
         base = build.load(DATA)["stories"]
         head = dict(base)
-        head["NEW1"] = dict(base["Z1"], title="new")
-        head["Z2"] = dict(base["Z2"], result="different")
-        del head["Z4"]
+        head["conflict/new-story"] = dict(base["conflict/move-while-typing"], title="new")
+        head["conflict/move-same-cell"] = dict(base["conflict/move-same-cell"], result="different")
+        del head["conflict/rewrite-same-cell"]
         change = build.diff_stories(base, head)
-        self.assertEqual(change, {"new": ["NEW1"], "changed": {"Z2": ["result"]}, "removed": ["Z4"]})
+        self.assertEqual(change, {"new": ["conflict/new-story"], "changed": {"conflict/move-same-cell": ["result"]}, "removed": ["conflict/rewrite-same-cell"]})
         self.assertEqual(build.diff_stories(base, base), {"new": [], "changed": {}, "removed": []})
+
+    def test_a_story_with_a_new_name_is_the_same_story_not_a_new_one_and_a_removed_one(self):
+        base = build.load(DATA)["stories"]
+        old = "conflict/move-same-cell"
+        head = {sid: st for sid, st in base.items() if sid != old}
+        head["conflict/move-the-same-cell"] = dict(base[old], aliases=[old], group="conflict")
+        self.assertEqual(
+            build.diff_stories(base, head),
+            {"new": [], "changed": {}, "removed": [], "renamed": {"conflict/move-the-same-cell": old}},
+        )
+        head["conflict/move-the-same-cell"]["result"] = "different"
+        change = build.diff_stories(base, head)
+        self.assertEqual(change["changed"], {"conflict/move-the-same-cell": ["result"]})
+        self.assertEqual((change["new"], change["removed"]), ([], []))
 
     def test_a_preview_opens_on_the_change_and_keeps_the_whole_site(self):
         with tempfile.TemporaryDirectory() as d:
@@ -223,7 +237,7 @@ class PreviewTest(unittest.TestCase):
         index = pages["index.html"]
         self.assertIn("pull request #7", index)
         self.assertIn("1 new, 1 changed, 1 removed", index)
-        for sid, tag in (("NEW1", "New"), ("Z2", "Changed"), ("Z4", "Removed")):
+        for sid, tag in (("conflict/new-story", "New"), ("conflict/move-same-cell", "Changed"), ("conflict/rewrite-same-cell", "Removed")):
             self.assertRegex(index, r'<span class="tag[^"]*">%s</span><span class="state-id">%s</span>' % (tag, sid))
         self.assertEqual(index.count('class="story-card"'), 2, "the new and the changed story are played; the removed one is not")
         self.assertIn("<b>Before</b>", index)
@@ -247,13 +261,13 @@ class PreviewTest(unittest.TestCase):
 class EditLinkTest(unittest.TestCase):
     def test_a_story_links_to_the_file_of_its_group_and_every_page_says_how_to_change_it(self):
         src = build.load(DATA)
-        group = src["stories"]["Z3"]["group"]
+        group = src["stories"]["conflict/delete-while-typing"]["group"]
         with tempfile.TemporaryDirectory() as d:
             build.build(DATA, Path(d))
             pages = {p.name: p.read_text() for p in Path(d).iterdir()}
         edit = f"{build.REPO}/edit/main/stories/storyboards/{group}.yaml"
         for name in ("stories.html", "current.html", "discussion.html"):
-            self.assertIn(f'href="{edit}"', pages[name], name + " links Z3 to the file it is written in")
+            self.assertIn(f'href="{edit}"', pages[name], name + " links a story to the file it is written in")
         self.assertEqual(pages["stories.html"].count('class="edit-story-row"'), len(src["stories"]), "one link a story")
         for name, page in pages.items():
             self.assertIn('<footer class="site-foot">', page, name)
