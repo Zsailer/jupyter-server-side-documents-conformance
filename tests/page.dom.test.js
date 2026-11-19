@@ -315,7 +315,7 @@ test('the current state lists every story once, with a tag, and the tags filter 
   const rows = [...doc.querySelectorAll('.state-row')];
   assert.ok(rows.length >= 60);
   assert.equal(new Set(rows.map(r => r.querySelector('.state-id').textContent)).size, rows.length, 'each story once');
-  assert.ok(rows.every(r => r.querySelector('.tag') && r.querySelector('p').textContent.length > 0));
+  assert.ok(rows.every(r => r.querySelector('.tag') && r.querySelector('.state-result').textContent.length > 0));
   const chip = [...doc.querySelectorAll('.chip-filter')].find(b => b.dataset.filter === 'provisional');
   chip.click();
   assert.deepEqual([...new Set(rows.filter(r => !r.hidden).map(r => r.dataset.status))], ['provisional']);
@@ -324,15 +324,32 @@ test('the current state lists every story once, with a tag, and the tags filter 
   assert.ok(rows.every(r => !r.hidden));
 });
 
-test('up for discussion shows each question with its answers, today\'s marked, and a way to the story', async () => {
+test('a story of the current state plays where it is, once its row is opened', async () => {
+  const doc = await read('current.html');
+  await sleep(100);
+  const row = doc.getElementById('C2');
+  assert.ok(row.matches('details.state-row') && !row.open, 'a row starts folded');
+  assert.equal(doc.querySelectorAll('.nbs-board').length, 0, 'nothing is played until a row is opened');
+  row.open = true;
+  row.dispatchEvent(new doc.defaultView.Event('toggle'));
+  await sleep(150);
+  assert.ok(row.querySelector('.nbs-board'), 'the story is mounted');
+  assert.ok(row.querySelector('.nbs-play'), 'and can be played');
+  assert.equal(doc.querySelectorAll('.nbs-board').length, 1, 'only the opened one');
+  assert.ok(row.querySelector('a[href="stories.html#C2"]'), 'with a way to it among all the stories');
+});
+
+test('up for discussion plays each story on the page, with its question and a way to the story', async () => {
   const doc = await read('discussion.html');
+  await sleep(250);
   const talks = [...doc.querySelectorAll('.talk')];
   assert.ok(talks.length >= 1 && talks.length <= 20, 'a small list');
   for (const t of talks) {
-    assert.ok(t.querySelectorAll('.talk-option').length >= 2 || t.querySelector('.tag-new'), t.id + ' shows the answers');
-    assert.equal(t.querySelectorAll('.talk-option.today').length, 1, t.id + ' marks one');
+    assert.ok(t.querySelector('.talk-question').textContent.length > 0, t.id + ' asks its question');
+    assert.ok(t.querySelector('.nbs-board'), t.id + ' plays without a click');
     assert.ok(t.querySelector('a[href^="stories.html#"]'), t.id + ' links to its story');
   }
+  assert.ok(talks.some(t => t.querySelector('.nbs-decision .nbs-opt')), 'the answers are in the player, with their endings');
 });
 
 test('every page of the site has the same bar with the same pages', async () => {
