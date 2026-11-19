@@ -70,7 +70,10 @@ jobs:
       - name: Install the tests
         working-directory: compliance
         run: |
+          pip install pyyaml
           npm ci
+          # the stories and the tests are generated from stories/, none of it is committed
+          npm run generate
           npx playwright install --with-deps chromium
       - name: Install the latest ${{ matrix.name }}
         run: |
