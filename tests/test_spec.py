@@ -73,15 +73,18 @@ class SpecTest(unittest.TestCase):
 
 
 class BuildTest(unittest.TestCase):
-    def test_the_page_is_deterministic_and_self_contained(self):
+    def test_every_page_is_deterministic_and_self_contained(self):
         with tempfile.TemporaryDirectory() as d:
-            a, b = Path(d) / "a.html", Path(d) / "b.html"
+            a, b = Path(d) / "a", Path(d) / "b"
             build.build(DATA, a)
             build.build(DATA, b)
-            for name in ("a.html", "b.html", "about.html"):
-                self.assertTrue((Path(d) / name).exists(), name)
-            self.assertEqual(a.read_bytes(), b.read_bytes())
-            pages = {"index": a.read_text(), "about": (Path(d) / "about.html").read_text()}
+            names = sorted(p.name for p in a.iterdir())
+            self.assertEqual(names, sorted(p.name for p in b.iterdir()))
+            for name in ("index.html", "stories.html", "about.html"):
+                self.assertIn(name, names)
+            for name in names:
+                self.assertEqual((a / name).read_bytes(), (b / name).read_bytes(), name)
+            pages = {name: (a / name).read_text() for name in names}
         for name, page in pages.items():
             with self.subTest(name):
                 self.assertNotRegex(page, r"<script[^>]+src=", "no external script")
@@ -92,21 +95,19 @@ class BuildTest(unittest.TestCase):
 
     def test_the_stories_page_is_light_and_the_explanation_is_on_its_own_page(self):
         with tempfile.TemporaryDirectory() as d:
-            out = Path(d) / "index.html"
-            build.build(DATA, out)
-            index, about = out.read_text(), (Path(d) / "about.html").read_text()
+            build.build(DATA, Path(d))
+            index, about = (Path(d) / "stories.html").read_text(), (Path(d) / "about.html").read_text()
         for section in ('id="picture"', 'id="how"', 'id="principles"', 'id="need"'):
             self.assertNotIn(section, index, "moved to about.html: " + section)
             self.assertIn(section, about)
         self.assertIn('href="about.html"', index, "the stories page says where the explanation is")
-        self.assertIn('href="index.html#Z3"', about, "the explanation links back to the stories")
-        self.assertIn('href="index.html"', about)
+        self.assertIn('href="stories.html#Z3"', about, "the explanation links back to the stories")
+        self.assertIn('href="stories.html"', about)
 
     def test_the_page_has_every_story_once_with_a_text_version(self):
         with tempfile.TemporaryDirectory() as d:
-            out = Path(d) / "p.html"
-            result = build.build(DATA, out)
-            page = out.read_text()
+            result = build.build(DATA, Path(d))
+            page = (Path(d) / "stories.html").read_text()
         for sid in result["stories"]:
             self.assertEqual(len(re.findall(r'<article class="story-card[^"]*" id="%s"' % re.escape(sid), page)), 1, sid)
         self.assertGreaterEqual(page.count("<ol>"), len(result["stories"]), "each story has its steps as plain text for no-JS readers")
@@ -132,3 +133,112 @@ class BuildTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+OPTIONS = [{"label": "A", "detail": "a", "proposed": True}, {"label": "B", "detail": "b"}]
+
+
+class DiscussionTest(unittest.TestCase):
+    def test_only_a_story_with_alternatives_or_a_proposed_case_can_be_discussed(self):
+        spec.validate_story("X", story(decision={"question": "q", "options": OPTIONS}, discussion=True))
+        spec.validate_story("X", story(status="proposed", discussion={"link": "https://github.com/o/r/issues/1", "note": "n"}))
+        with self.assertRaises(spec.SpecError):
+            spec.validate_story("X", story(discussion=True))
+
+    def test_a_discussion_has_a_web_address_and_a_note_and_nothing_else(self):
+        for bad in ({"link": "not a link"}, {"url": "https://x.y"}, {"note": 3}, "yes"):
+            with self.subTest(bad), self.assertRaises(spec.SpecError):
+                spec.validate_story("X", story(status="proposed", discussion=bad))
+
+    def test_the_pages_say_how_firm_each_answer_is_and_list_what_is_discussed(self):
+        src = build.load(DATA)
+        by_status = {}
+        for sid in src["stories"]:
+            by_status.setdefault(build.status_of(src, sid), []).append(sid)
+        self.assertEqual(len(by_status["provisional"]), 8)
+        self.assertEqual(sorted(by_status["open"]), ["AI5", "AI6", "AI7"])
+        with tempfile.TemporaryDirectory() as d:
+            build.build(DATA, Path(d))
+            current = (Path(d) / "current.html").read_text()
+            discussion = (Path(d) / "discussion.html").read_text()
+        self.assertEqual(current.count('class="state-row"'), len(src["stories"]))
+        self.assertEqual(current.count('data-status="settled"'), 58)
+        opted_in = [sid for sid, s in src["stories"].items() if build.discussed(s)]
+        self.assertEqual(len(opted_in), 11)
+        self.assertEqual(discussion.count('class="talk"'), 11)
+        self.assertNotIn('class="talk-join"', discussion, "no link, no button")
+
+    def test_a_link_makes_a_join_button(self):
+        with tempfile.TemporaryDirectory() as d:
+            data = Path(d) / "data"
+            shutil.copytree(DATA, data)
+            path = data / "storyboards" / "residual.yaml"
+            text = path.read_text().replace("    discussion: true\n    decision:", "    discussion: {link: 'https://github.com/o/r/issues/7', note: 'Leaning to the first.'}\n    decision:", 1)
+            path.write_text(text)
+            build.build(data, Path(d) / "out")
+            page = (Path(d) / "out" / "discussion.html").read_text()
+        self.assertIn('class="talk-join" href="https://github.com/o/r/issues/7"', page)
+        self.assertIn("Leaning to the first.", page)
+
+
+class PreviewTest(unittest.TestCase):
+    """A pull request's preview opens on what the pull request changes."""
+
+    def _head(self, d: Path) -> Path:
+        """The stories of a pull request that adds one story, changes the result of one and removes one."""
+        import copy
+
+        import yaml
+
+        head = d / "head"
+        shutil.copytree(DATA, head)
+        path = head / "storyboards" / "residual.yaml"
+        body = yaml.safe_load(path.read_text())
+        scenarios = body["scenarios"]
+        new = copy.deepcopy(scenarios["Z1"])
+        new.update(title="A tab loses its connection a moment after typing", status="proposed")
+        new.pop("decision"), new.pop("discussion")
+        scenarios["NEW1"] = new
+        scenarios["Z2"]["result"] = "The newer typing is kept in every copy."
+        del scenarios["Z4"]
+        path.write_text(yaml.safe_dump(body, sort_keys=False, width=200))
+        return head
+
+    def test_the_diff_sorts_stories_into_new_changed_and_removed(self):
+        base = build.load(DATA)["stories"]
+        head = dict(base)
+        head["NEW1"] = dict(base["Z1"], title="new")
+        head["Z2"] = dict(base["Z2"], result="different")
+        del head["Z4"]
+        change = build.diff_stories(base, head)
+        self.assertEqual(change, {"new": ["NEW1"], "changed": {"Z2": ["result"]}, "removed": ["Z4"]})
+        self.assertEqual(build.diff_stories(base, base), {"new": [], "changed": {}, "removed": []})
+
+    def test_a_preview_opens_on_the_change_and_keeps_the_whole_site(self):
+        with tempfile.TemporaryDirectory() as d:
+            head = self._head(Path(d))
+            build.build(head, Path(d) / "out", base_data=DATA, pr="7")
+            pages = {p.name: p.read_text() for p in (Path(d) / "out").iterdir()}
+        self.assertEqual(sorted(pages), ["about.html", "current.html", "discussion.html", "index.html", "stories.html", "welcome.html"])
+        index = pages["index.html"]
+        self.assertIn("pull request #7", index)
+        self.assertIn("1 new, 1 changed, 1 removed", index)
+        for sid, tag in (("NEW1", "New"), ("Z2", "Changed"), ("Z4", "Removed")):
+            self.assertRegex(index, r'<span class="tag[^"]*">%s</span><span class="state-id">%s</span>' % (tag, sid))
+        self.assertEqual(index.count('class="story-card"'), 2, "the new and the changed story are played; the removed one is not")
+        self.assertIn("<b>Before</b>", index)
+        self.assertIn("The newer typing is kept in every copy.", index)
+        # the whole site is there, and every page can get back to the change and to the welcome page
+        for name in ("stories.html", "about.html", "current.html", "discussion.html", "welcome.html"):
+            self.assertIn('<a href="index.html">This change</a>', pages[name], name)
+            self.assertIn('href="welcome.html" aria-label', pages[name], name + " links home to the welcome page")
+        self.assertIn('class="welcome"', pages["welcome.html"])
+
+    def test_a_pull_request_that_changes_no_story_is_the_ordinary_site(self):
+        with tempfile.TemporaryDirectory() as d:
+            build.build(DATA, Path(d) / "out", base_data=DATA, pr="8")
+            names = sorted(p.name for p in (Path(d) / "out").iterdir())
+            index = (Path(d) / "out" / "index.html").read_text()
+        self.assertNotIn("welcome.html", names)
+        self.assertIn('class="welcome"', index)
+        self.assertNotIn("This change", index)

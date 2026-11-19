@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { JSDOM, VirtualConsole } = require('jsdom');
 
-const SITE = path.join(__dirname, '..', 'examples', 'storyboards', 'site', 'index.html');
+const SITE = path.join(__dirname, '..', 'examples', 'storyboards', 'site', 'stories.html');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const opened = [];
@@ -290,4 +290,78 @@ test('the button that hides the list is a hamburger icon, first in the bar, on t
   assert.equal(toggle.textContent.trim(), '', 'an icon, no word');
   assert.match(toggle.getAttribute('aria-label'), /list of stories/);
   assert.equal(toggle.querySelectorAll('path').length, 1);
+});
+
+test('the welcome page is short, with the real Jupyter mark, and leads to the stories', async () => {
+  const dom = await JSDOM.fromFile(path.join(path.dirname(SITE), 'index.html'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
+  opened.push(dom.window);
+  const doc = dom.window.document;
+  assert.equal(doc.querySelectorAll('h1').length, 1);
+  assert.equal(doc.querySelectorAll('.story-card').length, 0, 'no stories on the welcome page');
+  assert.ok(doc.querySelector('.welcome-lead'));
+  assert.ok(doc.querySelector('.welcome-links a[href="stories.html"]'));
+  // the mark is the orange arcs and the planets of the Jupyter logo
+  const logo = doc.querySelector('.brand svg.logo');
+  assert.ok(logo);
+  assert.equal(logo.querySelectorAll('path').length, 2, 'the arcs, and the planets');
+  assert.ok(logo.innerHTML.includes('#F37726'));
+  assert.ok((doc.body.textContent.match(/\S+/g) || []).length < 250, 'a few lines, not a wall of text');
+});
+
+const read = name => JSDOM.fromFile(path.join(path.dirname(SITE), name), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' }).then(dom => (opened.push(dom.window), dom.window.document));
+
+test('the current state lists every story once, with a tag, and the tags filter it', async () => {
+  const doc = await read('current.html');
+  const rows = [...doc.querySelectorAll('.state-row')];
+  assert.ok(rows.length >= 60);
+  assert.equal(new Set(rows.map(r => r.querySelector('.state-id').textContent)).size, rows.length, 'each story once');
+  assert.ok(rows.every(r => r.querySelector('.tag') && r.querySelector('p').textContent.length > 0));
+  const chip = [...doc.querySelectorAll('.chip-filter')].find(b => b.dataset.filter === 'provisional');
+  chip.click();
+  assert.deepEqual([...new Set(rows.filter(r => !r.hidden).map(r => r.dataset.status))], ['provisional']);
+  assert.ok([...doc.querySelectorAll('.state-group')].every(g => g.hidden === !g.querySelector('.state-row:not([hidden])')), 'a group with no row is hidden');
+  [...doc.querySelectorAll('.chip-filter')].find(b => b.dataset.filter === 'all').click();
+  assert.ok(rows.every(r => !r.hidden));
+});
+
+test('up for discussion shows each question with its answers, today\'s marked, and a way to the story', async () => {
+  const doc = await read('discussion.html');
+  const talks = [...doc.querySelectorAll('.talk')];
+  assert.ok(talks.length >= 1 && talks.length <= 20, 'a small list');
+  for (const t of talks) {
+    assert.ok(t.querySelectorAll('.talk-option').length >= 2 || t.querySelector('.tag-new'), t.id + ' shows the answers');
+    assert.equal(t.querySelectorAll('.talk-option.today').length, 1, t.id + ' marks one');
+    assert.ok(t.querySelector('a[href^="stories.html#"]'), t.id + ' links to its story');
+  }
+});
+
+test('every page of the site has the same bar with the same pages', async () => {
+  for (const name of ['index.html', 'current.html', 'discussion.html', 'stories.html', 'about.html']) {
+    const doc = await read(name);
+    assert.deepEqual([...doc.querySelectorAll('.topnav a')].map(a => a.getAttribute('href')), ['current.html', 'discussion.html', 'stories.html', 'about.html'], name);
+    assert.ok(doc.querySelector('.brand svg.logo'), name + ' has the mark');
+  }
+});
+
+test('a preview of a change plays the new and the changed stories and says what moved', async () => {
+  const { spawnSync } = require('node:child_process');
+  const os = require('node:os');
+  const root = path.join(__dirname, '..');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'preview-'));
+  const head = path.join(tmp, 'head');
+  fs.cpSync(path.join(root, 'stories'), head, { recursive: true });
+  const file = path.join(head, 'storyboards', 'residual.yaml');
+  fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/(  Z2:[\s\S]*?\n    result: )"[^\n]*"/, '$1"A different result."'));
+  const run = spawnSync('python3', ['-I', path.join(root, 'examples', 'storyboards', 'build.py'), '--data', head, '--base-data', path.join(root, 'stories'), '--pr', '9', '-o', path.join(tmp, 'out')], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const dom = await JSDOM.fromFile(path.join(tmp, 'out', 'index.html'), { runScripts: 'dangerously', pretendToBeVisual: true, url: 'http://localhost/' });
+  opened.push(dom.window);
+  await sleep(150);
+  const doc = dom.window.document;
+  assert.match(doc.querySelector('.preview-banner').textContent, /pull request #9/);
+  const cards = [...doc.querySelectorAll('.story-card')];
+  assert.deepEqual(cards.map(c => c.id), ['Z2']);
+  assert.ok(cards[0].querySelector('.nbs-board'), 'the changed story is mounted and played');
+  assert.match(doc.querySelector('.change-diff').textContent, /A different result\./);
+  fs.rmSync(tmp, { recursive: true, force: true });
 });
