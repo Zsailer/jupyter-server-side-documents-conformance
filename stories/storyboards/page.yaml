@@ -65,17 +65,22 @@ groups:
     title: "Reconnecting"
     intro: >-
       A tab that comes back from offline and the server first compare what they each hold. These are the situations around that
-      moment: a message that is lost or late, a brand-new tab, a second tab, and two tabs that are both out of date.
-  edges:
-    title: "More corners of reconnecting"
+      moment: a message that is lost or late, and a brand-new tab.
+  offline:
+    title: "Editing while offline"
     intro: >-
-      A tab that has only been reading, a view-only user, a tab that left, a late answer after offline typing, and cells that were
+      A tab that has only been reading, a view-only user, a tab that left, two tabs that are both out of date, and cells that were
       created, moved or saved by tabs that come back in a different order.
   rebuild:
     title: "Offline edits across a rebuilt notebook"
     intro: >-
       While a tab is offline the server lets go of the notebook and builds it again from the file. What the user typed, moved or
       deleted in the meantime must still hold when the tab comes back.
+  conflict:
+    title: "Two people at once"
+    intro: >-
+      Situations in which two people's intentions conflict: one moves a cell while another types into it, two move the same cell, one
+      deletes a cell that another is typing in, two rewrite the same text. Each has a proposed answer and the alternatives to align on.
   crash:
     title: "A server that dies before it saved"
     intro: >-
@@ -84,7 +89,7 @@ groups:
     title: "The file changes underneath"
     intro: >-
       The file is edited outside Jupyter, replaced by another copy, or deleted.
-  lineage:
+  history:
     title: "The server's history record"
     intro: >-
       These stories apply only if the server keeps a record of each notebook's editing history next to the file. They say what that
@@ -93,20 +98,16 @@ groups:
     title: "Notebook outputs"
     intro: >-
       The outputs of cells (results, plots, text) must survive the server letting go of a notebook and building it again.
-  stop:
+  shutdown:
     title: "Shutting a notebook down"
     intro: >-
       What the server does with messages that are still waiting when it shuts a notebook down.
-  residual:
-    title: "What still needs a decision"
-    intro: >-
-      Situations in which two people's intentions conflict, or in which the machinery could lose something. Each has a proposed answer
-      and the alternatives to align on.
-  ai:
+  agent:
     title: "AI agents edit the notebook"
     intro: >-
       An AI agent such as Claude Code can change a notebook in two ways. While the server holds the notebook, the agent edits the server's
       live copy, the way a tab does, and everybody sees the change as it happens. While the server does not hold it, the agent edits the
       file directly. The server holds a notebook from the moment the first tab opens it until a few minutes after the last tab has left.
-      These stories are about the two paths and the moments in between. S3 (an edit on the server's live copy), S4, S8 and S9 (the file
-      edited outside) and Z5 (an outside change against unsaved typing) play parts of the same ground.
+      These stories are about the two paths and the moments in between. The stories crash/server-edit-survives (an edit on the server's
+      live copy), files/edited-outside-while-offline, files/edit-keeps-mtime and files/edited-outside-then-crash (the file edited outside)
+      and files/changed-outside-while-typing (an outside change against unsaved typing) play parts of the same ground.

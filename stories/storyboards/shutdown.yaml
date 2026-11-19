@@ -1,12 +1,13 @@
-# What YRoom.stop() does with queued work.
-# (How a storyboard is written: storyboard.py.)
+# What a room does with queued work when it is shut down.
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
-  three: &three [c0, c1, c2]
   queued: &queued ["c0=+QUEUED", c1, c2]
+  three: &three [c0, c1, c2]
   valid: &valid ["c0=+VALID", c1, c2]
 
 scenarios:
-  X1:
+  shutdown/update-waiting:
+    aliases: [X1]
     title: "Shutting down with an update still waiting from a connected tab"
     story: >-
       A tab that is connected and in sync types, and the server is told to shut the notebook down while the update is still waiting in
@@ -21,7 +22,8 @@ scenarios:
     ends: {tab: *queued, server: *queued, file: *queued}
     risk: "An edit the server had already received must not be dropped because it was still in the queue."
 
-  X2:
+  shutdown/damaged-message-first:
+    aliases: [X2]
     title: "Shutting down with a damaged message ahead of a valid one"
     story: >-
       A damaged message and, right behind it, a valid edit are waiting in the server's queue when the notebook is shut down.
@@ -35,7 +37,8 @@ scenarios:
     ends: {tab: *valid, server: *valid, file: *valid}
     risk: "One damaged message must not keep the edits behind it from being saved, nor keep the notebook from shutting down."
 
-  X3:
+  shutdown/waits-for-cleanup:
+    aliases: [X3]
     title: "Shutting down waits for the cleanup work registered for it"
     lanes: {server: "Server"}
     start: {server: "an open notebook"}
@@ -51,7 +54,8 @@ scenarios:
     ends: {server: "the cleanup work finished before the server reported it was done"}
     risk: "Reporting “done” too early lets the next step, such as building the notebook again, run before the cleanup that it depends on."
 
-  X4:
+  shutdown/update-from-left-tab:
+    aliases: [X4]
     title: "Shutting down with an update from a tab that has already left"
     story: >-
       A tab sends an update and leaves before the server handled it. The update is still in the server's queue when the notebook is shut

@@ -28,7 +28,7 @@ KINDS = (
     "rebuild", "crash", "save", "deadline", "fault", "late", "outside", "restore", "remove", "note",
 )
 
-STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges", "status", "discussion"}
+STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges", "status", "discussion", "aliases"}
 # "proposed": the case is up for discussion, so a backend that does not meet it is reported but not failed
 STATUSES = ("accepted", "proposed")
 REQUIRED = ("title", "story", "steps", "result", "ends")
@@ -91,6 +91,11 @@ def validate_story(sid: str, story: dict) -> None:
     for key in REQUIRED:
         if not story.get(key):
             raise SpecError(f"{where}: {key} is required")
+    aliases = story.get("aliases")
+    if aliases is not None and (not isinstance(aliases, list) or not all(isinstance(a, str) and a for a in aliases)):
+        raise SpecError(f"{where}: aliases is a list of the names the story had before")
+    if "/" in sid and story.get("group") and sid.split("/", 1)[0] != story["group"]:
+        raise SpecError(f"{where}: a story is named group/what-happens, and this one is in the group {story['group']!r}")
     for lane in story.get("lanes") or {}:
         _check_lane(lane, f"{where}, lanes")
     used: set[str] = set()

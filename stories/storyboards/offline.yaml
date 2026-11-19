@@ -1,18 +1,75 @@
-# More edges of the handshake: a bare client, a read-only client, a departed client, late replies with offline work.
-# (How a storyboard is written: storyboard.py.)
+# Tabs that edit while disconnected: cells added, typed into or moved, a read-only or departed client, and tabs that come back in a different order.
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
+  offline_edit: &offline_edit [c0, c1, c2, "+offline edit"]
   three: &three [c0, c1, c2]
-  one_added: &one_added [c0, c1, c2, "+offline edit"]
-  typed: &typed ["c0=+OFFLINE", c1, c2]
+  four: &four [c0, c1, c2, "+typed while offline"]
   edited: &edited ["c0=EDITED OFFLINE", c1, c2]
+  one_added: &one_added [c0, c1, c2, "+offline edit"]
+  moved: &moved [c1, c2, "^c0"]
+  five: &five [c0, c1, c2, X-1, X-2]
+  six: &six [c0, c1, c2, X-1, X-2, Y-1]
   five_k: &five_k [c0, c1, c2, Y-1, NEW-B]
   five_k_new: &five_k_new [c0, c1, c2, Y-1, "+NEW-B"]
   five_k2: &five_k2 [c0, c1, c2, B-1, Y-1]
-  six: &six [c0, c1, c2, X-1, X-2, Y-1]
-  moved: &moved [c1, c2, "^c0"]
 
 scenarios:
-  C:
+  offline/first-tab-adds-cell-control:
+    aliases: [C1]
+    title: "Control: the first tab adds a cell while offline"
+    story: >-
+      One tab opens the notebook, loses its connection, the user adds a cell, and the tab reconnects to the same server.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: add, text: "adds a cell “offline edit”", cells: *offline_edit}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects", cells: *offline_edit}
+      - {at: server, kind: note, text: "receives the new cell", cells: *offline_edit}
+      - {at: file, kind: save, text: "autosave", cells: *offline_edit}
+    result: "The cell syncs like any other edit: four cells everywhere."
+    ends: {all: *offline_edit}
+    risk: "The simplest offline edit of all. If it fails, no offline edit can be trusted."
+
+  offline/second-tab-adds-cell:
+    aliases: [C2]
+    title: "A second tab adds a cell while offline"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      Two tabs have the notebook open. The second loses its connection, the user adds a cell, and the tab reconnects to the same server.
+      The first tab stays connected throughout.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: offline, text: "loses its connection"}
+      - {at: tab2, kind: add, text: "adds a cell “typed while offline”", cells: *four}
+      - {at: tab2, kind: reconnect, to: server, text: "reconnects", cells: *four}
+      - {at: server, kind: note, text: "keeps the new cell and shares it with the first tab", cells: *four}
+      - {at: file, kind: save, text: "autosave", cells: *four}
+    result: "The cell added offline is kept: four cells everywhere, and the first tab simply receives it."
+    ends: {all: *four}
+    risk: "Without this, a cell added offline disappears when the connection returns, and the user is not told."
+
+  offline/second-tab-types:
+    aliases: [C3]
+    title: "A second tab types into a cell while offline"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      The most common offline edit is typing in a cell, not adding one. Two tabs have the notebook open; the second loses its connection,
+      the user rewrites the text of a cell, and the tab reconnects to the same server.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: offline, text: "loses its connection"}
+      - {at: tab2, kind: type, text: "rewrites c0 as “EDITED OFFLINE”", cells: *edited}
+      - {at: tab2, kind: reconnect, to: server, text: "reconnects", cells: *edited}
+      - {at: server, kind: note, text: "receives the typing and shares it", cells: *edited}
+      - {at: file, kind: save, text: "autosave", cells: *edited}
+    result: "The typing is kept and reaches the server: three cells everywhere, and c0 reads “EDITED OFFLINE”."
+    ends: {all: *edited}
+    risk: "Without this, a user who types on a train loses the typing the moment the connection comes back."
+
+  offline/reading-tab-adds-cell:
+    aliases: [C]
     title: "A tab that has only been reading adds a cell while offline"
     story: >-
       The tab opened the notebook and has not changed anything yet. Its connection drops, the user adds a cell, and the tab reconnects
@@ -28,7 +85,27 @@ scenarios:
     ends: {all: *one_added}
     risk: "A cell added offline must not vanish when the connection returns, however little the tab had done before."
 
-  E:
+  offline/second-tab-moves-cell:
+    aliases: [M1]
+    title: "A second tab moves a cell while offline"
+    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
+    story: >-
+      Two tabs have the notebook open. The second loses its connection, the user moves a cell to the end, and the tab reconnects to the
+      same server.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
+      - {at: tab2, kind: offline, text: "loses its connection"}
+      - {at: tab2, kind: move, text: "moves c0 to the end of the notebook", cells: *moved}
+      - {at: tab2, kind: reconnect, to: server, text: "reconnects", cells: *moved}
+      - {at: server, kind: note, text: "keeps the moved cell and shares it", cells: *moved}
+      - {at: file, kind: save, text: "autosave", cells: *moved}
+    result: "The moved cell survives: three cells everywhere, with c0 at the end."
+    ends: {all: *moved}
+    risk: "A move is the easiest edit to get wrong: the cell must neither disappear nor appear twice."
+
+  offline/view-only-reconnects:
+    aliases: [E]
     title: "A view-only user reconnects"
     lanes: {tab: "View-only tab", server: "Server", file: "File on disk"}
     story: >-
@@ -41,7 +118,8 @@ scenarios:
     ends: {all: *three}
     risk: "Without this, any connection blip would show a view-only user an empty notebook, although nothing is wrong."
 
-  F:
+  offline/leaving-tab-does-not-freeze:
+    aliases: [F]
     title: "A tab that left does not freeze the notebook for the others"
     lanes: {tab: "Tab that leaves", tab2: "Newcomer", server: "Server"}
     story: >-
@@ -57,47 +135,31 @@ scenarios:
     ends: {tab2: *three, server: *three}
     risk: "A single stray message from a tab that is gone must not stop the notebook for everybody who is still there."
 
-  G2:
-    title: "A late answer after typing offline"
+  offline/stale-tabs-different-amounts:
+    aliases: [H2]
+    title: "Two out-of-date tabs hold different amounts of the same session"
+    lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator W", server: "Server", file: "File on disk"}
     story: >-
-      The tab types while it is offline, the server builds the notebook again, and the tab reconnects, but its browser is busy and the
-      answer reaches the server only after the five-second wait.
+      Tabs A and B and a collaborator W work in one notebook. A leaves early, so B holds more of what W did than A does. Then the server
+      lets go of the notebook and builds it again, and A comes back first, B second.
     steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab, kind: offline, text: "loses its connection"}
-      - {at: tab, kind: type, text: "types “+OFFLINE” into c0", cells: *typed}
-      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *three}
-      - {at: tab, kind: reconnect, to: server, text: "reconnects; the browser is busy, so its answer is slow", cells: *typed}
-      - {at: server, kind: deadline, text: "waits five seconds, then carries on; the tab stays connected"}
-      - {at: tab, kind: late, to: server, text: "the answer arrives after the wait"}
-      - {at: server, kind: note, text: "uses it: the typing is in the notebook", cells: *typed}
-      - {at: tab, kind: offline, text: "the connection drops once more"}
-      - {at: tab, kind: reconnect, to: server, text: "reconnects again", cells: *typed}
-    result: "The notebook is intact, the late answer is used and the typing is kept. Nobody is disconnected."
-    ends: {all: *typed}
-    risk: "A slow browser must not turn into lost typing."
+      - {at: [tab, tab2, tab3], kind: open, text: "A, B and W open the notebook", cells: *three}
+      - {at: tab3, kind: add, text: "W adds a cell “X-1”", cells: [c0, c1, c2, "+X-1"]}
+      - {at: [tab, tab2], kind: note, text: "A and B receive X-1", cells: [c0, c1, c2, X-1]}
+      - {at: tab, kind: offline, text: "A goes away (laptop closed)"}
+      - {at: tab3, kind: add, text: "W adds another cell “X-2”", cells: [c0, c1, c2, X-1, "+X-2"]}
+      - {at: tab2, kind: note, text: "only B receives X-2: B now holds more of W's work than A", cells: *five}
+      - {at: [tab2, tab3], kind: leave, text: "B and W close their tabs"}
+      - {at: file, kind: save, text: "holds all five cells", cells: *five}
+      - {at: server, kind: rebuild, text: "lets go of the notebook, then builds it again from the file", cells: *five}
+      - {at: tab, kind: reconnect, to: server, text: "A comes back first", cells: *five}
+      - {at: tab2, kind: reconnect, to: server, text: "B comes back second; it holds a longer piece of W's work than A did", cells: *five}
+    result: "All copies end with the same five cells, and X-2 is not duplicated."
+    ends: {tab: *five, tab2: *five, server: *five, file: *five}
+    risk: "If B's longer piece of W's work were merged next to the server's rebuilt copy of the same work, X-2 would appear twice and be saved twice."
 
-  G3:
-    title: "A second tab types offline and its answer is late"
-    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
-    story: >-
-      Like the story of the second tab that types while offline, but its browser is busy and the answer reaches the server only after the
-      five-second wait.
-    steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
-      - {at: tab2, kind: offline, text: "loses its connection"}
-      - {at: tab2, kind: type, text: "rewrites c0 as “EDITED OFFLINE”", cells: *edited}
-      - {at: tab2, kind: reconnect, to: server, text: "reconnects; the browser is busy, so its answer is slow", cells: *edited}
-      - {at: server, kind: deadline, text: "waits five seconds, then carries on; nobody is disconnected"}
-      - {at: tab2, kind: late, to: server, text: "the answer arrives after the wait"}
-      - {at: server, kind: note, text: "uses it: the typing is in the notebook", cells: *edited}
-      - {at: file, kind: save, text: "autosave", cells: *edited}
-    result: "The typing reaches the server and nobody is disconnected: three cells everywhere."
-    ends: {all: *edited}
-    risk: "A slow browser must not turn into lost typing, nor into a disconnected user."
-
-  H3:
+  offline/stale-tabs-plus-collaborator:
+    aliases: [H3]
     title: "Two out-of-date tabs, one also holding the work of a second collaborator"
     lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator W", tab4: "Collaborator V", server: "Server", file: "File on disk"}
     story: >-
@@ -120,7 +182,8 @@ scenarios:
     ends: {tab: *six, tab2: *six, server: *six, file: *six}
     risk: "If B's pieces were merged next to the server's rebuilt copy of the same work, X-2 would appear twice and be saved twice."
 
-  H4:
+  offline/stale-tabs-one-typed-forgotten:
+    aliases: [H4]
     title: "Two out-of-date tabs, the old session forgotten, one of them typed offline"
     lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator W", server: "Server", file: "File on disk"}
     story: >-
@@ -148,7 +211,8 @@ scenarios:
       file: ["c0=+B-OFFLINE", c1, c2, X-1, X-2]
     risk: "A tab that typed offline must not merge its old pieces next to the server's copy of the same work: they would appear twice."
 
-  K:
+  offline/cell-server-half-remembers:
+    aliases: [K]
     title: "A cell created offline by a tab the server only partly remembers"
     lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator V", server: "Server", file: "File on disk"}
     story: >-
@@ -170,7 +234,8 @@ scenarios:
     ends: {tab: *five_k, tab2: *five_k, server: *five_k, file: *five_k}
     risk: "A cell the user added while offline must not be dropped just because the server only remembers part of what the tab did earlier."
 
-  K2:
+  offline/saved-cell-not-added-twice:
+    aliases: [K2]
     title: "A cell that was already saved is not added a second time"
     lanes: {tab: "Tab A", tab2: "Tab B", tab3: "Collaborator V", server: "Server", file: "File on disk"}
     story: >-
@@ -190,21 +255,3 @@ scenarios:
     result: "Five cells in every copy: B-1 is there once."
     ends: {tab: *five_k2, tab2: *five_k2, server: *five_k2, file: *five_k2}
     risk: "Work that was saved must not come back a second time when the tab that typed it returns."
-
-  M1:
-    title: "A second tab moves a cell while offline"
-    lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
-    story: >-
-      Two tabs have the notebook open. The second loses its connection, the user moves a cell to the end, and the tab reconnects to the
-      same server.
-    steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab2, kind: open, text: "opens the same notebook", cells: *three}
-      - {at: tab2, kind: offline, text: "loses its connection"}
-      - {at: tab2, kind: move, text: "moves c0 to the end of the notebook", cells: *moved}
-      - {at: tab2, kind: reconnect, to: server, text: "reconnects", cells: *moved}
-      - {at: server, kind: note, text: "keeps the moved cell and shares it", cells: *moved}
-      - {at: file, kind: save, text: "autosave", cells: *moved}
-    result: "The moved cell survives: three cells everywhere, with c0 at the end."
-    ends: {all: *moved}
-    risk: "A move is the easiest edit to get wrong: the cell must neither disappear nor appear twice."

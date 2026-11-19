@@ -1,13 +1,31 @@
 # Notebook outputs across a free and a rebuild.
-# The cells of these notebooks have outputs: a chip with a blue edge and a note is a cell with its output.
-# (How a storyboard is written: storyboard.py.)
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
   outs: &outs ["#c0=1 output", "#c1=1 output", "#c2=1 output"]
-  refs: &refs ["#c0=link", "#c1=link", "#c2=link"]
   bare: &bare [c0, c1, c2]
+  refs: &refs ["#c0=link", "#c1=link", "#c2=link"]
 
 scenarios:
-  O1:
+  outputs/survive-rebuild-with-ids-control:
+    aliases: [O2]
+    title: "Control: outputs survive a rebuild, in a notebook with cell ids"
+    lanes: {server: "Server", store: "Output store", file: "File on disk"}
+    start: {file: *outs}
+    story: >-
+      The same story with a recent notebook, whose cells have ids that stay the same from one load to the next.
+    steps:
+      - {at: server, kind: open, text: "loads the notebook", cells: *outs}
+      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
+      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *outs}
+      - {at: store, kind: note, text: "is filled again", cells: *outs}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
+    result: "All three outputs are still there in the saved file."
+    ends: {server: *outs, store: *outs, file: *outs}
+    risk: "The control: if this fails, nothing about outputs can be trusted."
+
+  outputs/survive-rebuild-no-ids:
+    aliases: [O1]
     title: "Outputs survive a rebuild, in a notebook without cell ids"
     lanes: {server: "Server", store: "Output store", file: "File on disk"}
     start: {file: *outs}
@@ -25,24 +43,8 @@ scenarios:
     ends: {server: *outs, store: *outs, file: *outs}
     risk: "A user who reopens a notebook after a server restart must still see the results of the cells they ran."
 
-  O2:
-    title: "Control: outputs survive a rebuild, in a notebook with cell ids"
-    lanes: {server: "Server", store: "Output store", file: "File on disk"}
-    start: {file: *outs}
-    story: >-
-      The same story with a recent notebook, whose cells have ids that stay the same from one load to the next.
-    steps:
-      - {at: server, kind: open, text: "loads the notebook", cells: *outs}
-      - {at: store, kind: note, text: "is filled from the outputs in the file", cells: *outs}
-      - {at: server, kind: free, text: "lets go of the notebook; nothing is unsaved, so nothing is written"}
-      - {at: server, kind: rebuild, text: "builds the notebook again from the file", cells: *outs}
-      - {at: store, kind: note, text: "is filled again", cells: *outs}
-      - {at: file, kind: save, text: "the server saves the notebook", cells: *outs}
-    result: "All three outputs are still there in the saved file."
-    ends: {server: *outs, store: *outs, file: *outs}
-    risk: "The control: if this fails, nothing about outputs can be trusted."
-
-  O3:
+  outputs/survive-wipe-no-ids:
+    aliases: [O3]
     title: "Outputs survive a wiped output store, in a notebook without cell ids"
     lanes: {server: "Server", store: "Output store", file: "File on disk"}
     start: {file: *outs}
@@ -61,7 +63,8 @@ scenarios:
     ends: {server: *outs, store: *outs, file: *outs}
     risk: "Wiping a cache must never cost the user the results stored in their notebook."
 
-  O4:
+  outputs/survive-wipe-with-ids:
+    aliases: [O4]
     title: "Outputs survive a wiped output store, in a notebook with cell ids"
     lanes: {server: "Server", store: "Output store", file: "File on disk"}
     start: {file: *outs}
@@ -79,7 +82,8 @@ scenarios:
     ends: {server: *outs, store: *outs, file: *outs}
     risk: "Wiping a cache must never cost the user the results stored in their notebook."
 
-  O5:
+  outputs/store-only-survive-rebuild:
+    aliases: [O5]
     title: "Outputs that live only in the store survive a rebuild"
     lanes: {server: "Server", store: "Output store", file: "File on disk"}
     start: {file: *outs}
@@ -97,7 +101,8 @@ scenarios:
     ends: {server: *refs, store: *outs, file: *bare}
     risk: "A cell that links to an output that is gone shows an error where the user expects a result."
 
-  O6:
+  outputs/store-only-wiped:
+    aliases: [O6]
     title: "Outputs that live only in the store: the store is wiped"
     lanes: {server: "Server", store: "Output store", file: "File on disk"}
     start: {file: *outs}

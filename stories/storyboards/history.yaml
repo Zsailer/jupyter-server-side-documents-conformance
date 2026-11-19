@@ -1,12 +1,12 @@
-# The server's history record itself: its limits and its upgrade paths.
-# These stories only apply if the server keeps a record of each notebook's editing history next to the file.
-# (How a storyboard is written: storyboard.py.)
+# The persisted lineage itself: its checkpoint, its limits and its upgrade paths.
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
   three: &three [c0, c1, c2]
   queued: &queued ["c0=+QUEUED", c1, c2]
 
 scenarios:
-  S12:
+  history/notebook-too-big:
+    aliases: [S12]
     title: "A notebook too big for the server to keep a history record of"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-
@@ -22,7 +22,8 @@ scenarios:
     ends: {tab: *three, server: *three, record: [], file: *three}
     risk: "A big notebook must not be slowed down, nor broken, by a record that is not worth keeping."
 
-  S13:
+  history/record-from-other-version:
+    aliases: [S13]
     title: "A history record written by another version of the software"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-
@@ -44,7 +45,8 @@ scenarios:
     ends: {tab: *three, server: *three, file: *three}
     risk: "Upgrading, or downgrading, the software must never keep a notebook from opening."
 
-  S14:
+  history/empty-metadata-restored:
+    aliases: [S14]
     title: "A notebook with empty metadata is restored without needless work"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-
@@ -60,7 +62,8 @@ scenarios:
     ends: {tab: *three, server: *three, record: *three, file: *three}
     risk: "A false alarm on every restore would fill the logs and do needless work."
 
-  T1:
+  history/starts-after-tab-met-none:
+    aliases: [T1]
     title: "The server starts keeping a history record after a tab met one that kept none"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-
@@ -78,7 +81,8 @@ scenarios:
     ends: {tab: *three, server: *three, record: *three, file: *three}
     risk: "Treating two histories of one notebook as a single history would double every cell."
 
-  X5:
+  history/shutdown-update-kept:
+    aliases: [X5]
     title: "An update waiting when the server shuts down is kept in the record"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-

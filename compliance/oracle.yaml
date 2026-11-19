@@ -4,7 +4,7 @@
 
 # A cell the storyboard describes in words. The key is the cell exactly as the storyboard writes it.
 cells:
-  Z4:
+  conflict/rewrite-same-cell:
     # two people rewrite one cell; the merge keeps both, one after the other
     "c0=both rewrites, one after the other":
       contains: ["total = a - b", "total = a * b"]
@@ -14,12 +14,12 @@ cells:
 
 # Stories whose cells may end in either order (the storyboard says "stands at one of the two places").
 ordered:
-  Z2: false
+  conflict/move-same-cell: false
 
 # Stories about something inside the server that a person can neither cause nor see. They are skipped, with this reason,
 # rather than passing or failing by chance. (Whether an update reaches the server before a tab closes is a race.)
 internal:
-  X1: "the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment"
-  X2: "the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser"
-  X3: "work the server registers for its own shutdown: nothing a person does or sees"
-  X4: "the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race"
+  shutdown/update-waiting: "the server's internal queue when it shuts a notebook down: no one can put an update there and shut down at that moment"
+  shutdown/damaged-message-first: "the server's internal queue when it shuts a notebook down: no one can send a damaged message from the browser"
+  shutdown/waits-for-cleanup: "work the server registers for its own shutdown: nothing a person does or sees"
+  shutdown/update-from-left-tab: "the server's internal queue when it shuts a notebook down: whether an update is still waiting when a tab closes is a race"

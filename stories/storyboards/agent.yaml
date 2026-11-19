@@ -1,18 +1,20 @@
-# AI agents (such as Claude Code) edit the notebook. Played by the scenarios AI1 to AI9 of suite.yaml. The three that raise a question
+# AI agents (such as Claude Code) edit the notebook. Played by the scenarios agent/* of suite.yaml. The three that raise a question
 # (AI5, AI6, AI7) have a pending policy there, so the answer marked `proposed` is shown as "Suggested": nobody has discussed it.
 #
 # The two paths of an agent, as the product defines them: while the server holds the notebook (from the first tab until a few minutes after
 # the last one has left) the agent edits the server's live copy; while it does not, the agent edits the file directly.
 # (How a storyboard is written: storyboard.py.)
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
-  three: &three [c0, c1, c2]
   fixed: &fixed [c0, "c1=fixed", c2]
+  three: &three [c0, c1, c2]
   fixed_tests: &fixed_tests [c0, "c1=fixed", c2, "tests"]
   fixed_tests_new: &fixed_tests_new [c0, "c1=fixed", c2, "+tests"]
   all_three_changes: &all_three_changes [c0, "c1=fixed", c2, tests, docs]
 
 scenarios:
-  AI1:
+  agent/edits-open-notebook:
+    aliases: [AI1]
     title: "An AI agent edits a notebook that is open"
     story: >-
       A person has the notebook open in a tab, so the server holds it. The agent does not touch the file: it edits the server's live copy,
@@ -27,7 +29,8 @@ scenarios:
     ends: {tab: *fixed, server: *fixed, file: *fixed}
     risk: "An agent that wrote the file instead would change the notebook under the person's hands."
 
-  AI2:
+  agent/edits-closed-notebook:
+    aliases: [AI2]
     title: "An AI agent edits a notebook that nobody has open"
     story: >-
       No tab has the notebook and the server does not hold it. The agent edits the file directly. The next person who opens the notebook
@@ -42,7 +45,8 @@ scenarios:
     ends: {all: *fixed_tests}
     risk: "Work done on a closed notebook is only worth something if it is there when the notebook is opened."
 
-  AI3:
+  agent/person-opens-mid-edit:
+    aliases: [AI3]
     title: "A person opens the notebook in the middle of the agent's work"
     story: >-
       The agent starts while nobody has the notebook open, so it edits the file. Then a person opens the notebook, and the agent's next
@@ -61,7 +65,8 @@ scenarios:
     ends: {all: *fixed_tests}
     risk: "An agent that changes path in the middle of its work must not lose the part that went the old way."
 
-  AI4:
+  agent/last-person-leaves:
+    aliases: [AI4]
     title: "The last person leaves in the middle of the agent's work"
     story: >-
       The agent edits the live copy while a person has the notebook open. The person closes the tab, but the server keeps holding the
@@ -84,7 +89,8 @@ scenarios:
     ends: {tab: *all_three_changes, server: *all_three_changes, file: *all_three_changes}
     risk: "The agent never has to know when the person leaves: the notebook is held for a while, then let go, and no edit falls between the two."
 
-  AI5:
+  agent/rewrites-cell-person-typing:
+    aliases: [AI5]
     title: "The agent rewrites a cell while a person is typing in it"
     story: >-
       A person is typing at the end of c1 in a tab. At the same moment the agent, through the server, rewrites c1 as “fixed”.
@@ -120,7 +126,8 @@ scenarios:
             without a person, at the price of a person who must always answer.
           ends: [c0, "c1=+# check", c2, "*the agent's rewrite waits for the person"]
 
-  AI6:
+  agent/deletes-cell-person-edited:
+    aliases: [AI6]
     title: "The agent deletes a cell that a person edited while offline"
     story: >-
       A person's tab loses its connection and they type into c1. Meanwhile the agent, through the server, deletes c1. Then the tab
@@ -154,7 +161,8 @@ scenarios:
             Nothing a person typed is ever lost to a program.
           ends: [c0, "?c1 +B-TYPED=recovered", c2]
 
-  AI7:
+  agent/crash-before-autosave:
+    aliases: [AI7]
     title: "The server dies after the agent's edit, before the next autosave"
     story: >-
       Nobody has the notebook open, but the server still holds it, so the agent edits the live copy and is told that it worked. The server
@@ -189,7 +197,8 @@ scenarios:
             lost, although the agent was told that it worked. An agent that needs to be sure has to check the file afterwards.
           ends: *three
 
-  AI8:
+  agent/still-writing-file:
+    aliases: [AI8]
     title: "The agent is still writing the file when the server reads it"
     story: >-
       The agent rewrites the file directly while nobody has the notebook open. Before the write is finished, a person opens the notebook
@@ -207,7 +216,8 @@ scenarios:
     ends: {all: *fixed_tests}
     risk: "A half-written file must not become the notebook, and must never be saved over the agent's work."
 
-  AI9:
+  agent/writes-file-server-holds:
+    aliases: [AI9]
     title: "The agent writes the file although the server still holds the notebook"
     story: >-
       A person types and closes the tab a moment later. The server still holds the notebook, with typing it has not saved yet. The agent

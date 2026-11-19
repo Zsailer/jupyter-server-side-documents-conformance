@@ -1,11 +1,11 @@
-# What still goes wrong when everything is new: the answers are decided as a best effort, and each one is open to change here.
-# (How a storyboard is written: storyboard.py. The `decision` of each story is the provisional answer of suite.yaml, `proposed`,
-# next to the alternatives.)
+# Two people at once: their intentions conflict, and the answers are decided as a best effort, each open to change here.
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
   three: &three [c0, c1, c2]
 
 scenarios:
-  Z1:
+  conflict/move-while-typing:
+    aliases: [Z1]
     title: "One person moves a cell while another types into it"
     lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
     story: >-
@@ -40,7 +40,8 @@ scenarios:
             without a word. This is what the merge gives by itself.
           ends: [c0, c2, "^c1"]
 
-  Z2:
+  conflict/move-same-cell:
+    aliases: [Z2]
     title: "Two people move the same cell at the same time"
     lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
     story: >-
@@ -74,7 +75,8 @@ scenarios:
             Each move leaves a copy of the cell, so the live notebook shows the cell twice, while the saved file has it once.
           ends: [c1, "^c0", "!c0=second copy", c2]
 
-  Z3:
+  conflict/delete-while-typing:
+    aliases: [Z3]
     title: "One person deletes a cell while another types into it offline"
     lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
     story: >-
@@ -111,7 +113,8 @@ scenarios:
             the cell sees it again.
           ends: [c0, "?c1 +B-TYPED=recovered", c2]
 
-  Z4:
+  conflict/rewrite-same-cell:
+    aliases: [Z4]
     title: "Two people rewrite the same cell at the same time"
     lanes: {tab: "First tab", tab2: "Second tab", server: "Server", file: "File on disk"}
     story: >-
@@ -150,101 +153,3 @@ scenarios:
           detail: >-
             Both rewrites are kept intact, one in c0 and one as a separate cell marked as recovered, for everyone.
           ends: ["c0=total = a * b", "?c0 total = a - b=recovered", c1, c2]
-
-  Z5:
-    title: "The file changes from outside while a tab has unsaved typing"
-    story: >-
-      A tab types into c0 and the server has not saved it yet. Before it does, the file is edited outside Jupyter (git, a sync tool, an
-      editor, an AI agent): only c2 changes.
-    steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab, kind: type, text: "types “+TYPED” at the end of c0; the server has not saved it yet", cells: ["c0=+TYPED", c1, c2]}
-      - {at: file, kind: outside, text: "is edited outside Jupyter: only c2 changes", cells: [c0, c1, "c2=EXTERNAL EDIT"]}
-      - {at: server, kind: note, text: "notices the change before it saves, and merges it with the typing", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
-      - {at: tab, kind: note, text: "receives the result", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
-      - {at: file, kind: save, text: "autosave", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
-    result: "The outside change is applied and the typing survives: both are in every copy."
-    ends: {all: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
-    risk: "Typing in a cell that the outside change did not even touch must not be reverted."
-    discussion: true
-    decision:
-      question: >-
-        The server loads a changed file as a whole, so unsaved typing is reverted in every cell. Should it merge the change with the
-        typing instead?
-      options:
-        - label: "The change is merged with the typing"
-          proposed: true
-          detail: >-
-            An outside change is merged with the unsaved typing, not applied over it: both survive. The file stays the source of truth for
-            what it carries, but it does not erase what it has not seen.
-          ends: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]
-        - label: "The file replaces the notebook"
-          detail: >-
-            The outside change applies and the unsaved typing is lost, in every cell, not only in the cell the change touched.
-          ends: [c0, c1, "c2=EXTERNAL EDIT"]
-
-  Z6:
-    title: "The server dies before it saved, and no tab that held the typing is left"
-    story: >-
-      A tab types and the user closes it. The server dies before the next autosave, so the typing exists nowhere: not in the file, and no
-      longer in any tab.
-    steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab, kind: type, text: "types “+TYPED”; the server holds it in memory, but the file does not have it yet", cells: ["c0=+TYPED", c1, c2]}
-      - {at: tab, kind: leave, text: "the user closes the tab"}
-      - {at: server, kind: crash, text: "dies before the next autosave"}
-      - {at: server, kind: rebuild, text: "starts again from the file", cells: *three}
-      - {at: tab2, kind: open, text: "someone opens the notebook", cells: *three}
-    result: "The notebook is the last saved state, whole: three cells, without the typing that was never saved."
-    ends: {tab2: *three, server: *three, file: *three}
-    risk: "The loss is bounded: at most an autosave interval of typing, and nothing else."
-    discussion: true
-    decision:
-      question: >-
-        An edit the server acknowledged is not yet an edit it saved. Is that acceptable, or should every update be written to disk before
-        it is relayed?
-      options:
-        - label: "The bound is accepted"
-          proposed: true
-          detail: >-
-            A server that dies loses what it had not saved, if no tab still holds it: at most an autosave interval of typing, and nothing
-            else. The notebook is the last saved state, whole. Closing that window would cost a disk write per update; revisit if that
-            cost becomes acceptable.
-          ends: *three
-        - label: "Every update is written to disk first"
-          detail: >-
-            Nothing the server acknowledged is ever lost. The price is a disk write per update, or per batch of updates.
-          ends: ["c0=+TYPED", c1, c2]
-
-  Z7:
-    title: "Offline typing in a notebook without cell ids, after the server forgot the old session"
-    story: >-
-      An older notebook has no cell ids, so the server gives its cells new ones every time it loads it. A tab types into c1 while it is
-      offline, and the server forgets the old session and builds the notebook again from the file. When the tab comes back, the cells it
-      holds and the cells of the server share no ids.
-    start: {file: [c0, c1, c2, "*no cell ids"]}
-    steps:
-      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
-      - {at: tab, kind: offline, text: "loses its connection"}
-      - {at: tab, kind: type, text: "types “+OFFLINE” at the end of c1", cells: [c0, "c1=+OFFLINE", c2]}
-      - {at: server, kind: rebuild, text: "forgets the old session and builds the notebook again from the file; the cells get new ids", cells: *three}
-      - {at: tab, kind: reconnect, to: server, text: "reconnects: without ids it cannot tell which of the server's cells is which of its own", cells: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
-      - {at: file, kind: save, text: "autosave", cells: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
-    result: "The typing is kept: merged into its cell when it can be matched, as a cell marked “recovered” when it cannot."
-    ends: {all: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
-    risk: "Typing must not vanish just because the notebook is in an older format."
-    discussion: true
-    decision:
-      question: >-
-        Without cell ids the typing cannot be matched to its cell. Is a separate cell marked “recovered” enough, or must the typing be
-        merged into the cell it was typed in?
-      options:
-        - label: "Merged when it can be matched, a recovered cell when it cannot"
-          proposed: true
-          detail: >-
-            The typing is kept. Without ids it comes back as a separate cell marked “recovered”, which the user can move or merge by hand.
-          ends: [c0, c1, c2, "?c1 +OFFLINE=recovered"]
-        - label: "Always merged into its cell"
-          detail: >-
-            The typing always goes back into the cell it was typed in, even when the notebook has no cell ids.
-          ends: [c0, "c1=+OFFLINE", c2]

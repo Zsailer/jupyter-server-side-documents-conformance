@@ -1,15 +1,15 @@
 # The file changes under the room.
-# (How a storyboard is written: storyboard.py.)
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
-  three: &three [c0, c1, c2]
-  outside: &outside [c0, "c1=EDITED ON DISK", c2, "+x9=ADDED ON DISK"]
-  outside_gone: &outside_gone [c0, "c1=EDITED ON DISK", "-c2", "+x9=ADDED ON DISK"]
   after_s4: &after_s4 ["c0=+A-OFFLINE", "c1=EDITED ON DISK", "x9=ADDED ON DISK"]
+  outside_gone: &outside_gone [c0, "c1=EDITED ON DISK", "-c2", "+x9=ADDED ON DISK"]
+  three: &three [c0, c1, c2]
   ext: &ext [c0, "c1=EXTERNAL EDIT", c2, "+EXTERNAL NEW CELL"]
   ext_kept: &ext_kept [c0, "c1=EXTERNAL EDIT", c2, EXTERNAL NEW CELL]
 
 scenarios:
-  S4:
+  files/edited-outside-while-offline:
+    aliases: [S4]
     title: "The file is edited outside Jupyter while a tab is offline"
     story: >-
       While a tab is offline, the server lets go of the notebook and someone edits the file outside Jupyter (git, another editor, an AI agent): one
@@ -27,7 +27,8 @@ scenarios:
     ends: {all: *after_s4}
     risk: "The file is the truth for what it carries, but the typing of a tab that never saw the change must not be erased by it."
 
-  S8:
+  files/edit-keeps-mtime:
+    aliases: [S8]
     title: "An outside edit that keeps the file's modification time"
     story: >-
       While a tab is offline, the file is edited outside Jupyter by a tool that puts the modification time back (a copy or sync tool that keeps
@@ -43,7 +44,8 @@ scenarios:
     ends: {all: *ext_kept}
     risk: "An edit that looks old to the clock must not be ignored: the user would be working on a notebook that is not the file."
 
-  S9:
+  files/edited-outside-then-crash:
+    aliases: [S9]
     title: "The file is edited outside while a tab is connected, then the server dies"
     story: >-
       The file is edited outside Jupyter (for example by an AI agent that wrote it directly) while a tab is connected: the server reloads it in place and the tab receives the new cell. Then
@@ -61,7 +63,41 @@ scenarios:
     ends: {all: *ext_kept}
     risk: "The cell that came from outside must not come back a second time when the tab, which already received it, reconnects."
 
-  S10:
+  files/changed-outside-while-typing:
+    aliases: [Z5]
+    title: "The file changes from outside while a tab has unsaved typing"
+    story: >-
+      A tab types into c0 and the server has not saved it yet. Before it does, the file is edited outside Jupyter (git, a sync tool, an
+      editor, an AI agent): only c2 changes.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: type, text: "types “+TYPED” at the end of c0; the server has not saved it yet", cells: ["c0=+TYPED", c1, c2]}
+      - {at: file, kind: outside, text: "is edited outside Jupyter: only c2 changes", cells: [c0, c1, "c2=EXTERNAL EDIT"]}
+      - {at: server, kind: note, text: "notices the change before it saves, and merges it with the typing", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
+      - {at: tab, kind: note, text: "receives the result", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
+      - {at: file, kind: save, text: "autosave", cells: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
+    result: "The outside change is applied and the typing survives: both are in every copy."
+    ends: {all: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
+    risk: "Typing in a cell that the outside change did not even touch must not be reverted."
+    discussion: true
+    decision:
+      question: >-
+        The server loads a changed file as a whole, so unsaved typing is reverted in every cell. Should it merge the change with the
+        typing instead?
+      options:
+        - label: "The change is merged with the typing"
+          proposed: true
+          detail: >-
+            An outside change is merged with the unsaved typing, not applied over it: both survive. The file stays the source of truth for
+            what it carries, but it does not erase what it has not seen.
+          ends: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]
+        - label: "The file replaces the notebook"
+          detail: >-
+            The outside change applies and the unsaved typing is lost, in every cell, not only in the cell the change touched.
+          ends: [c0, c1, "c2=EXTERNAL EDIT"]
+
+  files/deleted-through-jupyter:
+    aliases: [S10]
     title: "The notebook is deleted through Jupyter"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-
@@ -77,7 +113,8 @@ scenarios:
     ends: {server: "the notebook is stopped", record: [], file: []}
     risk: "Leftovers of a deleted notebook would pile up on the disk, and a new notebook with the same name could inherit them."
 
-  S11:
+  files/deleted-behind-the-servers-back:
+    aliases: [S11]
     title: "The notebook is deleted behind the server's back"
     lanes: {tab: "Your tab", server: "Server", record: "History record", file: "File on disk"}
     story: >-

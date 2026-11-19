@@ -1,5 +1,5 @@
 # Edits made while disconnected, across a rebuilt room.
-# (How a storyboard is written: storyboard.py.)
+# (How a storyboard is written: storyboard.py. A story is named group/what-happens, and keeps its old id in `aliases`.)
 shared:
   three: &three [c0, c1, c2]
   typed: &typed ["c0=+TYPED", c1, c2]
@@ -8,7 +8,8 @@ shared:
   both_ab: &both_ab ["c0=+A-OFFLINE", "c1=+B-OFFLINE", c2]
 
 scenarios:
-  N1:
+  rebuild/type-offline:
+    aliases: [N1]
     title: "Typing while offline, across a rebuilt notebook"
     story: >-
       The tab loses its connection, the server builds the notebook again from the file, and the user types into a cell before the tab
@@ -25,7 +26,8 @@ scenarios:
     ends: {all: *typed}
     risk: "Typing is the most common thing a user does offline. If it is dropped, the work is lost without a word."
 
-  M2:
+  rebuild/move-offline:
+    aliases: [M2]
     title: "Moving a cell while offline, across a rebuilt notebook"
     story: >-
       The user moves a cell while the tab is offline, and the server builds the notebook again from the file meanwhile. The rebuilt
@@ -42,7 +44,8 @@ scenarios:
     ends: {all: *moved}
     risk: "A move that is undone, or that leaves the cell twice, changes the notebook behind the user's back."
 
-  R1:
+  rebuild/delete-offline:
+    aliases: [R1]
     title: "Deleting a cell while offline, across a rebuilt notebook"
     story: >-
       The user deletes a cell while the tab is offline, and the server builds the notebook again from the file meanwhile. The rebuilt
@@ -60,7 +63,8 @@ scenarios:
     ends: {all: [c0, c2]}
     risk: "A cell the user deleted comes back, as if they had never deleted it."
 
-  W1:
+  rebuild/two-people-one-cell:
+    aliases: [W1]
     title: "Two people type into one cell; one was offline across a rebuild"
     lanes: {tab: "Tab A", tab2: "Tab B (a colleague)", server: "Server", file: "File on disk"}
     story: >-
@@ -79,7 +83,8 @@ scenarios:
     ends: {all: *AB}
     risk: "One of the two people would silently lose what they typed."
 
-  W2:
+  rebuild/stale-tabs-both-typed:
+    aliases: [W2]
     title: "Two out-of-date tabs both typed offline"
     lanes: {tab: "Tab A", tab2: "Tab B", server: "Server", file: "File on disk"}
     story: >-
@@ -98,7 +103,8 @@ scenarios:
     ends: {all: *both_ab}
     risk: "The second tab to reconnect must not lose what its user typed because the first one got there before it."
 
-  W3:
+  rebuild/stale-tabs-both-typed-forgotten:
+    aliases: [W3]
     title: "Two out-of-date tabs both typed offline, and the server forgot the old session"
     lanes: {tab: "Tab A", tab2: "Tab B", server: "Server", file: "File on disk"}
     story: >-
@@ -117,7 +123,8 @@ scenarios:
     ends: {all: *both_ab}
     risk: "Forgetting the old session must make the tabs more careful, not cost them their typing."
 
-  S1:
+  rebuild/online-then-offline-edits:
+    aliases: [S1]
     title: "A tab that edited online, then offline, reconnects to a rebuilt notebook"
     story: >-
       A tab adds a cell and types while it is online, loses its connection, and the server builds the notebook again from the file. The
@@ -134,7 +141,8 @@ scenarios:
     ends: {all: ["c0=+TYPED", "c1=+OFFLINE", c2, ONLINE CELL]}
     risk: "A tab that did everything right must not lose any of it, nor have any of it doubled."
 
-  S5:
+  rebuild/session-forgotten-typed-offline:
+    aliases: [S5]
     title: "The server forgot the old session; a tab typed offline"
     story: >-
       While a tab is offline the server loses everything it kept about the old session (for instance after a restart on a new
@@ -151,7 +159,8 @@ scenarios:
     ends: {all: ["c0=+A-OFFLINE", c1, c2]}
     risk: "Losing what the server kept must never cost the user the notebook or their typing."
 
-  S7:
+  rebuild/damaged-session-record:
+    aliases: [S7]
     title: "What the server kept about the old session is damaged"
     story: >-
       Like the previous story, but the server still has what it kept about the old session and finds it unreadable (corrupt, or written
@@ -167,3 +176,37 @@ scenarios:
     result: "The server starts again from the file and never crashes; the typing is kept, three cells everywhere."
     ends: {all: ["c0=+A-OFFLINE", c1, c2]}
     risk: "A damaged leftover must never keep a notebook from opening."
+
+  rebuild/offline-typing-no-cell-ids:
+    aliases: [Z7]
+    title: "Offline typing in a notebook without cell ids, after the server forgot the old session"
+    story: >-
+      An older notebook has no cell ids, so the server gives its cells new ones every time it loads it. A tab types into c1 while it is
+      offline, and the server forgets the old session and builds the notebook again from the file. When the tab comes back, the cells it
+      holds and the cells of the server share no ids.
+    start: {file: [c0, c1, c2, "*no cell ids"]}
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook", cells: *three}
+      - {at: tab, kind: offline, text: "loses its connection"}
+      - {at: tab, kind: type, text: "types “+OFFLINE” at the end of c1", cells: [c0, "c1=+OFFLINE", c2]}
+      - {at: server, kind: rebuild, text: "forgets the old session and builds the notebook again from the file; the cells get new ids", cells: *three}
+      - {at: tab, kind: reconnect, to: server, text: "reconnects: without ids it cannot tell which of the server's cells is which of its own", cells: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
+      - {at: file, kind: save, text: "autosave", cells: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
+    result: "The typing is kept: merged into its cell when it can be matched, as a cell marked “recovered” when it cannot."
+    ends: {all: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
+    risk: "Typing must not vanish just because the notebook is in an older format."
+    discussion: true
+    decision:
+      question: >-
+        Without cell ids the typing cannot be matched to its cell. Is a separate cell marked “recovered” enough, or must the typing be
+        merged into the cell it was typed in?
+      options:
+        - label: "Merged when it can be matched, a recovered cell when it cannot"
+          proposed: true
+          detail: >-
+            The typing is kept. Without ids it comes back as a separate cell marked “recovered”, which the user can move or merge by hand.
+          ends: [c0, c1, c2, "?c1 +OFFLINE=recovered"]
+        - label: "Always merged into its cell"
+          detail: >-
+            The typing always goes back into the cell it was typed in, even when the notebook has no cell ids.
+          ends: [c0, "c1=+OFFLINE", c2]

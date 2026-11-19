@@ -466,6 +466,8 @@ def emit_story(sid: str, st: dict, group: str, scn: dict, page: dict, c: Compile
         "title": st["title"],
         "requires": sorted(c.requires),
     }
+    if st.get("aliases"):
+        meta["aliases"] = list(st["aliases"])
     if needs:
         meta["needsAlignment"] = True
     if st.get("status") == "proposed":
@@ -486,8 +488,14 @@ def emit_story(sid: str, st: dict, group: str, scn: dict, page: dict, c: Compile
 
 def generate(data: Path = DATA) -> dict:
     src = storyboards.load(data)
+    taken: dict[str, str] = {}
     for sid, st in src["stories"].items():
         spec.validate_story(sid, st)
+        # a name, or a name a story had before, stands for one story only
+        for name in [sid, *(st.get("aliases") or [])]:
+            if name in taken:
+                raise SystemExit(f"{name!r} names both {taken[name]!r} and {sid!r}")
+            taken[name] = sid
     oracle = yaml.safe_load((HERE / "oracle.yaml").read_text()) or {}
     files: dict[str, str] = {}
     manifest = []
@@ -505,6 +513,7 @@ def generate(data: Path = DATA) -> dict:
                 "group": gid,
                 "groupTitle": src["groups"][gid]["title"],
                 "title": st["title"],
+                "aliases": list(st.get("aliases") or []),
                 "requires": sorted(c.requires),
                 "needsAlignment": bool(st.get("decision")),
                 "proposed": st.get("status") == "proposed",
