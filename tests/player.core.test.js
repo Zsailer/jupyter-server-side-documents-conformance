@@ -6,7 +6,7 @@ const path = require('node:path');
 const NB = require('../player/nbscenario.js');
 
 function stories() {
-  const page = fs.readFileSync(path.join(__dirname, '..', 'examples', 'storyboards', 'site', 'index.html'), 'utf8');
+  const page = fs.readFileSync(path.join(__dirname, '..', 'examples', 'storyboards', 'site', 'stories.html'), 'utf8');
   const m = /<script id="data" type="application\/json">([\s\S]*?)<\/script>/.exec(page);
   return JSON.parse(m[1].replace(/<\\\//g, '</'));
 }

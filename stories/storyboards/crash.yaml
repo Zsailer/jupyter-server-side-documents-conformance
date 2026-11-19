@@ -84,6 +84,7 @@ scenarios:
     result: "The file wins: every copy ends with the file's three cells. A restore from a backup holds even against a tab that still has newer content."
     ends: {all: *three}
     risk: "If an open tab could undo a restore, nothing could ever be restored."
+    discussion: true
     decision:
       question: >-
         When the file is older than what a tab still holds (a restore from a backup, a stale sync), does the file win, or does the newer

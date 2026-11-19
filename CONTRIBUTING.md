@@ -14,6 +14,9 @@ previews it. To do it by hand:
 3. `npm run build` builds the page; open `examples/storyboards/site/index.html` to look at it.
 4. Open a draft pull request against `main`. A preview of the page is published and linked on the pull request.
 
+To ask the group about it, add `discussion:` to the story (see [the spec](docs/02-spec-reference.md#putting-a-story-up-for-discussion)):
+it is then listed on the "Up for discussion" page, with a link to the issue or pull request where you talk about it.
+
 Discuss the case on the pull request, looking at the preview. When the group agrees, change the story to
 `status: accepted`, in the same pull request. From then on a backend that does not do what it says fails its compliance
 test, unless the gap is listed in `compliance/known-gaps/<adapter>.json`.
@@ -24,7 +27,9 @@ notebook, crash), say it in the steps; the adapter for each backend says whether
 ## Previews of pull requests
 
 `.github/workflows/preview.yml` builds the page for every pull request and publishes it to GitHub Pages under
-`pr-preview/pr-<number>/`, with a comment on the pull request that links it. The preview is updated on every push and
+`pr-preview/pr-<number>/`, with a comment on the pull request that links it. When the pull request adds, changes or removes a
+story, the link opens on a page that shows only that: the new and changed stories played, and what moved. The whole site is
+in the same preview, one click away. A pull request that changes no story opens on the ordinary welcome page. The preview is updated on every push and
 removed when the pull request is closed. The live page of `main` is published by `.github/workflows/pages.yml`.
 
 Pull requests from a fork get no preview, because GitHub gives them a read-only token. The build and the tests still run

@@ -98,6 +98,7 @@ scenarios:
     result: "Both survive, as between two people who are online: the cell holds the agent's rewrite and the person's typing."
     ends: {tab: [c0, "c1=fixed + # check", c2], server: [c0, "c1=fixed + # check", c2], file: [c0, "c1=fixed + # check", c2]}
     risk: "A person who is typing must not have their words wiped by an agent, and the agent's rewrite must not be thrown away silently either."
+    discussion: true
     decision:
       question: >-
         An AI agent rewrites a cell while a person is typing in it. Who gives way?
@@ -135,6 +136,7 @@ scenarios:
     result: "The deletion wins, as it does between two people: the cell stays deleted and the typing goes with it."
     ends: {tab: [c0, c2], server: [c0, c2], file: [c0, c2]}
     risk: "A person who was offline would lose their typing because of an edit they never saw, made by a program."
+    discussion: true
     decision:
       question: >-
         A deletion wins over typing made in the same cell at the same moment (see Z3). Does the answer change when the one who deleted the
@@ -169,6 +171,7 @@ scenarios:
     result: "The agent's edit survives: it was saved before the agent was told that it worked."
     ends: {tab: *fixed, server: *fixed, file: *fixed}
     risk: "An agent that is told “done” for work that can still vanish cannot be trusted to report what it did."
+    discussion: true
     decision:
       question: >-
         An edit that a person types is not saved before it is relayed (see Z6). Should an edit made by an AI agent be saved before the agent
