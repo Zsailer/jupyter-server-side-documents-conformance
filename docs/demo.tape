@@ -17,9 +17,9 @@ Set Padding 20
 Set Theme "Catppuccin Mocha"
 Set TypingSpeed 60ms
 
-# `jupyter conformance ssd` for the length of the demo, from this checkout (installed, it is on the PATH)
+# `jupyter conformance ssd` for the length of the demo, from this checkout (installed, `jupyter` finds it on the PATH)
 Hide
-Type "alias jupyter conformance ssd='node compliance/bin/conformance.mjs'" Enter
+Type `jupyter() { shift; node compliance/bin/conformance.mjs "$@"; }` Enter
 Type "export PS1='$ '" Enter
 Type "clear" Enter
 Show
@@ -56,7 +56,7 @@ Type "clear" Enter
 Show
 
 # 3. Run one story against a real server
-Type "jupyter conformance ssd pick"
+Type "jupyter conformance ssd pick --backend jsd"
 Sleep 400ms
 Enter
 Sleep 1s
