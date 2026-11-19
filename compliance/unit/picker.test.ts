@@ -159,8 +159,8 @@ test('the welcome screen has the logo, the name, the version and where to start'
   const text = welcome({ version: '9.8.7', color: false }).join('\n');
   assert.match(text, /[▀▄█▌▐▘▝▖▗▚▞▛▜▙▟]/); // the logo is drawn in solid blocks
   assert.doesNotMatch(text, /[\u2800-\u28ff]/); // not in braille dots
-  assert.match(text, /conformance\s*\n/); // the name sits between the arcs
-  assert.match(text, /v9\.8\.7/);
+  assert.match(text, /Server-side documents\s*\n\s*conformance suite\s*\n\s*v9\.8\.7\s*\n/); // the name sits between the arcs
+  assert.match(welcome({ version: '9.8.7', color: false, stories: 69 }).join('\n'), /v9\.8\.7 · 69 stories/);
   assert.match(text, /jupyter conformance ssd pick/);
   assert.match(text, /jupyter conformance ssd run Z3/);
   assert.match(text, /jupyter conformance ssd help/);
@@ -169,11 +169,11 @@ test('the welcome screen has the logo, the name, the version and where to start'
 
 test('the logo is two arcs with an empty middle, a block of the same width on every row', () => {
   const rows = logo({ color: false });
-  assert.equal(rows.length, 16);
+  assert.equal(rows.length, 15);
   assert.ok(new Set(rows.map(r => r.length)).size === 1, 'every row has the same width');
   assert.equal(rows[0].length, 24);
   assert.equal(rows[7].trim(), '', 'there is nothing between the arcs');
-  assert.ok(rows.slice(5, 10).every(r => r.trim() === ''), 'a gap of rows between them, for the name');
+  assert.ok(rows.slice(5, 9).every(r => r.trim() === ''), 'a gap of rows between them, for the name');
   assert.doesNotMatch(rows.join(''), /[\u2800-\u28ff]/, 'solid blocks, not braille dots');
 });
 

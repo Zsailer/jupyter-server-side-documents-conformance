@@ -7,6 +7,7 @@ Output docs/assets/conformance.gif
 
 Set Shell "bash"
 Set FontSize 14
+Set LineHeight 1.2
 Set Width 1100
 Set Height 680
 Set Padding 20

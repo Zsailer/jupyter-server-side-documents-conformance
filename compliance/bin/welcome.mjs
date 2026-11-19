@@ -6,37 +6,35 @@
 // of each character: 0 none, 1 the crescents, 2 the circles.
 const LOGO = [
   '                   ▟██▙ ',
-  '▗▄▖     ▄▄▄▄▄▄▄▄▖  ▜██▛ ',
-  '▜██ ▗▄████████████▙▄    ',
-  '   ▟██▛▀▀▀▀▀▀▀▀▀▀▀███▄  ',
-  ' ▗█▀▘               ▀▀▙ ',
+  '▗▄▄    ▗▄▄▄▄▄▄▄▄▄  ▀██▛ ',
+  '▜█▛ ▗▟█████████████▄▖   ',
+  '  ▗▟█▛▀▀▀      ▝▀▀▀██▙  ',
+  ' ▗▀▘                 ▀▜ ',
   '                        ',
   '                        ',
   '                        ',
   '                        ',
-  '                        ',
-  ' ▝▄▖                 ▄▞ ',
-  '  ▝▜█▙▄▄▄      ▗▄▄▄██▛  ',
-  '    ▝▜█████████████▀▘   ',
-  ' ▗▄▄▄  ▀▀▀████▛▀▀▘      ',
+  ' ▗▖                   ▄ ',
+  '  ▀█▄▄▖           ▄▄▟█▘ ',
+  '   ▝▀██████████████▛▀   ',
+  '  ▄▄▄ ▝▀▀███████▀▀      ',
   ' ████▙                  ',
-  ' ▝██▛▘                  '
+  ' ▀██▛▘                  '
 ];
 const LOGO_COLORS = [
   '000000000000000000022220',
-  '222000001111111110022220',
-  '222011111111111111110000',
-  '000111111111111111111100',
-  '011110000000000000001110',
-  '000000000000000000000000',
-  '000000000000000000000000',
-  '000000000000000000000000',
-  '000000000000000000000000',
-  '000000000000000000000000',
-  '011100000000000000000110',
+  '222000011111111110022220',
+  '222011111111111111111000',
   '001111111000000111111100',
-  '000011111111111111111000',
-  '022220011111111111000000',
+  '011100000000000000000110',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '011000000000000000000010',
+  '001111100000000000111110',
+  '000111111111111111111000',
+  '002220111111111111000000',
   '022222000000000000000000',
   '022222000000000000000000'
 ];
@@ -68,7 +66,7 @@ export function logo({ color = true, labels = {} } = {}) {
 }
 
 /** The lines of the welcome screen. */
-export function welcome({ version, color = true } = {}) {
+export function welcome({ version, color = true, stories } = {}) {
   const paint = (code, s) => (color ? `\u001b[${code}m${s}\u001b[0m` : s);
   const bold = s => paint('1', s);
   const dim = s => paint('2', s);
@@ -76,7 +74,12 @@ export function welcome({ version, color = true } = {}) {
   // the name sits inside the arcs, like a wordmark
   const art = logo({
     color,
-    labels: { [MIDDLE - 1]: { text: 'conformance', paint: bold }, [MIDDLE]: { text: `v${version}`, paint: dim } }
+    // the name of the suite in the gap between the arcs: what it is, which kind, and how big it is today
+    labels: {
+      [MIDDLE - 1]: { text: 'Server-side documents', paint: bold },
+      [MIDDLE]: { text: 'conformance suite', paint: s => s },
+      [MIDDLE + 1]: { text: stories ? `v${version} · ${stories} stories` : `v${version}`, paint: dim }
+    }
   }).map(row => `  ${row}`);
 
   const commands = [

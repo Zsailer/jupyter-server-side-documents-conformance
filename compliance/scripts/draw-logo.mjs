@@ -3,6 +3,7 @@
 //
 //   node compliance/scripts/draw-logo.mjs [columns]            # prints the rows to paste into welcome.mjs, and a preview
 //   node compliance/scripts/draw-logo.mjs 26 preview.png       # also writes the preview as a picture
+//   CELL_ASPECT=2.25 node compliance/scripts/draw-logo.mjs      # for cells that are 2.25 times as tall as they are wide (default 2.1)
 //
 // It traces examples/storyboards/jupyter-logo.svg (the official mark), so the proportions are the real ones: the SVG is
 // drawn in a headless browser, each pixel is called orange (the arcs), grey (the planets) or empty, and two pixels, one
@@ -17,7 +18,10 @@ const SVG = fs.readFileSync(path.join(HERE, '..', '..', 'examples', 'storyboards
 const COLS = Number(process.argv[2] ?? 24);
 const PREVIEW = process.argv[3];
 const [VW, VH] = [39, 51]; // the viewBox of the mark
-const ROWS = Math.round((COLS * VH) / VW / 2); // a character is about twice as tall as it is wide
+// A character cell is taller than it is wide, by a ratio that depends on the font and the line spacing: about 1.8 to 2.3. The
+// logo is drawn for the middle of that, so it is a little tall in one terminal and a little flat in another, never far off.
+const CELL_ASPECT = Number(process.env.CELL_ASPECT ?? 2.1);
+const ROWS = Math.round((COLS * VH) / VW / CELL_ASPECT);
 const WIDTH = COLS * 2; // sub-pixels: a character is two across and two down
 const HEIGHT = ROWS * 2;
 const SCALE = 12; // sub-pixels per pixel, to see how much of a pixel a shape covers
@@ -82,15 +86,15 @@ console.log('const LOGO_COLORS = [\n' + colors.map(c => `  '${c}'`).join(',\n') 
 console.log(`\n${COLS} columns, ${text.length} rows`);
 
 if (PREVIEW) {
-  const [cw, ch] = [9, 18]; // a character cell, about twice as tall as it is wide
+  const [cw, ch] = [9, 9 * CELL_ASPECT]; // a character cell
   const rects = [];
   for (let y = 0; y < HEIGHT; y++) {
     for (let x = 0; x < WIDTH; x++) {
       if (grid[y][x]) rects.push(`<rect x="${(x * cw) / 2}" y="${(y * ch) / 2}" width="${cw / 2 + 0.3}" height="${ch / 2 + 0.3}" fill="${grid[y][x] === 1 ? '#f37726' : '#9e9e9e'}"/>`);
     }
   }
-  await page.setContent(`<body style="margin:0;background:#1e1e2e"><svg width="${COLS * cw + 24}" height="${ROWS * ch + 24}"><g transform="translate(12 12)">${rects.join('')}</g></svg></body>`);
-  await page.setViewportSize({ width: COLS * cw + 24, height: ROWS * ch + 24 });
+  await page.setContent(`<body style="margin:0;background:#1e1e2e"><svg width="${COLS * cw + 24}" height="${Math.ceil(ROWS * ch + 24)}"><g transform="translate(12 12)">${rects.join('')}</g></svg></body>`);
+  await page.setViewportSize({ width: COLS * cw + 24, height: Math.ceil(ROWS * ch + 24) });
   await page.screenshot({ path: PREVIEW });
 }
 await browser.close();
