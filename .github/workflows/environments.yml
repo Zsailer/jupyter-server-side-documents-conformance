@@ -138,6 +138,8 @@ jobs:
       group: gh-pages
       cancel-in-progress: false
     steps:
+      # the deploy action pushes from a git repository
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v4
         with:
           pattern: report-*
