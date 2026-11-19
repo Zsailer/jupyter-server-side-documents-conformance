@@ -159,13 +159,9 @@ jobs:
         run: |
           cd site
           for dir in report-*; do mv "$dir" "${dir#report-}"; done
-          {
-            echo '<!doctype html><meta charset="utf-8"><title>Conformance by environment</title>'
-            echo '<h1>Conformance by environment</h1>'
-            echo "<p>The latest <a href=\"$RUN_URL\">run</a>, on ${GITHUB_SHA::7}. Each report is Playwright's own.</p><ul>"
-            for dir in */; do echo "<li><a href=\"$dir\">${dir%/}</a></li>"; done
-            echo '</ul>'
-          } > index.html
+          # the page is .github/environments-index.html, with the run filled in
+          sed -e "s|__RUN_URL__|$RUN_URL|" -e "s|__SHA__|${GITHUB_SHA::7}|" -e "s|__DATE__|$(date -u '+%-d %B %Y, %H:%M UTC')|" \
+            ../.github/environments-index.html > index.html
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
