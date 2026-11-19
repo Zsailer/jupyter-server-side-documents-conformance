@@ -28,6 +28,9 @@ changes. jupyverse has no server-side execution that keeps documents of its own.
 import argparse
 import io
 import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 from anyio import fail_after, sleep
 from fastapi import APIRouter, HTTPException
@@ -123,6 +126,97 @@ class Control(Router):
         self.include_router(router)
 
 
+class NoPathsend:
+    """Do not let a response be sent with the server's zero-copy `pathsend`.
+
+    anycorn (the server under jupyverse) then fails to send a file that does not fit in the socket buffer at once, as the
+    JavaScript of JupyterLab does: "File descriptor N is used by transport", and the page never finishes loading. Without
+    the extension, Starlette sends a file as an ordinary stream.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            extensions = dict(scope.get("extensions") or {})
+            extensions.pop("http.response.pathsend", None)
+            extensions.pop("http.response.zerocopysend", None)
+            scope = {**scope, "extensions": extensions}
+        await self.app(scope, receive, send)
+
+
+class PathInBody:
+    """Make saves of the Contents API work as Galata makes them, which jupyverse does not accept as they are.
+
+    - `PUT /api/contents/<path>` with a body that has no `path` is a validation error in jupyverse, which wants the path in
+      the body as well as in the URL. It is copied from the URL.
+    - `PUT` with `"type": "directory"` is how Galata makes the folder a story works in. Jupyverse writes the body to a
+      *file* of that name instead (it makes folders with `POST`). The folder is made here.
+
+    Neither has to do with what the stories are about: they only let the tests set themselves up.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        prefix = "/api/contents/"
+        if scope["type"] == "http" and scope["method"] == "PUT" and scope["path"].startswith(prefix):
+            body = b""
+            while True:
+                message = await receive()
+                body += message.get("body", b"")
+                if not message.get("more_body"):
+                    break
+            path = scope["path"][len(prefix):]
+            try:
+                content = json.loads(body or b"{}")
+                if isinstance(content, dict):
+                    if content.get("type") == "directory":
+                        return await self.make_directory(path, send)
+                    if "path" not in content:
+                        content["path"] = path
+                        body = json.dumps(content).encode()
+            except ValueError:
+                pass
+            sent = False
+
+            async def replay():
+                nonlocal sent
+                if sent:
+                    return await receive()
+                sent = True
+                return {"type": "http.request", "body": body, "more_body": False}
+
+            headers = [(k, v) for k, v in scope["headers"] if k != b"content-length"]
+            headers.append((b"content-length", str(len(body)).encode()))
+            scope = {**scope, "headers": headers}
+            return await self.app(scope, replay, send)
+        await self.app(scope, receive, send)
+
+    @staticmethod
+    async def make_directory(path, send):
+        folder = Path(path)
+        folder.mkdir(parents=True, exist_ok=True)
+        created = datetime.fromtimestamp(folder.stat().st_mtime, timezone.utc).isoformat().replace("+00:00", "Z")
+        model = {
+            "name": folder.name,
+            "path": path,
+            "type": "directory",
+            "format": None,
+            "content": None,
+            "mimetype": None,
+            "size": None,
+            "writable": True,
+            "created": created,
+            "last_modified": created,
+        }
+        payload = json.dumps(model).encode()
+        await send({"type": "http.response.start", "status": 201, "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(payload)).encode())]})
+        await send({"type": "http.response.body", "body": payload})
+
+
 class ControlModule(Module):
     async def prepare(self):
         app = await self.get(App)
@@ -133,8 +227,26 @@ class ControlModule(Module):
             config["exposeAppInBrowser"] = True
 
         page_config.register(expose)
+        app._app.add_middleware(NoPathsend)
+        app._app.add_middleware(PathInBody)
         self.put(Control(app, yjs))
         self.done()
+
+
+def link_galata_extension():
+    """Make the page helpers of Galata, which the tests need (`window.galata`), a JupyterLab extension jupyverse serves.
+
+    Jupyter Server is told where to find it (`LabServerApp.extra_labextensions_path`). Jupyverse only looks in the
+    `share/jupyter/labextensions` of its own environment, so the extension that ships in the `jupyterlab` package is linked
+    there.
+    """
+    import jupyterlab
+
+    source = Path(jupyterlab.__file__).parent / "galata" / "@jupyterlab" / "galata-extension"
+    target = Path(sys.prefix) / "share" / "jupyter" / "labextensions" / "@jupyterlab" / "galata-extension"
+    if not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.symlink_to(source, target_is_directory=True)
 
 
 def main():
@@ -143,6 +255,7 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
 
+    link_galata_extension()
     config = get_pluggin_config(())
     config["jupyverse"]["modules"][MODULE] = {"type": f"{MODULE}:ControlModule"}
     settings = [
