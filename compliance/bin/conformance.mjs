@@ -271,6 +271,7 @@ async function run(suite, stories, options) {
       ...process.env,
       COMPLIANCE_BASE_URL: baseURL,
       COMPLIANCE_ADAPTER: options.adapter ?? 'http',
+      ...(options.workers ? { COMPLIANCE_WORKERS: options.workers } : {}),
       ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
       ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
       PLAYWRIGHT_HTML_OPEN: 'never'

@@ -55,6 +55,10 @@ Which server
   --adapter <path>     your own adapter module (default: ask the server what
                        it can do)
 
+Speed
+  --workers <n>        run n stories at once (default 1). Each story opens
+                       several browsers, so start low: 3 or 4
+
 What you see
   --headed             show the browsers
   --open               open the side-by-side video page of each failed story
@@ -65,6 +69,7 @@ What you see
 
 Examples
   jupyter conformance ssd run Z3 --backend jsd --env ~/envs/jsd
+  jupyter conformance ssd run --backend jcollab --workers 4
   jupyter conformance ssd run --group handshake --headed
   jupyter conformance ssd run --url http://localhost:8888
   jupyter conformance ssd run --start "my-server --port {port}"
@@ -123,7 +128,7 @@ export function helpFor(topic = 'main') {
   return TOPICS[topic] ?? MAIN;
 }
 
-const VALUE = new Set(['backend', 'url', 'start', 'adapter', 'root-dir', 'group', 'known-gaps', 'env', 'out', 'filter']);
+const VALUE = new Set(['backend', 'url', 'start', 'adapter', 'root-dir', 'group', 'known-gaps', 'env', 'out', 'filter', 'workers']);
 const SWITCH = new Set(['headed', 'open', 'help', 'version', 'interactive']);
 const SHORT = { h: 'help', v: 'version', i: 'interactive' };
 
@@ -172,6 +177,9 @@ export function parse(argv) {
     } else {
       positional.push(arg);
     }
+  }
+  if (options.workers !== undefined && !/^[1-9][0-9]*$/.test(options.workers)) {
+    throw new Error('--workers needs a whole number of at least 1');
   }
   // `jupyter conformance ssd run`: the first word names the suite (the only one so far). `jupyter conformance run` is the same
   if (positional[0] === SUITE) {
