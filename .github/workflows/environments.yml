@@ -28,6 +28,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # where the publish job puts the reports (GitHub Pages, the gh-pages branch)
+  REPORTS_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/environments
+
 concurrency:
   group: environments-${{ github.ref }}
   cancel-in-progress: true
@@ -111,6 +115,11 @@ jobs:
           if [ -d "$RUNNER_TEMP/blob" ]; then
             npx playwright merge-reports --reporter html "$RUNNER_TEMP/blob"
           fi
+      - name: Say where the report will be
+        if: always()
+        run: |
+          echo "The report of ${{ matrix.name }} will be at $REPORTS_URL/${{ matrix.id }}/ once the last job has published it"
+          echo "Report: $REPORTS_URL/${{ matrix.id }}/ (when the last job has published it)" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -165,3 +174,13 @@ jobs:
           # only this folder is replaced: the site and the pull request previews stay
           clean: true
           force: false
+      - name: Link to the reports
+        run: |
+          echo "::notice title=Conformance reports::$REPORTS_URL/"
+          {
+            echo "### Playwright reports"
+            echo "- [all three]($REPORTS_URL/)"
+            for dir in site/*/; do d=$(basename "$dir"); echo "- [$d]($REPORTS_URL/$d/)"; done
+            echo
+            echo "The page can take a minute to update after the deploy."
+          } | tee -a "$GITHUB_STEP_SUMMARY"
