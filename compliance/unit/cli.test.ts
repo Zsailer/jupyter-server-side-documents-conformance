@@ -54,6 +54,13 @@ test('arguments: a command, stories and options', () => {
   assert.deepEqual(p.options, { group: 'edges', headed: true, url: 'http://x:1' });
 });
 
+test('arguments: workers is a whole number of at least 1', () => {
+  assert.equal(parse(['run', '--workers', '4']).options.workers, '4');
+  for (const bad of ['0', '-1', 'two', '1.5']) {
+    assert.throws(() => parse(['run', `--workers=${bad}`]), /--workers needs a whole number/);
+  }
+});
+
 test('arguments: mistakes say what is wrong', () => {
   assert.throws(() => parse(['run', '--bogus']), /unknown option --bogus/);
   assert.throws(() => parse(['run', '--url']), /--url needs a value/);

@@ -23,7 +23,9 @@ export default defineConfig({
   // a story opens several browsers, goes offline, waits for saves: give it room
   timeout: Number(process.env.COMPLIANCE_STORY_TIMEOUT_MS ?? 240000),
   retries: 0,
+  // every story works on a notebook of its own (galata's tmpPath), so stories can run side by side, also those of one file
   workers: Number(process.env.COMPLIANCE_WORKERS ?? 1),
+  fullyParallel: true,
   // a click that cannot be made (something is in the way) fails with a message and a picture, not after the whole story's time
   use: { ...baseConfig.use, baseURL, actionTimeout: Number(process.env.COMPLIANCE_ACTION_TIMEOUT_MS ?? 30000) },
   webServer: process.env.COMPLIANCE_SERVER_CMD
