@@ -21,9 +21,9 @@ on:
         type: string
         default: ""
       workers:
-        description: Stories to run at once in each environment (every story opens several browsers)
+        description: Stories to run at once in each environment (a number, or max for as many as the runner has processors). Every story opens several browsers.
         type: string
-        default: "3"
+        default: "max"
 
 permissions:
   contents: read

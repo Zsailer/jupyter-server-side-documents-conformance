@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { grepFor, helpFor, parse, phasesFor } from './args.mjs';
+import { grepFor, helpFor, parse, phasesFor, workersFor } from './args.mjs';
 import { watchControl } from './control.mjs';
 import { pick } from './picker.mjs';
 import { welcome } from './welcome.mjs';
@@ -319,7 +319,7 @@ async function run(suite, stories, options) {
   const grep = grepFor(stories, options.group);
   const rowsFile = path.join(out, 'rows.json');
   fs.rmSync(rowsFile, { force: true });
-  const phases = phasesFor(loadStories(suite), stories, options.group, Number(options.workers ?? 1));
+  const phases = phasesFor(loadStories(suite), stories, options.group, workersFor(options.workers, os.availableParallelism()));
   let code = 0;
   // COMPLIANCE_BLOB_DIR: also keep Playwright's blob report, one file per phase (each has a name of its own), to merge into an HTML report afterwards
   // (`npx playwright merge-reports --reporter html <dir>`); a run in two phases would overwrite a single HTML report

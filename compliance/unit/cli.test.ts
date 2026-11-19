@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { reason, rowLines, rowOf, summaryLines } from '../runtime/report.ts';
-import { grepFor, parse } from '../bin/args.mjs';
+import { grepFor, parse, workersFor } from '../bin/args.mjs';
 
 const plain = { color: false };
 const t = (title: string, over: Record<string, unknown> = {}) => ({ title, annotations: [], expectedStatus: 'passed', ...over });
@@ -54,11 +54,19 @@ test('arguments: a command, stories and options', () => {
   assert.deepEqual(p.options, { group: 'edges', headed: true, url: 'http://x:1' });
 });
 
-test('arguments: workers is a whole number of at least 1', () => {
+test('arguments: workers is a whole number of at least 1, or max', () => {
   assert.equal(parse(['run', '--workers', '4']).options.workers, '4');
+  assert.equal(parse(['run', '--workers', 'max']).options.workers, 'max');
   for (const bad of ['0', '-1', 'two', '1.5']) {
     assert.throws(() => parse(['run', `--workers=${bad}`]), /--workers needs a whole number/);
   }
+});
+
+test('workers: max is as many as the machine has processors, and at least one', () => {
+  assert.equal(workersFor('max', 4), 4);
+  assert.equal(workersFor('max', 0), 1);
+  assert.equal(workersFor('3', 16), 3);
+  assert.equal(workersFor(undefined, 16), 1);
 });
 
 test('arguments: mistakes say what is wrong', () => {
