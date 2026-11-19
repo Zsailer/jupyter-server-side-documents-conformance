@@ -94,7 +94,7 @@ test('the window counts the titles of groups, so the list never outgrows the ter
     let s = createPicker(stories);
     for (let i = 0; i < 6; i++) {
       s = reduce(s, 'down', budget).state;
-      const listLines = render(s, { color: false, budget }).slice(3, -2); // between the keys line and the count
+      const listLines = render(s, { color: false, budget }).slice(3, -3); // between the keys line and the sentence of the story under the arrow
       assert.ok(listLines.length <= budget, `budget ${budget}: ${listLines.length} lines`);
       assert.ok(render(s, { color: false, budget }).join('\n').includes('❯'), `the arrow is shown at budget ${budget}`);
     }
@@ -105,9 +105,10 @@ test('the picker draws groups, what each story needs, and how many are selected'
   const s = press(createPicker(stories), 'space');
   const text = render(s, { width: 100, budget: 14, color: false }).join('\n');
   assert.match(text, /RECONNECTING {2}· {2}3/);
-  assert.match(text, /◉ A {5}Control: a tab reconnects {2}releaseRoom/);
+  assert.match(text, /◉ A {6}releaseRoom/);
+  assert.match(text, /\n {2}The answer is lost\n/); // the story under the arrow (B, after the space) is said in words
   assert.match(text, /○ B/);
-  assert.match(text, /Z3 {4}One deletes while another types {2}releaseRoom · proposed/);
+  assert.match(text, /Z3 {5}releaseRoom · proposed/);
   assert.match(text, /not checkable from outside/);
   assert.match(text, /1 selected/);
 });
@@ -162,7 +163,7 @@ test('the welcome screen has the logo, the name, the version and where to start'
   assert.match(text, /Server-side documents\s*\n\s*conformance suite\s*\n\s*v9\.8\.7\s*\n/); // the name sits between the arcs
   assert.match(welcome({ version: '9.8.7', color: false, stories: 69 }).join('\n'), /v9\.8\.7 · 69 stories/);
   assert.match(text, /jupyter conformance ssd pick/);
-  assert.match(text, /jupyter conformance ssd run Z3/);
+  assert.match(text, /jupyter conformance ssd run crash\/dies-before-save/);
   assert.match(text, /jupyter conformance ssd help/);
   assert.doesNotMatch(text, /\u001b/); // plain when there is no colour
 });

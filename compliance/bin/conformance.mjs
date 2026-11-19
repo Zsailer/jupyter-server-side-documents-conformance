@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { grepFor, helpFor, parse, phasesFor, workersFor } from './args.mjs';
+import { grepFor, helpFor, nearestStory, parse, phasesFor, resolveStories, workersFor } from './args.mjs';
 import { watchControl } from './control.mjs';
 import { pick } from './picker.mjs';
 import { welcome } from './welcome.mjs';
@@ -97,18 +97,18 @@ function list(suite, options) {
       console.log(`  ${bold((s.groupTitle ?? group).toUpperCase())}  ${dim(`${stories.filter(x => x.group === group).length} · ${group}`)}`);
     }
     const tags = [s.proposed ? 'proposed' : '', s.needsAlignment ? 'open question' : ''].filter(Boolean);
-    console.log(`    ${bold(s.id.padEnd(5))} ${s.title}`);
-    console.log(`          ${dim([needsOf(s), ...tags].join(' · '))}`);
+    console.log(`    ${bold(s.id)}  ${dim([needsOf(s), ...tags].join(' · '))}`);
+    console.log(`      ${s.title}`);
   }
   const free = stories.filter(s => !s.internal && !s.requires.length).length;
   console.log(`\n  ${dim(`${stories.length} stories · ${free} need nothing special from a backend`)}`);
-  console.log(`  ${dim('jupyter conformance ssd pick  to choose some   ·   jupyter conformance ssd run <id>  to run one')}\n`);
+  console.log(`  ${dim('jupyter conformance ssd pick  to choose some   ·   jupyter conformance ssd run <story>  to run one')}\n`);
 }
 
 /** The interactive way in: a list to choose from. Resolves with the ids chosen, or exits if the person leaves. */
 async function choose(suite) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
-    fail('Picking stories needs a terminal', 'Name the stories instead:\n  jupyter conformance ssd run Z3 C2\nor see them with:\n  jupyter conformance ssd list');
+    fail('Picking stories needs a terminal', 'Name the stories instead:\n  jupyter conformance ssd run crash/dies-before-save conflict/*\nor see them with:\n  jupyter conformance ssd list');
   }
   const chosen = await pick(loadStories(suite));
   if (!chosen) {
@@ -275,7 +275,18 @@ function watchPages(results) {
   return pages;
 }
 
-async function run(suite, stories, options) {
+async function run(suite, words, options) {
+  // what was typed, as the stories it names (a name, an old name, a group, or a pattern): a word that names none is a mistake
+  let stories = words;
+  if (words.length) {
+    const all = loadStories(suite);
+    const { ids, unknown } = resolveStories(words, all);
+    if (unknown.length) {
+      const close = nearestStory(unknown[0], all);
+      fail(`No story called "${unknown[0]}"`, `${close ? `Did you mean ${close}?\n` : ''}See the stories with:\n  jupyter conformance ssd list`);
+    }
+    stories = ids;
+  }
   const out = path.resolve(options.out ?? 'conformance-results');
   const results = path.join(out, 'results');
   const backend = options.backend;

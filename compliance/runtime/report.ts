@@ -94,17 +94,37 @@ const MARK: Record<Kind, (s: Style) => string> = {
   skip: s => dim(s, '○')
 };
 
-/** The line (and, for anything but a pass, the reason under it) printed when a story finishes. */
-export function rowLines(row: Row, style: Style, width = 100): string[] {
+/** The width of the name column: the longest name a story has today, so that the times line up. */
+export const NAME_WIDTH = 42;
+
+/**
+ * The line printed when a story finishes: its name says what it is about, so a pass is that and the time. Anything else
+ * says under it which story that is in words, and why.
+ */
+export function rowLines(row: Row, style: Style): string[] {
   const time = dim(style, seconds(row.ms));
-  const room = Math.max(20, width - 8 - row.id.length - 10);
-  const title = row.title.length > room ? `${row.title.slice(0, room - 1)}…` : row.title;
-  const head = `  ${MARK[row.kind](style)} ${bold(style, row.id.padEnd(5))} ${title}  ${time}`;
+  const head = `  ${MARK[row.kind](style)} ${bold(style, row.id.padEnd(NAME_WIDTH))} ${time}`;
   if (row.kind === 'pass') {
     return [head];
   }
   const why = row.kind === 'fail' ? red(style, row.detail) : dim(style, row.kind === 'gap' ? `known gap: ${row.detail}` : `proposed, not met: ${row.detail}`);
-  return [head, `          ${why}`];
+  return [head, `    ${dim(style, row.title)}`, `    ${why}`];
+}
+
+/** Names joined with commas, on as many lines as it takes to keep each within `width`. */
+export function wrapList(names: string[], width: number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const name of names) {
+    const next = line ? `${line}, ${name}` : name;
+    if (line && next.length > width) {
+      lines.push(`${line},`);
+      line = name;
+    } else {
+      line = next;
+    }
+  }
+  return line ? [...lines, line] : lines;
 }
 
 /** The end of a run: the counts, why stories were skipped, and what to do next. */
@@ -127,8 +147,10 @@ export function summaryLines(rows: Row[], ms: number, style: Style): string[] {
   if (skipped.size) {
     lines.push('', `  ${dim(style, 'Skipped')}`);
     for (const [why, ids] of [...skipped].sort((a, b) => b[1].length - a[1].length)) {
-      const shown = ids.length > 8 ? `${ids.slice(0, 8).join(', ')}, …` : ids.join(', ');
-      lines.push(`  ${dim(style, `${String(ids.length).padStart(3)}  ${why}  (${shown})`)}`);
+      lines.push(`  ${dim(style, `${String(ids.length).padStart(3)}  ${why}`)}`);
+      for (const line of wrapList(ids, 88)) {
+        lines.push(`        ${dim(style, line)}`);
+      }
     }
   }
   return lines;

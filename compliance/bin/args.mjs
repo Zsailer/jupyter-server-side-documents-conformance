@@ -12,8 +12,9 @@ What it does
 
 Start here
   jupyter conformance ssd pick    choose stories from a list, then run them
-  jupyter conformance ssd run Z3  run one story
   jupyter conformance ssd run     run every story (takes a while)
+  jupyter conformance ssd run crash/dies-before-save
+                                  run one story
 
 Commands
   run [story ...]    run the stories named, or all of them
@@ -32,11 +33,15 @@ Usage
   jupyter conformance ssd run [story ...] [options]
 
 Which stories (each needs a server too: see below)
-  jupyter conformance ssd run                every story
-  jupyter conformance ssd run Z3 C2          these two
-  jupyter conformance ssd run 'AI*'          every story whose id starts AI
-  jupyter conformance ssd run --group edges  one group (see \`list\`)
-  jupyter conformance ssd run -i             pick them from a list first
+  jupyter conformance ssd run                  every story
+  jupyter conformance ssd run crash/dies-mid-save files/edit-keeps-mtime
+                                               these two
+  jupyter conformance ssd run 'crash/*'        a whole group (or: run crash)
+  jupyter conformance ssd run --group files    one group, the same
+  jupyter conformance ssd run -i               pick them from a list first
+
+  A story is named group/what-happens (see \`list\`). The name it had
+  before, such as S2, still works.
 
 Which server
   --backend <name>     how to start the server, so no backend is assumed:
@@ -69,7 +74,7 @@ What you see
                        (default ./conformance-known-gaps.json)
 
 Examples
-  jupyter conformance ssd run Z3 --backend jsd --env ~/envs/jsd
+  jupyter conformance ssd run crash/dies-mid-save --backend jsd --env ~/jsd
   jupyter conformance ssd run --backend jcollab --workers 4
   jupyter conformance ssd run --group handshake --headed
   jupyter conformance ssd run --url http://localhost:8888
@@ -96,7 +101,7 @@ In the list
   space            select or unselect the story under the arrow
   a                select everything shown (again: unselect it)
   g                select the whole group the arrow is in
-  /                filter by what you type: an id, a word in a title, a group,
+  /                filter by typing: a name, a word in a title, a group,
                    a need like releaseRoom (escape clears it)
   c                clear the selection
   enter            run what is selected (or the story under the arrow if
@@ -104,7 +109,7 @@ In the list
   q  or  escape    leave without running
 
 Needs a terminal. In a script, name the stories:
-  jupyter conformance ssd run Z3 C2
+  jupyter conformance ssd run crash/dies-before-save conflict/*
 `;
 
 const LIST = `jupyter conformance ssd list: every story, and what each needs
@@ -113,8 +118,8 @@ Usage
   jupyter conformance ssd list [--group <name>] [--filter <text>]
 
   --group <name>    only the stories of one group
-  --filter <text>   only the stories whose id, title or needs contain the text
-                    (for example: releaseRoom, offline, AI)
+  --filter <text>   only the stories whose name, title or needs hold the text
+                    (for example: releaseRoom, offline, agent)
 
 A story that "needs releaseRoom" is skipped on a backend that cannot make the
 server let go of a notebook.
@@ -204,6 +209,32 @@ export function parse(argv) {
     return { command: 'help', stories: [], options, topic: first };
   }
   return { command: first, stories: rest, options, topic: first };
+}
+
+/**
+ * The stories a command line names, as the names they have now. What is typed is a story's name (`crash/dies-before-save`), a
+ * name it had before (`S2`), a group (`crash`), or any of these with `*` for any run of characters (`crash/*`, `AI*`).
+ * @param {string[]} words what was typed
+ * @param {{id: string, group: string, aliases?: string[]}[]} all the stories of the suite, in order
+ * @returns {{ids: string[], unknown: string[]}} the stories named, in the suite's order, and the words that name none
+ */
+export function resolveStories(words, all) {
+  const chosen = new Set();
+  const unknown = [];
+  for (const word of words) {
+    const pattern = new RegExp(`^${word.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
+    const found = all.filter(s => s.group === word || [s.id, ...(s.aliases ?? [])].some(name => pattern.test(name)));
+    if (!found.length) {
+      unknown.push(word);
+    }
+    found.forEach(s => chosen.add(s.id));
+  }
+  return { ids: all.filter(s => chosen.has(s.id)).map(s => s.id), unknown };
+}
+
+/** The closest name to one that names no story, to say "did you mean". */
+export function nearestStory(word, all) {
+  return suggest(word, all.flatMap(s => [s.id, ...(s.aliases ?? [])]));
 }
 
 /** The Playwright --grep for the stories named (ids, or a prefix with *) in a group. Undefined means all of them. */

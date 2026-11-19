@@ -5,17 +5,18 @@ import { AdapterContext, BackendAdapter, loadAdapter } from './adapter';
 import { matchCells, notebookJSON, showActual, showExpected } from './cells';
 import { Tab, TabEnv, WAIT } from './tab';
 import { keepLook, Recorder } from './recording';
+import { byName, fileNameOf } from './names';
 import * as fs from 'node:fs';
 import * as nodePath from 'node:path';
 
 export { E, typed } from './cells';
 
 /**
- * Which option of a decision to hold the backend to, per story: `COMPLIANCE_DECISIONS='{"Z3":1}'` picks the second
- * option of Z3. The default is the proposed one (the first).
+ * Which option of a decision to hold the backend to, per story: `COMPLIANCE_DECISIONS='{"conflict/delete-while-typing":1}'`
+ * picks the second option of that story (its old name works too). The default is the proposed one (the first).
  */
-function chosenOption(id: string, count: number): number {
-  const chosen = JSON.parse(process.env.COMPLIANCE_DECISIONS || '{}')[id];
+function chosenOption(meta: StoryMeta, count: number): number {
+  const chosen = byName(JSON.parse(process.env.COMPLIANCE_DECISIONS || '{}'), meta);
   return typeof chosen === 'number' && chosen >= 0 && chosen < count ? chosen : 0;
 }
 
@@ -39,7 +40,7 @@ export class Story {
 
   /** Create the notebook file the story starts from. `ids: false` makes an older notebook without cell ids. */
   async notebook(sources: string[], opts: { ids?: boolean } = {}): Promise<void> {
-    this.path = `${this.dir}/${this.meta.id.toLowerCase()}.ipynb`;
+    this.path = `${this.dir}/${fileNameOf(this.meta)}.ipynb`;
     await this.ctx.admin.contents.uploadContent(notebookJSON(sources, opts.ids !== false), 'text', this.path);
   }
 
@@ -302,7 +303,7 @@ export class Story {
    * also says which of the storyboard's options the backend does.
    */
   async ends(endings: Ending[]): Promise<void> {
-    const ends = endings[chosenOption(this.meta.id, endings.length)].ends;
+    const ends = endings[chosenOption(this.meta, endings.length)].ends;
     this.recorder.step('The end: every copy is compared with what the storyboard says');
     await test.step('the end: every copy holds what the storyboard says', async () => {
       const failures: string[] = [];
@@ -444,7 +445,7 @@ export function story(
       if (meta.proposed) {
         testInfo.annotations.push({ type: 'proposed', description: 'not agreed yet: a miss is reported, not failed' });
       }
-      const gap = knownGaps(adapter.name)[meta.id];
+      const gap = byName(knownGaps(adapter.name), meta);
       if (gap) {
         testInfo.annotations.push({ type: 'known-gap', description: gap });
         test.fail(true, `known gap in "${adapter.name}": ${gap}`);

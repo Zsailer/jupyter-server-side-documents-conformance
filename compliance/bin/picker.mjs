@@ -3,19 +3,19 @@
 // part that reads keys and draws.
 import readline from 'node:readline';
 
-/** @typedef {{id: string, group: string, groupTitle?: string, title: string, requires?: string[], proposed?: boolean, internal?: string}} Story */
+/** @typedef {{id: string, aliases?: string[], group: string, groupTitle?: string, title: string, requires?: string[], proposed?: boolean, internal?: string}} Story */
 
 export function createPicker(stories, { preselected = [] } = {}) {
   return { stories, selected: new Set(preselected), filter: '', typing: false, cursor: 0, top: 0, hint: '' };
 }
 
-/** The stories that match what was typed: in the id, the title, the group, or what a story needs. */
+/** The stories that match what was typed: in the name (or one it had before), the title, the group, or what a story needs. */
 export function visible(state) {
   const q = state.filter.trim().toLowerCase();
   if (!q) {
     return state.stories;
   }
-  return state.stories.filter(s => [s.id, s.title, s.group, s.groupTitle ?? '', ...(s.requires ?? [])].join(' ').toLowerCase().includes(q));
+  return state.stories.filter(s => [s.id, ...(s.aliases ?? []), s.title, s.group, s.groupTitle ?? '', ...(s.requires ?? [])].join(' ').toLowerCase().includes(q));
 }
 
 /**
@@ -150,6 +150,8 @@ export function render(state, { width = 100, budget = 14, color = true } = {}) {
   const yellow = s => paint(color, '33', s);
   const cyan = s => paint(color, '36', s);
   const list = visible(state);
+  // as wide as the longest name of any story, so that the columns do not move as the list scrolls
+  const nameWidth = Math.min(46, Math.max(5, ...state.stories.map(s => s.id.length)));
   const lines = [];
 
   lines.push(`  ${bold('Pick the stories to run')}`);
@@ -179,18 +181,19 @@ export function render(state, { width = 100, budget = 14, color = true } = {}) {
     const needs = s.internal ? 'not checkable from outside' : (s.requires ?? []).join(', ');
     const tags = [s.proposed ? 'proposed' : ''].filter(Boolean).join(', ');
     const right = [needs, tags].filter(Boolean).join(' · ');
-    const room = Math.max(12, width - 18 - s.id.length - Math.min(right.length, 30));
-    const title = s.title.length > room ? `${s.title.slice(0, room - 1)}…` : s.title;
     const pointer = index === state.cursor ? cyan('❯') : ' ';
     const box = on ? green('◉') : dim('○');
-    const text = index === state.cursor ? bold(title) : title;
-    lines.push(` ${pointer} ${box} ${bold(s.id.padEnd(5))} ${text}${right ? `  ${dim(right.length > 30 ? `${right.slice(0, 29)}…` : right)}` : ''}`);
+    const name = index === state.cursor ? bold(s.id.padEnd(nameWidth)) : s.id.padEnd(nameWidth);
+    lines.push(` ${pointer} ${box} ${name}${right ? `  ${dim(right.length > 30 ? `${right.slice(0, 29)}…` : right)}` : ''}`);
   });
 
+  // what the story under the arrow is, in words: its name says what it is about, this is the sentence
+  const here = list[state.cursor];
+  lines.push('');
+  lines.push(`  ${here ? dim(here.title.length > width - 4 ? `${here.title.slice(0, width - 5)}…` : here.title) : ''}`);
   const above = state.top;
   const below = Math.max(0, list.length - state.top - shown);
   const more = [above ? `↑ ${above} above` : '', below ? `↓ ${below} below` : ''].filter(Boolean).join('   ');
-  lines.push('');
   lines.push(`  ${state.selected.size ? yellow(`${state.selected.size} selected`) : dim('space selects several · enter runs the one under the arrow')}${more ? `   ${dim(more)}` : ''}`);
   if (state.hint) {
     lines.push(`  ${yellow(state.hint)}`);
@@ -204,8 +207,8 @@ const NAMES = { return: 'enter', escape: 'escape', backspace: 'backspace', up: '
 export function pick(stories, { stdin = process.stdin, stdout = process.stdout, preselected = [] } = {}) {
   return new Promise(resolve => {
     const color = !process.env.NO_COLOR;
-    // the title, the keys, the filter, two blank lines, the count and a line for the cursor are not the list
-    const budgetFor = () => Math.max(8, (stdout.rows || 30) - 9);
+    // the title, the keys, the filter, the blank lines, the sentence of the story under the arrow and the count are not the list
+    const budgetFor = () => Math.max(8, (stdout.rows || 30) - 10);
     let state = createPicker(stories, { preselected });
     let drawn = 0;
 

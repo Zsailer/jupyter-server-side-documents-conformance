@@ -50,7 +50,7 @@ export default class ConformanceReporter implements Reporter {
     const row = rowOf(test, result);
     this.rows.push(row);
     if (row.kind !== 'skip') {
-      process.stdout.write(rowLines(row, this.style, process.stdout.columns ?? 100).join('\n') + '\n');
+      process.stdout.write(rowLines(row, this.style).join('\n') + '\n');
     }
   }
 

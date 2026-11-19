@@ -33,7 +33,10 @@ export type Expect =
 
 /** What a story says about itself. Generated; see compliance/generate.py. */
 export interface StoryMeta {
+  /** `group/what-happens` */
   id: string;
+  /** What the story was called before, which still finds it. */
+  aliases?: string[];
   group: string;
   title: string;
   /** What the story needs from the backend, beyond the always-available. */

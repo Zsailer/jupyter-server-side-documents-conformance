@@ -84,7 +84,7 @@ export function welcome({ version, color = true, stories } = {}) {
 
   const commands = [
     ['jupyter conformance ssd pick', 'choose stories from a list, then run them'],
-    ['jupyter conformance ssd run Z3', 'run one story'],
+    ['jupyter conformance ssd run', 'run every story (takes a while)'],
     ['jupyter conformance ssd list', 'see every story, and what each needs'],
     ['jupyter conformance ssd help', 'everything it can do']
   ];
@@ -101,6 +101,8 @@ export function welcome({ version, color = true, stories } = {}) {
     '',
     `  ${bold('Try one of these')}`,
     ...commands.map(([command, what]) => `    ${bold(command)}${' '.repeat(width - command.length)}${what}`),
+    '',
+    `  Or name a story: ${bold('jupyter conformance ssd run crash/dies-before-save')}`,
     ''
   ];
 }
