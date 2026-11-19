@@ -1,40 +1,50 @@
 // The welcome screen of `jupyter conformance ssd`: what is shown when it is run with nothing to do. A pure function of the
 // version and whether to use colour, so it is tested without a terminal.
 
-// The Jupyter logo as an outline in braille (two crescents and three small circles), drawn by scripts/draw-logo.py:
-// change the geometry there and paste the new rows here. LOGO_COLORS gives the colour of each character: 0 none,
-// 1 the crescents, 2 to 4 the circles.
+// The Jupyter logo, solid: two crescents and three small circles, in blocks (▀ ▄ ▌ ▐ ▘ ▝ ▖ ▗ ▚ ▞ ▛ ▜ ▙ ▟ █), traced from the
+// official mark by scripts/draw-logo.mjs: change the size there and paste the new rows here. LOGO_COLORS gives the colour
+// of each character: 0 none, 1 the crescents, 2 the circles.
 const LOGO = [
-  '⠀⢠⠒⠒⡄⠀⠀⠀⠀⠀⢀⣀⠤⠤⠤⠤⠤⠤⠤⠤⠤⣀⡀⠀⠀⠀⠀⠀⡠⠒⢄⠀⠀',
-  '⠀⠱⣀⣀⠎⠀⢀⠤⠒⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠒⠤⡀⠀⠑⠤⠊⠀⠀',
-  '⠀⠀⠀⠀⡠⠊⠁⣀⣀⠤⠤⠤⠒⠒⠒⠒⠒⠒⠒⠒⠒⠤⠤⠤⣀⣀⠈⠑⢄⠀⠀⠀⠀',
-  '⠀⠀⢀⠮⠔⠒⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠒⠢⠵⡀⠀⠀',
-  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
-  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
-  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
-  '⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀',
-  '⠀⠀⠈⢖⠢⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠤⠔⡲⠁⠀⠀',
-  '⠀⠀⠀⠀⠑⢄⡀⠉⠉⠒⠒⠒⠤⠤⠤⠤⠤⠤⠤⠤⠤⠒⠒⠒⠉⠉⢀⡠⠊⠀⠀⠀⠀',
-  '⠀⠀⢠⠒⠒⡄⠈⠒⠤⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⠤⠒⠁⠀⠀⠀⠀⠀⠀',
-  '⠀⠀⠈⠒⠒⠁⠀⠀⠀⠀⠈⠉⠒⠒⠒⠒⠒⠒⠒⠒⠒⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀'
+  '                   ▟██▙ ',
+  '▗▄▄    ▗▄▄▄▄▄▄▄▄▄  ▀██▛ ',
+  '▜█▛ ▗▟█████████████▄▖   ',
+  '  ▗▟█▛▀▀▀      ▝▀▀▀██▙  ',
+  ' ▗▀▘                 ▀▜ ',
+  '                        ',
+  '                        ',
+  '                        ',
+  '                        ',
+  ' ▗▖                   ▄ ',
+  '  ▀█▄▄▖           ▄▄▟█▘ ',
+  '   ▝▀██████████████▛▀   ',
+  '  ▄▄▄ ▝▀▀███████▀▀      ',
+  ' ████▙                  ',
+  ' ▀██▛▘                  '
 ];
 const LOGO_COLORS = [
-  '022220000011111111111110000033300',
-  '022220111110000000000011111033300',
-  '000011111111111111111111111110000',
-  '001111100000000000000000001111100',
-  '000000000000000000000000000000000',
-  '000000000000000000000000000000000',
-  '000000000000000000000000000000000',
-  '000000000000000000000000000000000',
-  '001111100000000000000000001111100',
-  '000011111111111111111111111110000',
-  '004444111110000000000011111000000',
-  '004444000011111111111110000000000'
+  '000000000000000000022220',
+  '222000011111111110022220',
+  '222011111111111111111000',
+  '001111111000000111111100',
+  '011100000000000000000110',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '000000000000000000000000',
+  '011000000000000000000010',
+  '001111100000000000111110',
+  '000111111111111111111000',
+  '002220111111111111000000',
+  '022222000000000000000000',
+  '022222000000000000000000'
 ];
 
+// the empty rows between the arcs, and the one in the middle of them: where the name and the version go
+const EMPTY_ROWS = LOGO.flatMap((row, i) => (row.trim() === '' ? [i] : []));
+const MIDDLE = EMPTY_ROWS[Math.floor(EMPTY_ROWS.length / 2)];
+
 // the 256-colour palette entries nearest to the colours of the logo
-const COLORS = { 1: 208, 2: 250, 3: 246, 4: 248 };
+const COLORS = { 1: 208, 2: 245 };
 
 /**
  * The logo as rows of terminal text: in colour, or the same shape without. `labels` puts text inside the arcs: a row
@@ -44,10 +54,6 @@ export function logo({ color = true, labels = {} } = {}) {
   return LOGO.map((row, r) => {
     const cells = [...row].map((ch, c) => {
       const id = +LOGO_COLORS[r][c];
-      // an empty braille character is drawn as a space: some fonts draw it as something else
-      if (ch === '\u2800') {
-        return ' ';
-      }
       return color && id ? `\u001b[38;5;${COLORS[id]}m${ch}\u001b[0m` : ch;
     });
     const label = labels[r];
@@ -60,7 +66,7 @@ export function logo({ color = true, labels = {} } = {}) {
 }
 
 /** The lines of the welcome screen. */
-export function welcome({ version, color = true } = {}) {
+export function welcome({ version, color = true, stories } = {}) {
   const paint = (code, s) => (color ? `\u001b[${code}m${s}\u001b[0m` : s);
   const bold = s => paint('1', s);
   const dim = s => paint('2', s);
@@ -68,7 +74,12 @@ export function welcome({ version, color = true } = {}) {
   // the name sits inside the arcs, like a wordmark
   const art = logo({
     color,
-    labels: { 5: { text: 'conformance', paint: bold }, 6: { text: `v${version}`, paint: dim } }
+    // the name of the suite in the gap between the arcs: what it is, which kind, and how big it is today
+    labels: {
+      [MIDDLE - 1]: { text: 'Server-side documents', paint: bold },
+      [MIDDLE]: { text: 'conformance suite', paint: s => s },
+      [MIDDLE + 1]: { text: stories ? `v${version} · ${stories} stories` : `v${version}`, paint: dim }
+    }
   }).map(row => `  ${row}`);
 
   const commands = [
