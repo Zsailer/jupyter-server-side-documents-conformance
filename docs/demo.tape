@@ -1,11 +1,7 @@
 # The demo GIF of the README: `npm run demo` plays this in a real terminal and writes docs/assets/conformance.gif.
 #
-# It needs VHS (`brew install vhs`) and a Python environment with jupyter_server_documents:
-#
-#   JSD_ENV=/path/to/that/env npm run demo
-#
-# The run at the end starts a real server, so it takes about half a minute. Change a step and run it again: the GIF is
-# always what the command does today.
+# It needs VHS (`brew install vhs`). Nothing here starts a server, so it takes about a minute and needs no Python
+# environment. Change a step and run it again: the GIF is always what the command does today.
 
 Output docs/assets/conformance.gif
 
@@ -55,18 +51,8 @@ Hide
 Type "clear" Enter
 Show
 
-# 3. Run one story against a real server
-Type "jupyter conformance ssd pick --backend jsd"
+# 3. See what each story needs from a backend, without starting one
+Type "jupyter conformance ssd list --group handshake"
 Sleep 400ms
 Enter
-Sleep 1s
-Type "/"
-Type "z3"
-Sleep 600ms
-Enter
-Sleep 600ms
-Type " "
-Sleep 800ms
-Enter
-Wait+Screen@120s /passed|failed/
-Sleep 4s
+Sleep 6s
