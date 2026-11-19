@@ -1,78 +1,95 @@
 # Jupyter server-side documents: conformance
 
-The user-experience cases for real-time notebook collaboration, as a page people can read and as compliance tests any
-backend can be held to. Both are generated from the same stories (`stories/`); to add one, see
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+When two people edit the same notebook, what should they see? What if one of them loses their connection, the server
+restarts, or a file changes underneath them? This project writes those situations down as short stories, and gives you a
+command that checks whether your real-time collaboration backend does what the stories say.
 
 <img src="docs/assets/conformance.gif" alt="jupyter conformance ssd: the welcome screen, choosing stories from a list, and seeing what each one needs from a backend" width="720">
 
-To run the tests against a backend: [`docs/running-against-a-backend.md`](docs/running-against-a-backend.md).
+You can use it two ways:
 
-The page is made with a small library of live, side-by-side notebook demos for documenting **what a product does in each scenario**.
+- **Check your backend.** Run the stories against it in real browsers and see which it meets.
+- **Read the stories.** Every one is a short animation of what each copy of the notebook holds, step by step:
+  [the stories, live](https://zsailer.github.io/jupyter-server-side-documents-conformance/).
 
-Instead of describing a scenario in a paragraph, you show it: real-looking Jupyter windows, one per tab, server and
-file, that play the story step by step, with typing and a live cursor. The reader sees what each copy of the notebook
-holds after every step, and how the story ends.
+## Install
 
-```
- Your tab (offline)        Second tab              Server
- ┌────────────────┐        ┌────────────────┐      ┌────────────────┐
- │[ ]: import pd  │        │[ ]: import pd  │      │[ ]: import pd  │
- │[ ]: df = …  ▌  │ ─────▶ │[ ]: df = …     │      │[ ]: df = …     │
- └────────────────┘        └────────────────┘      └────────────────┘
-   ● Offline                 ● Connected             ● Holds the notebook
- ▶ ━━━━━━━●━━━━━━━⚡━━━━━━━━━━━━━  3 · types “+OFFLINE” into c1
-```
-
-**Live:** https://zsailer.github.io/jupyter-server-side-documents-conformance/
-**Repo:** https://github.com/Zsailer/jupyter-server-side-documents-conformance
-
-## What is here
-
-| | |
-|---|---|
-| [`player/`](player/) | The library: `nbscenario.js` and `nbscenario.css`. No dependencies, no build step. |
-| [`docs/`](docs/) | How to write a good scenario page. Start with [the guide](docs/01-why-and-when.md). |
-| [`examples/minimal/`](examples/minimal/) | The smallest useful page: one picture and one live scenario. **Start here.** |
-| [`examples/storyboards/`](examples/storyboards/) | A real page: the 69 stories of the multi-tab acceptance suite, built from YAML. |
-| [`compliance/`](compliance/) | **Compliance tests generated from the storyboards**: Galata tests that hold any real-time collaboration backend to what the stories say a person experiences. To run them against a backend, see [running against a backend](docs/running-against-a-backend.md) (`npx @zsailer/jupyter-server-side-documents-conformance run`). |
-| [`tools/`](tools/) | The scenario grammar as a validator (`nbscenario_spec.py`). |
-| [`tests/`](tests/) | Tests of the core, of the built page in a simulated browser, and of the spec. |
-
-## Try it
+You need [Node.js](https://nodejs.org) and a Python environment with the backend you want to check. Then:
 
 ```sh
-open examples/minimal/index.html          # nothing to install: it is one HTML file and two player files
+npm install -g @zsailer/jupyter-server-side-documents-conformance
 ```
 
-To build and test the storyboards page:
+Check that it worked:
 
 ```sh
-npm install                                # jsdom, for the tests only
-npm run build                              # writes examples/storyboards/site/index.html
-npm test
+jupyter conformance ssd
 ```
 
-The built page is the folder `examples/storyboards/site/`, which `npm run build` writes. It is a static site: GitHub
-Actions publishes it to GitHub Pages from `main`, and a preview of every pull request (see [CONTRIBUTING](CONTRIBUTING.md)).
+You should see a welcome screen with a few things to try. The first time you run the tests, it sets itself up (it downloads
+a browser for the tests to drive), which takes a few minutes. After that it starts straight away.
 
-## The idea in four moves
+No install? Run it once with `npx`. There is no `jupyter` in front here, because `npx` runs the program directly:
 
-1. **Write the story, not the animation.** A scenario is a list of steps: who does what (`at`), what kind of thing it
-   is (`kind`), and what that lane's copy of the notebook holds afterwards (`cells`). You never script an animation.
-2. **The player works out what to show.** By comparing a lane's cells before and after a step it knows what was typed,
-   added, moved, removed or changed by the system, and draws each the right way.
-3. **Show the moment of change the way it happens.** A person's typing is typed. Something the system does
-   (a merge, a rebuild) just appears. A reconnect is a blink in real life, so the player shows what is about to differ,
-   then jumps. See [Designing a good scenario](docs/03-designing-a-good-scenario.md).
-4. **Keep the words.** Every story keeps its steps as text, so it works without JavaScript, for screen readers, and in
-   a review.
+```sh
+npx @zsailer/jupyter-server-side-documents-conformance ssd run --backend jsd
+```
 
-## Where this came from
+## Run the tests
 
-It was built to document the scenarios of jupyter-server-documents PR #100:
-a storyboard of what Jupyter should do when connections drop, servers let go of notebooks, files change underneath,
-and AI agents edit. The same grammar and player work for any "who does what to a shared notebook" documentation.
+Run the command from the Python environment your backend is installed in, and say which backend it is:
+
+```sh
+jupyter conformance ssd run --backend jsd      # jupyter-server-documents
+jupyter conformance ssd run --backend jcollab  # jupyter-collaboration
+```
+
+It starts a JupyterLab with your backend, plays every story in real browsers, stops the server, and tells you how it went.
+The exit code is 0 when no story failed, so it works as a step in CI.
+
+Not sure where to start? Pick stories from a list, or run just one:
+
+```sh
+jupyter conformance ssd pick --backend jsd       # choose stories from a list, then run them
+jupyter conformance ssd run Z3 --backend jsd     # run one story
+jupyter conformance ssd list                     # see every story, and what each needs from a backend
+```
+
+If your backend is somewhere else, point at it: `--env <dir>` for a Python environment, `--url <address>` for a server that
+is already running, or `--start "<command>"` for your own way to start one.
+
+**Reading the results.** Each story ends in one of these: it passed, it failed, it is a known gap (it fails, and you have
+said that is expected), it is a proposal that is not met yet (reported, never a failure), or it was skipped because your
+backend cannot do something the story needs. The summary says which, and why.
+
+Your backend can do more than the basics. A few stories need it to help the tests, for example to let go of a notebook on
+request. That is a small, test-only contract. [Running against a backend](docs/running-against-a-backend.md) has all the
+options, [the backend contract](docs/backend-contract.md) says what to add for the rest of the stories, and
+[running in CI](docs/running-in-ci.md) has a ready-made GitHub Actions workflow.
+
+## Contribute a story
+
+A story is one situation: what people see when something happens to a shared notebook. If you think a situation is
+missing, or that one of the answers is wrong, we would love your help.
+
+1. **To change a story,** open it on [the site](https://zsailer.github.io/jupyter-server-side-documents-conformance/) and
+   click **Edit this story on GitHub**. **To add one,** copy a similar story in [`stories/storyboards/`](stories/storyboards/)
+   and mark it `status: proposed`.
+2. Write it in plain words: who does what, in order, and what each copy of the notebook holds after each step. The
+   [guide to a good scenario](docs/03-designing-a-good-scenario.md) shows how, and the
+   [reference](docs/02-spec-reference.md) lists everything a story can say.
+3. Open a pull request. A preview of the site is published on it, and it opens on just the story you added or changed, so
+   everyone can look at the same thing and talk about it.
+
+If the right answer is not agreed, add the options to the story and mark one as the proposal. The group can then decide
+on the pull request, and a story can be listed on the "Up for discussion" page with a link to the conversation. Details
+are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## More
+
+- [The stories, live](https://zsailer.github.io/jupyter-server-side-documents-conformance/)
+- [The player library and how the site is built](docs/library.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 
