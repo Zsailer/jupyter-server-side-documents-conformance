@@ -4,7 +4,8 @@ name: Environments
 #   Actions > Environments > Run workflow
 #
 # Manual only: it never runs on a pull request or a push. It installs whatever is newest on PyPI at the time, so a run
-# says how the backends stand today, not how this tree stood when it was written.
+# says how the backends stand today, not how this tree stood when it was written. To test a change that is not released,
+# give the branch (a tag or a commit) of the backend it is in; the run summary says which commit was installed.
 #
 #   jsd         jupyter-server-documents
 #   jcollab     jupyter-collaboration + jupyter-server-nbmodel
@@ -24,6 +25,22 @@ on:
         description: Stories to run at once in each environment (a number, or max for as many as the runner has processors). Every story opens several browsers.
         type: string
         default: "max"
+      jsd_ref:
+        description: jupyter-server-documents branch, tag or commit to test (empty - the release). owner/repo@ref for a fork.
+        type: string
+        default: ""
+      jcollab_ref:
+        description: jupyter-collaboration branch, tag or commit to test (empty - the release). owner/repo@ref for a fork.
+        type: string
+        default: ""
+      nbmodel_ref:
+        description: jupyter-server-nbmodel branch, tag or commit to test, in the jupyter-collaboration environment (empty - the release)
+        type: string
+        default: ""
+      jupyverse_ref:
+        description: jupyverse branch, tag or commit to test (empty - the release). owner/repo@ref for a fork.
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -79,15 +96,26 @@ jobs:
           # the stories and the tests are generated from stories/, none of it is committed
           npm run generate
           npx playwright install --with-deps chromium
-      - name: Install the latest ${{ matrix.name }}
+      - name: Install ${{ matrix.name }}
+        env:
+          # a branch, tag or commit to test instead of the release (empty: the release); `owner/repo@ref` for a fork
+          REF: ${{ inputs[format('{0}_ref', matrix.id)] }}
+          NBMODEL_REF: ${{ matrix.id == 'jcollab' && inputs.nbmodel_ref || '' }}
         run: |
           python -m venv "$RUNNER_TEMP/env"
           "$RUNNER_TEMP/env/bin/pip" install --upgrade pip
+          # the release first, for everything a branch does not change; a branch is then installed over it
           "$RUNNER_TEMP/env/bin/pip" install --upgrade ${{ matrix.packages }}
           mkdir -p "$RUNNER_TEMP/root"
-          # the versions this run is about, in the log and in the summary
+          # what this run is about, in the log and in the summary
           {
             echo "### ${{ matrix.name }}"
+            if [ -n "$REF" ]; then
+              python scripts/install_ref.py --pip "$RUNNER_TEMP/env/bin/pip" --backend ${{ matrix.id }} --ref "$REF"
+            fi
+            if [ -n "$NBMODEL_REF" ]; then
+              python scripts/install_ref.py --pip "$RUNNER_TEMP/env/bin/pip" --backend nbmodel --ref "$NBMODEL_REF"
+            fi
             "$RUNNER_TEMP/env/bin/pip" list --format=freeze | grep -iE '^(jupyterlab|jupyter[-_]server[-_]documents|jupyter[-_]collaboration|jupyter[-_]server[-_]nbmodel|jupyverse|fps[-_]yjs)==' | sed 's/^/- /'
           } | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Run the conformance tests
