@@ -324,6 +324,11 @@ async function run(suite, stories, options) {
   // COMPLIANCE_BLOB_DIR: also keep Playwright's blob report, one file per phase (each has a name of its own), to merge into an HTML report afterwards
   // (`npx playwright merge-reports --reporter html <dir>`); a run in two phases would overwrite a single HTML report
   const blobDir = process.env.COMPLIANCE_BLOB_DIR ? path.resolve(process.env.COMPLIANCE_BLOB_DIR) : undefined;
+  // Playwright's blob reporter empties its folder when a run starts, which would leave only the last phase in it: this
+  // command empties it once, and tells the reporter to leave what an earlier phase wrote
+  if (blobDir) {
+    fs.rmSync(blobDir, { recursive: true, force: true });
+  }
   for (const phase of phases) {
     const args = ['playwright', 'test', '--reporter', path.join(suite, 'runtime', 'reporter.ts') + (blobDir ? ',blob' : ''), '--output', results, '--workers', String(phase.workers)];
     if (phase.project) {
@@ -346,7 +351,7 @@ async function run(suite, stories, options) {
         ...(phases.length > 1 ? { COMPLIANCE_ROWS_FILE: rowsFile, COMPLIANCE_LAST_PHASE: phase.last ? '1' : '' } : {}),
         ...(rootDir ? { COMPLIANCE_ROOT_DIR: rootDir } : {}),
         ...(fs.existsSync(knownGaps) ? { COMPLIANCE_KNOWN_GAPS: knownGaps } : {}),
-        ...(blobDir ? { PLAYWRIGHT_BLOB_OUTPUT_DIR: blobDir } : {}),
+        ...(blobDir ? { PLAYWRIGHT_BLOB_OUTPUT_DIR: blobDir, PWTEST_BLOB_DO_NOT_REMOVE: '1' } : {}),
         PLAYWRIGHT_HTML_OPEN: 'never'
       }
     });
