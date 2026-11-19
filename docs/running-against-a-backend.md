@@ -2,7 +2,7 @@
 
 The tests say what a person should experience when a notebook is shared in real time: a tab goes offline and keeps typing,
 the server lets go of a notebook, a file changes underneath. They know nothing about how a backend does it, so you can
-point them at any implementation. There is a built-in way to start jupyter-server-documents (`jsd`) and jupyter-collaboration (`jcollab`, with jupyter-server-nbmodel).
+point them at any implementation. There is a built-in way to start jupyter-server-documents (`jsd`) and jupyter-collaboration (`jcollab`, with jupyter-server-nbmodel) and jupyverse (`jupyverse`).
 
 ## Quick start
 
@@ -95,6 +95,7 @@ Another backend, or a server you already started:
 
 ```sh
 jupyter conformance ssd run --backend jcollab --env environments/jupyter-collaboration/.venv  # jupyter-collaboration (see environments/)
+jupyter conformance ssd run --backend jupyverse --env environments/jupyverse/.venv            # jupyverse (see environments/)
 jupyter conformance ssd run --url http://localhost:8888                 # a server that is already running
 jupyter conformance ssd run --start "my-server --port {port}"           # your own command that starts one
 ```
