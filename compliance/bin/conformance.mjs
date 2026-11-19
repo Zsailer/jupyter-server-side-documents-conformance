@@ -55,6 +55,15 @@ function suiteDir() {
   return cache;
 }
 
+/** How many stories there are, for the welcome screen: read where the package keeps them, without setting anything up. */
+function storyCount() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(PACKAGE_ROOT, 'stories.json'), 'utf8')).length;
+  } catch {
+    return undefined;
+  }
+}
+
 function loadStories(suite) {
   return JSON.parse(fs.readFileSync(path.join(suite, 'stories.json'), 'utf8'));
 }
@@ -357,7 +366,7 @@ try {
 }
 const { command, stories, options, topic } = parsed;
 if (command === 'welcome') {
-  console.log(welcome({ version: VERSION, color }).join('\n'));
+  console.log(welcome({ version: VERSION, color, stories: storyCount() }).join('\n'));
 } else if (command === 'help') {
   console.log(`\n${helpFor(topic)}`);
 } else if (command === 'version') {
