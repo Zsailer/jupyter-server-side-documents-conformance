@@ -255,7 +255,9 @@ export class Tab {
       for (const widget of app.shell.widgets('main')) {
         const context = (widget as any).context;
         if (context?.path === p && context.model?.sharedModel) {
-          return context.model.sharedModel.toJSON().cells.map((c: any) => c.source);
+          // a model that has not got its content yet has no cells: the notebook is not open in this tab yet
+          const cells = context.model.sharedModel.toJSON()?.cells;
+          return Array.isArray(cells) ? cells.map((c: any) => c.source) : null;
         }
       }
       return null;

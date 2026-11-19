@@ -103,7 +103,9 @@ export class Story {
         return null;
       }
       const model = await res.json();
-      return model.content.cells.map((c: any) => (Array.isArray(c.source) ? c.source.join('') : c.source));
+      // Jupyter Server gives a notebook as an object; a backend that gives it as its JSON text holds the same file
+      const notebook = typeof model.content === 'string' ? JSON.parse(model.content) : model.content;
+      return notebook.cells.map((c: any) => (Array.isArray(c.source) ? c.source.join('') : c.source));
     }, this.path);
   }
 
