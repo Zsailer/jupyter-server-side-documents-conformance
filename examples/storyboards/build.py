@@ -214,9 +214,12 @@ def current_page(src: dict, order: list[str], all_stories: dict) -> str:
             status = status_of(src, sid)
             counts[status] += 1
             rows.append(
-                f'<li class="state-row" data-status="{status}"><a class="state-id" href="stories.html#{e(sid)}">{e(sid)}</a>'
-                f'<div class="state-main"><h3>{e(st["title"])}</h3><p>{e(st["result"])}</p></div>'
-                f'<span class="tag tag-{status}" title="{e(STATUS_HELP[status])}">{STATUS_TEXT[status]}</span></li>'
+                f'<li><details class="state-row" id="{e(sid)}" data-status="{status}"><summary>'
+                f'<span class="state-id">{e(sid)}</span>'
+                f'<span class="state-main"><b class="state-title">{e(st["title"])}</b><span class="state-result">{e(st["result"])}</span></span>'
+                f'<span class="tag tag-{status}" title="{e(STATUS_HELP[status])}">{STATUS_TEXT[status]}</span></summary>'
+                f'<div class="state-demo"><article class="story-card" data-story="{e(sid)}" data-nbs>{static_card(st)}</article>'
+                f'<p class="state-more"><a href="stories.html#{e(sid)}">Open it among all the stories</a></p></div></details></li>'
             )
         sections.append(
             f'<section class="state-group" id="g-{e(gid)}"><h2>{e(src["groups"][gid]["title"])}</h2><ul class="state-list">{"".join(rows)}</ul></section>'
@@ -228,8 +231,8 @@ def current_page(src: dict, order: list[str], all_stories: dict) -> str:
     )
     return (
         '<section class="hero"><h1>How it works today</h1>'
-        '<p class="lead">For each story, what happens now. Most are settled. The rest are an answer taken for now, '
-        'or a suggestion nobody has answered yet; <a href="discussion.html">they are open for discussion</a>.</p></section>'
+        '<p class="lead">For each story, what happens now. Click one to watch it play. Most are settled. The rest are an answer '
+        'taken for now, or a suggestion nobody has answered yet; <a href="discussion.html">they are open for discussion</a>.</p></section>'
         f'<div class="filters" id="filters">{chips}</div>{"".join(sections)}'
     )
 
@@ -243,35 +246,24 @@ def discussion_page(src: dict, order: list[str], all_stories: dict) -> str:
         talk = st.get("discussion")
         talk = talk if isinstance(talk, dict) else {}
         decision = st.get("decision")
-        if decision:
-            suggested = decision["answerLabel"] == SUGGESTED
-            options = "".join(
-                f'<div class="talk-option{" today" if o.get("proposed") else ""}">'
-                + (f'<span class="tag tag-{OPEN if suggested else PROVISIONAL}">{"Suggested" if suggested else "How it works today"}</span>' if o.get("proposed") else "")
-                + f'<h4>{e(o["label"])}</h4><p>{e(o["detail"])}</p></div>'
-                for o in decision["options"]
-            )
-            question = decision["question"]
-        else:
-            options = (
-                f'<div class="talk-option today"><span class="tag tag-new">Proposed case</span><h4>{e(st["title"])}</h4>'
-                f'<p>{e(st["result"])}</p></div>'
-            )
-            question = st["story"]
+        # the player shows the competing answers, with the ending of each; a proposed case has only its result
+        question = decision["question"] if decision else st["story"]
         links = ""
         if talk.get("link"):
             links += f'<a class="talk-join" href="{e(talk["link"])}" rel="noopener">Join the discussion</a>'
-        links += f'<a href="stories.html#{e(sid)}">Watch the story</a>'
+        links += f'<a href="stories.html#{e(sid)}">Open it among all the stories</a>'
         note = f'<p class="talk-note">{e(talk["note"])}</p>' if talk.get("note") else ""
         cards.append(
             f'<article class="talk" id="d-{e(sid)}"><header><span class="state-id">{e(sid)}</span><h3>{e(st["title"])}</h3></header>'
-            f'<p class="talk-question">{e(question)}</p><div class="talk-options">{options}</div>{note}<p class="talk-links">{links}</p></article>'
+            f'<p class="talk-question">{e(question)}</p>'
+            f'<div class="talk-demo"><article class="story-card" data-story="{e(sid)}" data-nbs>{static_card(st)}</article></div>'
+            f'{note}<p class="talk-links">{links}</p></article>'
         )
     body = "".join(cards) or '<p class="empty">Nothing is up for discussion right now.</p>'
     return (
         '<section class="hero"><h1>Up for discussion</h1>'
-        '<p class="lead">Questions the group has not settled. Each shows the answers people are weighing, with how it works today marked. '
-        'Read them, then add your view where the discussion is linked.</p>'
+        '<p class="lead">Questions the group has not settled. Each one plays, with the answers people are weighing below it and the one '
+        'taken for now marked. Watch it, then add your view where the discussion is linked.</p>'
         f'<p class="hero-links">To suggest a change or a new case, see <a href="{REPO}/blob/main/CONTRIBUTING.md">how to contribute</a>.</p></section>'
         f'{body}'
     )
@@ -392,6 +384,7 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         "{{PAGE_JS}}": (HERE / "page.js").read_text(),
         "{{ABOUT_JS}}": (HERE / "about.js").read_text(),
         "{{LIST_JS}}": (HERE / "list.js").read_text(),
+        "{{DEMO_JS}}": (HERE / "demo.js").read_text(),
         "{{CHANGES_JS}}": (HERE / "changes.js").read_text(),
     }
 
@@ -431,7 +424,10 @@ def build(data: Path, out_dir: Path, base_data: Path | None = None, pr: str | No
         ("current.html", "How it works today", current_page(src, order, all_stories)),
         ("discussion.html", "Up for discussion", discussion_page(src, order, all_stories)),
     ):
-        (out_dir / name).write_text(render("doc.template.html", {"{{TITLE}}": title, "{{TOPBAR}}": topbar(name, home, extra=extra), "{{CONTENT}}": content}))
+        (out_dir / name).write_text(render("doc.template.html", {
+            "{{TITLE}}": title, "{{TOPBAR}}": topbar(name, home, extra=extra), "{{CONTENT}}": content,
+            "{{PLAYER}}": '<script id="data" type="application/json">{{DATA}}</script><script>{{PLAYER_JS}}</script><script>{{DEMO_JS}}</script>',
+        }))
     (out_dir / home).write_text(welcome)
     if change:
         shown = {sid: all_stories[sid] for sid in change["new"] + list(change["changed"])}
