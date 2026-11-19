@@ -56,7 +56,8 @@ Which server
                        it can do)
 
 Speed
-  --workers <n>        run n stories at once (default 1). Each story opens
+  --workers <n>        run n stories at once (default 1), or max for as many
+                       as this machine has processors. Each story opens
                        several browsers, so start low: 3 or 4
 
 What you see
@@ -178,8 +179,8 @@ export function parse(argv) {
       positional.push(arg);
     }
   }
-  if (options.workers !== undefined && !/^[1-9][0-9]*$/.test(options.workers)) {
-    throw new Error('--workers needs a whole number of at least 1');
+  if (options.workers !== undefined && options.workers !== 'max' && !/^[1-9][0-9]*$/.test(options.workers)) {
+    throw new Error('--workers needs a whole number of at least 1, or max');
   }
   // `jupyter conformance ssd run`: the first word names the suite (the only one so far). `jupyter conformance run` is the same
   if (positional[0] === SUITE) {
@@ -215,6 +216,15 @@ export function grepFor(stories, group) {
     return undefined;
   }
   return tag ? tag + '.*' + ids : ids;
+}
+
+/**
+ * How many stories to run at once: the number given, or with `max` as many as the machine has processors.
+ * @param {string | undefined} value what `--workers` was given
+ * @param {number} processors how many the machine has
+ */
+export function workersFor(value, processors) {
+  return value === 'max' ? Math.max(1, processors) : Number(value ?? 1);
 }
 
 /**

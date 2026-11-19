@@ -85,6 +85,7 @@ jupyter conformance ssd run Z3 C2              # just these
 jupyter conformance ssd run 'AI*'              # a prefix
 jupyter conformance ssd run --group handshake  # one group of the page
 jupyter conformance ssd run --workers 4         # four stories at once: much faster, and heavier on the machine
+jupyter conformance ssd run --workers max       # as many as the machine has processors
 jupyter conformance ssd run --headed           # watch the browsers
 jupyter conformance ssd run --open             # open the side-by-side video of each failed story
 ```
