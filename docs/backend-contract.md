@@ -59,8 +59,12 @@ serve the three endpoints, and starts with `--start` or `--url`.
 
 ## Capabilities that need more than HTTP
 
-Some capabilities need to act on the process or on the wire, not on the server's API: `crashServer` (kill it without a
-save and start it again), `wireFaults` (lose or delay one message between a tab and the server), `agent` (an AI agent
+`crashServer` (kill the server without a save and start it again) needs nothing from the backend when `jupyter conformance ssd`
+started the server itself (`--backend` or `--start`): the command owns the process, so it kills it (SIGKILL) and starts the same
+command again on the same port and files when a story asks. With `--url` it cannot, and those stories are skipped. Those stories
+run on their own after the others when `--workers` is more than 1, since every other story would lose its server.
+
+Some capabilities need to act on the wire or on the backend's own work: `wireFaults` (lose or delay one message between a tab and the server), `agent` (an AI agent
 edits the notebook), `historyRecord`. These are not in the HTTP contract. A backend that wants those stories writes an
 adapter (`--adapter ./my-adapter.ts`, a module whose default export is a
 [`BackendAdapter`](../compliance/runtime/adapter.ts)), which can do anything it needs. Until then those stories are

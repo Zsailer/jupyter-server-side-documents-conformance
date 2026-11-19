@@ -216,3 +216,28 @@ export function grepFor(stories, group) {
   }
   return tag ? tag + '.*' + ids : ids;
 }
+
+/**
+ * What to run, in what order. A story that kills the server (it needs crashServer) cannot run beside others, so when
+ * stories run in parallel it gets a phase of its own, after the rest, with one worker. With one worker everything is a
+ * single run. `all` is the stories of the suite (stories.json), `stories` the ids or prefixes named, `group` a group.
+ * @returns {{project?: string, workers: number, last: boolean}[]}
+ */
+export function phasesFor(all, stories, group, workers) {
+  const single = [{ workers, last: true }];
+  if (workers <= 1) {
+    return single;
+  }
+  const named = stories.map(s => new RegExp(`^${s.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
+  const selected = all.filter(s => (!group || s.group === group) && (!named.length || named.some(re => re.test(s.id))));
+  const serial = selected.some(s => s.requires.includes('crashServer'));
+  // with nothing narrowed down, the suite's own tests of the adapters run too, and they are not stories
+  const parallel = selected.some(s => !s.requires.includes('crashServer')) || (!named.length && !group);
+  if (!serial || !parallel) {
+    return serial ? [{ project: 'serial', workers: 1, last: true }] : single;
+  }
+  return [
+    { project: 'stories', workers, last: false },
+    { project: 'serial', workers: 1, last: true }
+  ];
+}

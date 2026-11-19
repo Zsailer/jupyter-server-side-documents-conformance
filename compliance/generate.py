@@ -491,13 +491,15 @@ def generate(data: Path = DATA) -> dict:
     oracle = yaml.safe_load((HERE / "oracle.yaml").read_text()) or {}
     files: dict[str, str] = {}
     manifest = []
+    # Stories that kill the server go to serial.spec.ts: they run alone, after the others (playwright.config.ts)
+    parts: dict[str, list[str]] = {}
     for gid in storyboards.group_order(src):
-        parts = [HEADER]
         for sid in storyboards.stories_of(src, gid):
             st = src["stories"][sid]
             scn = (src["suite"].get("scenarios") or {}).get(sid) or {}
             c = compile_story(sid, st, list(scn.get("requires") or []), oracle)
-            parts.append(emit_story(sid, st, gid, scn, src["page"], c))
+            name = "serial.spec.ts" if "crashServer" in c.requires else f"{gid}.spec.ts"
+            parts.setdefault(name, [HEADER]).append(emit_story(sid, st, gid, scn, src["page"], c))
             manifest.append({
                 "id": sid,
                 "group": gid,
@@ -510,7 +512,7 @@ def generate(data: Path = DATA) -> dict:
                 "internal": c.internal,
                 "steps": len(st["steps"]),
             })
-        files[f"{gid}.spec.ts"] = "\n".join(parts)
+    files.update({name: "\n".join(texts) for name, texts in parts.items()})
     return {"files": files, "manifest": manifest, "groups": {g: src["groups"][g]["title"] for g in storyboards.group_order(src)}}
 
 

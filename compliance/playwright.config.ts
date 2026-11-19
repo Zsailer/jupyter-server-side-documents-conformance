@@ -28,6 +28,13 @@ export default defineConfig({
   fullyParallel: true,
   // a click that cannot be made (something is in the way) fails with a message and a picture, not after the whole story's time
   use: { ...baseConfig.use, baseURL, actionTimeout: Number(process.env.COMPLIANCE_ACTION_TIMEOUT_MS ?? 30000) },
+  // A story that kills the server cannot run beside the others: every other story would lose its server. generate.py puts
+  // those stories in serial.spec.ts, and `jupyter conformance ssd run --workers n` runs the two projects one after the other
+  // (`--project stories`, then `--project serial`). Run by hand with several workers, run them one at a time the same way.
+  projects: [
+    { name: 'stories', testIgnore: /serial\.spec\.ts/ },
+    { name: 'serial', testMatch: /serial\.spec\.ts/, workers: 1, fullyParallel: false }
+  ],
   webServer: process.env.COMPLIANCE_SERVER_CMD
     ? { command: process.env.COMPLIANCE_SERVER_CMD, url: `${baseURL}/lab`, timeout: 120000, reuseExistingServer: true }
     : undefined
