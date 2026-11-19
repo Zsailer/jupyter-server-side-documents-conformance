@@ -22,11 +22,18 @@ jobs:
         if: github.event.action != 'closed'
         with:
           python-version: "3.12"
+      # the stories of the branch the pull request goes into, to see what the pull request changes
+      - name: Fetch the base stories
+        if: github.event.action != 'closed'
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.event.pull_request.base.sha }}"
+          git worktree add ../base "${{ github.event.pull_request.base.sha }}"
+      # the preview opens on the new and changed stories; with none changed it is the ordinary site
       - name: Build the page
         if: github.event.action != 'closed'
         run: |
           pip install pyyaml
-          npm run build
+          python3 -I examples/storyboards/build.py --base-data ../base/stories --pr "${{ github.event.pull_request.number }}"
       # deploys examples/storyboards/site to gh-pages/pr-preview/pr-<number>/ and comments the link;
       # on `closed` it removes the folder and updates the comment
       - uses: rossjrw/pr-preview-action@v1

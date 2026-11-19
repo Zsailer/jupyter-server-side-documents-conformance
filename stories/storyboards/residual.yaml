@@ -23,6 +23,7 @@ scenarios:
     result: "The move and the typing both survive: c1 is at the end, with the typing in it, in every copy."
     ends: {all: [c0, c2, "^c1=+B-TYPED"]}
     risk: "Typing that vanishes because somebody else moved the cell is a loss that nobody sees."
+    discussion: true
     decision:
       question: >-
         One person moves a cell while another types into it. Should both survive, or is the plain outcome of the merge the rule?
@@ -57,6 +58,7 @@ scenarios:
     result: "The cell exists once, in the notebook and in the file, at one of the two places it was moved to."
     ends: {all: [c1, "^c0=once", c2, "*c0 stands at one of the two places"]}
     risk: "A cell that is on the screen twice and in the file once is a surprise waiting to be saved."
+    discussion: true
     decision:
       question: >-
         Two people move the same cell at the same time. Should the notebook end with the cell once, or is the plain outcome of the merge
@@ -90,6 +92,7 @@ scenarios:
     result: "The deletion wins, as it does between two people who are online: the cell stays deleted and the typing goes with it."
     ends: {all: [c0, c2]}
     risk: "Either the person who typed or the person who deleted is surprised. The whole question is which."
+    discussion: true
     decision:
       question: >-
         A deletion wins over typing made in the same cell at the same moment. Who is to be protected: the person who typed, or the person
@@ -126,6 +129,7 @@ scenarios:
     result: "The merge decides, as it does online: c0 holds both rewrites, one after the other, and nothing either person typed is lost."
     ends: {all: ["c0=both rewrites, one after the other", c1, c2]}
     risk: "A cell that holds two rewrites, one after the other, may no longer make sense."
+    discussion: true
     decision:
       question: >-
         Both rewrites are kept by the merge, one after the other, which can read as nonsense. Should one rewrite win whole, or should the
@@ -162,6 +166,7 @@ scenarios:
     result: "The outside change is applied and the typing survives: both are in every copy."
     ends: {all: ["c0=+TYPED", c1, "c2=EXTERNAL EDIT"]}
     risk: "Typing in a cell that the outside change did not even touch must not be reverted."
+    discussion: true
     decision:
       question: >-
         The server loads a changed file as a whole, so unsaved typing is reverted in every cell. Should it merge the change with the
@@ -193,6 +198,7 @@ scenarios:
     result: "The notebook is the last saved state, whole: three cells, without the typing that was never saved."
     ends: {tab2: *three, server: *three, file: *three}
     risk: "The loss is bounded: at most an autosave interval of typing, and nothing else."
+    discussion: true
     decision:
       question: >-
         An edit the server acknowledged is not yet an edit it saved. Is that acceptable, or should every update be written to disk before
@@ -227,6 +233,7 @@ scenarios:
     result: "The typing is kept: merged into its cell when it can be matched, as a cell marked “recovered” when it cannot."
     ends: {all: [c0, c1, c2, "?c1 +OFFLINE=recovered"]}
     risk: "Typing must not vanish just because the notebook is in an older format."
+    discussion: true
     decision:
       question: >-
         Without cell ids the typing cannot be matched to its cell. Is a separate cell marked “recovered” enough, or must the typing be

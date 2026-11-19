@@ -65,3 +65,9 @@ asserts the second one for this snapshot.
 | `cells.yaml` | What cell names stand for. |
 | `data/` | The snapshot above. |
 | `site/` | The built page (ignored by version control). |
+
+## The Jupyter mark
+
+`jupyter-logo.svg` is the Jupyter logo as shipped in JupyterLab (`@jupyterlab/ui-components`, BSD-3-Clause). It is drawn at the
+top of every page. Jupyter is a trademark of its project; this page describes behavior of Jupyter software and does not speak
+for the project.
