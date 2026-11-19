@@ -5,7 +5,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { grepFor, helpFor, parse } from './args.mjs';
+import { grepFor, helpFor, parse, phasesFor } from './args.mjs';
+import { watchControl } from './control.mjs';
 import { pick } from './picker.mjs';
 import { welcome } from './welcome.mjs';
 
