@@ -879,7 +879,7 @@ scenarios:
 
   agent/deletes-cell-person-edited:
     group: agent
-    says: "The agent deletes a cell that a person edited while offline: the deletion wins, as it does between two people (Z3), and the typing goes with the cell."
+    says: "The agent deletes a cell that a person edited while offline: the deletion wins, as it does between two people (conflict/delete-while-typing), and the typing goes with the cell."
     floor:
       - same: [tab_cells, server_cells, disk_cells]
       - at_least: {server_cells: 2}
@@ -888,7 +888,7 @@ scenarios:
     policy:
       status: pending
       question: >-
-        A deletion wins over typing made in the same cell at the same moment (Z3). Does the answer change when the one who
+        A deletion wins over typing made in the same cell at the same moment (conflict/delete-while-typing). Does the answer change when the one who
         deleted the cell is an agent and not a person?
       today: The deletion wins and the typing is lost, as between two people.
 
@@ -903,7 +903,7 @@ scenarios:
     policy:
       status: pending
       question: >-
-        An edit that a person types is not saved before it is relayed (Z6). Should an edit made by an agent be saved before the
+        An edit that a person types is not saved before it is relayed (crash/dies-before-save-no-tab-left). Should an edit made by an agent be saved before the
         agent is told that it worked?
       today: The edit is in memory until the next autosave and is lost with the server.
 
@@ -945,5 +945,5 @@ scenarios:
       lineage: floor
       lineage+healing: floor
     why: >-
-      The room loads a changed file wholesale into the live document (as in Z5), so the typing it held and had not saved is
+      The room loads a changed file wholesale into the live document (as in files/changed-outside-while-typing), so the typing it held and had not saved is
       reverted; the tab that typed it has left, so nothing can bring it back.

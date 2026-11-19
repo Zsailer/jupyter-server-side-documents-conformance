@@ -459,6 +459,13 @@ export function story(
       } catch {
         /* the summary will not know which adapter ran */
       }
+      try {
+        // Playwright shortens a long title in the name of the folder, so the folder says which story it is for
+        fs.mkdirSync(testInfo.outputDir, { recursive: true });
+        fs.writeFileSync(nodePath.join(testInfo.outputDir, 'story.txt'), meta.id);
+      } catch {
+        /* the summary falls back on the name of the folder */
+      }
       const ctx: AdapterContext = { admin: page, baseURL: baseURL! };
       const env: TabEnv = {
         browser,

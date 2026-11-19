@@ -82,9 +82,9 @@ function list(suite, options) {
   const q = options.filter?.toLowerCase();
   const stories = all
     .filter(s => !options.group || s.group === options.group)
-    .filter(s => !q || [s.id, s.title, s.group, ...s.requires].join(' ').toLowerCase().includes(q));
+    .filter(s => !q || [s.id, ...(s.aliases ?? []), s.title, s.group, ...s.requires].join(' ').toLowerCase().includes(q));
   if (!stories.length) {
-    fail(`No story matches "${options.filter}"`, 'Try a word from a title, an id, or a need such as releaseRoom.');
+    fail(`No story matches "${options.filter}"`, 'Try a word from a title, a name (or one a story had before), or a need such as releaseRoom.');
   }
   console.log('');
   let group;
@@ -96,7 +96,7 @@ function list(suite, options) {
       group = s.group;
       console.log(`  ${bold((s.groupTitle ?? group).toUpperCase())}  ${dim(`${stories.filter(x => x.group === group).length} · ${group}`)}`);
     }
-    const tags = [s.proposed ? 'proposed' : '', s.needsAlignment ? 'open question' : ''].filter(Boolean);
+    const tags = [s.proposed ? 'proposed' : '', s.needsAlignment ? 'open question' : '', s.aliases?.length ? `was ${s.aliases.join(', ')}` : ''].filter(Boolean);
     console.log(`    ${bold(s.id)}  ${dim([needsOf(s), ...tags].join(' · '))}`);
     console.log(`      ${s.title}`);
   }

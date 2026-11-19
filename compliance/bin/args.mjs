@@ -119,7 +119,7 @@ Usage
 
   --group <name>    only the stories of one group
   --filter <text>   only the stories whose name, title or needs hold the text
-                    (for example: releaseRoom, offline, agent)
+                    (for example: releaseRoom, offline, agent, S2)
 
 A story that "needs releaseRoom" is skipped on a backend that cannot make the
 server let go of a notebook.

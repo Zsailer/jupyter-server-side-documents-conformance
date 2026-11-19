@@ -36,9 +36,12 @@ def main() -> None:
     stories = json.loads((COMPLIANCE / "stories.json").read_text())
     folders = {}
     for d in RESULTS.glob("*"):
-        m = re.match(r"generated-[a-z]+-([A-Z]+[0-9]*)-", d.name)
-        if d.is_dir() and m:
-            folders[m.group(1)] = d
+        # a story writes its name in its folder (Playwright shortens a long title in the name of the folder)
+        marker = d / "story.txt"
+        if d.is_dir() and marker.is_file():
+            folders[marker.read_text(encoding="utf-8").strip()] = d
+        elif d.is_dir() and (m := re.match(r"generated-[a-z]+-([A-Z]+[0-9]*)-", d.name)):
+            folders[m.group(1)] = d  # a run from before stories had names
     adapter_file = RESULTS / "adapter.json"
     has = set(json.loads(adapter_file.read_text())["capabilities"]) if adapter_file.exists() else None
     passed = failed = missed = 0
@@ -68,7 +71,7 @@ def main() -> None:
             rows.append((s["id"], "ok", "", s["needsAlignment"]))
     print(f"\n{len(stories)} stories: {passed} passed, {failed} failed, {missed} proposed cases not met, {sum(len(v) for v in skipped.values())} skipped\n")
     for sid, status, why, open_ in rows:
-        print(f"  {sid:<4} {status:<4} {'?' if open_ else ' '} {why}")
+        print(f"  {sid:<42} {status:<4} {'?' if open_ else ' '} {why}")
     print("\n  ? = the storyboard still asks a question about this one")
     if missed:
         print("  miss = a proposed case this backend does not meet yet (reported, not failed)")
@@ -85,7 +88,7 @@ def main() -> None:
         print("\nWhat a person would have noticed:")
         for line in notes.read_text().splitlines():
             r = json.loads(line)
-            print(f"  {r['id']:<4} {r['note']}")
+            print(f"  {r['id']:<42} {r['note']}")
     verdicts = RESULTS / "implements.jsonl"
     if verdicts.exists():
         print("\nOpen questions in the storyboards, and what this backend does:")

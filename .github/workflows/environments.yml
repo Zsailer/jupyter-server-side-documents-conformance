@@ -18,7 +18,7 @@ on:
   workflow_dispatch:
     inputs:
       stories:
-        description: Stories to run (ids or prefixes, space separated). Empty runs every story.
+        description: Stories to run (names such as crash/dies-before-save, groups, or patterns such as agent/*, space separated). Empty runs every story.
         type: string
         default: ""
       workers:

@@ -1,5 +1,5 @@
 # AI agents (such as Claude Code) edit the notebook. Played by the scenarios agent/* of suite.yaml. The three that raise a question
-# (AI5, AI6, AI7) have a pending policy there, so the answer marked `proposed` is shown as "Suggested": nobody has discussed it.
+# (agent/rewrites-cell-person-typing, agent/deletes-cell-person-edited, agent/crash-before-autosave) have a pending policy there, so the answer marked `proposed` is shown as "Suggested": nobody has discussed it.
 #
 # The two paths of an agent, as the product defines them: while the server holds the notebook (from the first tab until a few minutes after
 # the last one has left) the agent edits the server's live copy; while it does not, the agent edits the file directly.
@@ -112,7 +112,7 @@ scenarios:
         - label: "Both are kept"
           proposed: true
           detail: >-
-            As between two people who are online (see Z4): the merge keeps both, one after the other, and the cell may need a human look.
+            As between two people who are online (see conflict/rewrite-same-cell): the merge keeps both, one after the other, and the cell may need a human look.
             Nothing is lost and nobody is blocked.
           ends: [c0, "c1=fixed + # check", c2]
         - label: "The agent waits"
@@ -131,7 +131,7 @@ scenarios:
     title: "The agent deletes a cell that a person edited while offline"
     story: >-
       A person's tab loses its connection and they type into c1. Meanwhile the agent, through the server, deletes c1. Then the tab
-      reconnects. This is the story Z3 with an agent as the one who deletes.
+      reconnects. This is the story conflict/delete-while-typing with an agent as the one who deletes.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}
       - {at: tab, kind: offline, text: "loses its connection"}
@@ -146,7 +146,7 @@ scenarios:
     discussion: true
     decision:
       question: >-
-        A deletion wins over typing made in the same cell at the same moment (see Z3). Does the answer change when the one who deleted the
+        A deletion wins over typing made in the same cell at the same moment (see conflict/delete-while-typing). Does the answer change when the one who deleted the
         cell is an AI agent and not a person?
       options:
         - label: "The deletion wins, as for a person"
@@ -182,7 +182,7 @@ scenarios:
     discussion: true
     decision:
       question: >-
-        An edit that a person types is not saved before it is relayed (see Z6). Should an edit made by an AI agent be saved before the agent
+        An edit that a person types is not saved before it is relayed (see crash/dies-before-save-no-tab-left). Should an edit made by an AI agent be saved before the agent
         is told that it worked?
       options:
         - label: "The agent is told after the edit is saved"
@@ -221,7 +221,7 @@ scenarios:
     title: "The agent writes the file although the server still holds the notebook"
     story: >-
       A person types and closes the tab a moment later. The server still holds the notebook, with typing it has not saved yet. The agent
-      takes the notebook for closed and edits the file directly. This depends on the answer to Z5, the same question while the tab is still open.
+      takes the notebook for closed and edits the file directly. This depends on the answer to files/changed-outside-while-typing, the same question while the tab is still open.
     steps:
       - {at: tab, kind: open, text: "opens the notebook", cells: *three}
       - {at: tab, kind: type, text: "types “+TYPED” at the end of c0; the server has not saved it yet", cells: ["c0=+TYPED", c1, c2]}
