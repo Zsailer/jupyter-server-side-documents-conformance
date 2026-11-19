@@ -1,0 +1,13 @@
+[project]
+name = "conformance-env-jupyter-collaboration"
+version = "0"
+description = "The environment the conformance suite runs jupyter-collaboration in (with jupyter-server-nbmodel)"
+requires-python = ">=3.10"
+dependencies = [
+    "jupyterlab>=4.5",
+    "jupyter-collaboration>=5",
+    "jupyter-server-nbmodel",
+]
+
+[tool.uv]
+package = false

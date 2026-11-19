@@ -31,7 +31,7 @@ const RUN = `jupyter conformance ssd run: run the stories against a backend
 Usage
   jupyter conformance ssd run [story ...] [options]
 
-Which stories
+Which stories (each needs a server too: see below)
   jupyter conformance ssd run                every story
   jupyter conformance ssd run Z3 C2          these two
   jupyter conformance ssd run 'AI*'          every story whose id starts AI
@@ -39,10 +39,12 @@ Which stories
   jupyter conformance ssd run -i             pick them from a list first
 
 Which server
-  --backend <name>     how to start the server: jsd (default), the built-in
-                       way to start jupyter-server-documents
-  --env <dir>          the Python environment with jupyter_server_documents
-                       (default: the one on your PATH)
+  --backend <name>     how to start the server, so no backend is assumed:
+                       jsd (jupyter-server-documents) or jcollab
+                       (jupyter-collaboration and nbmodel). Or use --start
+                       or --url
+  --env <dir>          the Python environment with the backend installed
+                       (default: the one on your PATH that has it)
   --start <command>    your own command that starts a JupyterLab on {port}.
                        The backend must implement the control contract
                        (docs/backend-contract.md) for the stories that need
@@ -53,6 +55,10 @@ Which server
   --adapter <path>     your own adapter module (default: ask the server what
                        it can do)
 
+Speed
+  --workers <n>        run n stories at once (default 1). Each story opens
+                       several browsers, so start low: 3 or 4
+
 What you see
   --headed             show the browsers
   --open               open the side-by-side video page of each failed story
@@ -62,7 +68,8 @@ What you see
                        (default ./conformance-known-gaps.json)
 
 Examples
-  jupyter conformance ssd run Z3 --env ~/envs/jsd
+  jupyter conformance ssd run Z3 --backend jsd --env ~/envs/jsd
+  jupyter conformance ssd run --backend jcollab --workers 4
   jupyter conformance ssd run --group handshake --headed
   jupyter conformance ssd run --url http://localhost:8888
   jupyter conformance ssd run --start "my-server --port {port}"
@@ -121,7 +128,7 @@ export function helpFor(topic = 'main') {
   return TOPICS[topic] ?? MAIN;
 }
 
-const VALUE = new Set(['backend', 'url', 'start', 'adapter', 'root-dir', 'group', 'known-gaps', 'env', 'out', 'filter']);
+const VALUE = new Set(['backend', 'url', 'start', 'adapter', 'root-dir', 'group', 'known-gaps', 'env', 'out', 'filter', 'workers']);
 const SWITCH = new Set(['headed', 'open', 'help', 'version', 'interactive']);
 const SHORT = { h: 'help', v: 'version', i: 'interactive' };
 
@@ -171,6 +178,9 @@ export function parse(argv) {
       positional.push(arg);
     }
   }
+  if (options.workers !== undefined && !/^[1-9][0-9]*$/.test(options.workers)) {
+    throw new Error('--workers needs a whole number of at least 1');
+  }
   // `jupyter conformance ssd run`: the first word names the suite (the only one so far). `jupyter conformance run` is the same
   if (positional[0] === SUITE) {
     positional.shift();
@@ -205,4 +215,29 @@ export function grepFor(stories, group) {
     return undefined;
   }
   return tag ? tag + '.*' + ids : ids;
+}
+
+/**
+ * What to run, in what order. A story that kills the server (it needs crashServer) cannot run beside others, so when
+ * stories run in parallel it gets a phase of its own, after the rest, with one worker. With one worker everything is a
+ * single run. `all` is the stories of the suite (stories.json), `stories` the ids or prefixes named, `group` a group.
+ * @returns {{project?: string, workers: number, last: boolean}[]}
+ */
+export function phasesFor(all, stories, group, workers) {
+  const single = [{ workers, last: true }];
+  if (workers <= 1) {
+    return single;
+  }
+  const named = stories.map(s => new RegExp(`^${s.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`));
+  const selected = all.filter(s => (!group || s.group === group) && (!named.length || named.some(re => re.test(s.id))));
+  const serial = selected.some(s => s.requires.includes('crashServer'));
+  // with nothing narrowed down, the suite's own tests of the adapters run too, and they are not stories
+  const parallel = selected.some(s => !s.requires.includes('crashServer')) || (!named.length && !group);
+  if (!serial || !parallel) {
+    return serial ? [{ project: 'serial', workers: 1, last: true }] : single;
+  }
+  return [
+    { project: 'stories', workers, last: false },
+    { project: 'serial', workers: 1, last: true }
+  ];
 }

@@ -25,7 +25,7 @@ jobs:
       - name: Run the conformance tests
         env:
           VERSION: 0.0.5   # the version of the conformance tests this tree is held to
-        run: npx --yes "@zsailer/jupyter-server-side-documents-conformance@$VERSION" ssd run
+        run: npx --yes "@zsailer/jupyter-server-side-documents-conformance@$VERSION" ssd run --backend jsd
       - uses: actions/upload-artifact@v4
         if: always()
         with:

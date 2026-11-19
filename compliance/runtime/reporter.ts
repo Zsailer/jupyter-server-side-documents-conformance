@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import type { FullResult, Reporter, TestCase, TestResult } from '@playwright/test/reporter';
 import { rowLines, rowOf, Row, Style, summaryLines } from './report';
 
@@ -55,6 +56,24 @@ export default class ConformanceReporter implements Reporter {
 
   onEnd(_result: FullResult): void {
     this.clear();
-    process.stdout.write(summaryLines(this.rows, Date.now() - this.started, this.style).join('\n') + '\n');
+    let rows = this.rows;
+    let started = this.started;
+    // a run in phases (stories in parallel, then those that kill the server): the rows of the phases before are in a file,
+    // and only the last phase writes the summary, of all of them
+    const file = process.env.COMPLIANCE_ROWS_FILE;
+    if (file) {
+      try {
+        const before = JSON.parse(fs.readFileSync(file, 'utf-8'));
+        rows = [...before.rows, ...rows];
+        started = before.started;
+      } catch {
+        /* the first phase */
+      }
+      if (!process.env.COMPLIANCE_LAST_PHASE) {
+        fs.writeFileSync(file, JSON.stringify({ rows, started }));
+        return;
+      }
+    }
+    process.stdout.write(summaryLines(rows, Date.now() - started, this.style).join('\n') + '\n');
   }
 }

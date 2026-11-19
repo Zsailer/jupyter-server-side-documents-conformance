@@ -1,4 +1,5 @@
 import type { AdapterContext, BackendAdapter } from '../runtime/adapter';
+import { ask, supervised } from '../runtime/supervisor';
 import type { Capability } from '../runtime/types';
 
 /**
@@ -16,6 +17,10 @@ const KNOWN: ReadonlySet<string> = new Set(['serverState', 'releaseRoom']);
 const capabilities = new Set<Capability>(['contents']);
 if (process.env.COMPLIANCE_ROOT_DIR) {
   capabilities.add('fileSystem');
+}
+// the command that runs the tests started the server, so it can kill it and start it again (runtime/supervisor.ts)
+if (supervised()) {
+  capabilities.add('crashServer');
 }
 
 /** Ask the server what it offers. A server that does not answer offers nothing. */
@@ -78,6 +83,14 @@ const adapter: BackendAdapter = {
     if (status !== 200 && status !== 404) {
       throw new Error(`conformance/release-room -> HTTP ${status}`);
     }
+  },
+
+  async crashServer() {
+    await ask('crash', 'crashed', 30_000);
+  },
+
+  async restartServer() {
+    await ask('restart', 'restarted', 200_000);
   }
 };
 
