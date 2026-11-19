@@ -133,7 +133,9 @@ async function serving(url) {
  */
 const BACKENDS = {
   jsd: { label: 'jupyter-server-documents', module: 'jupyter_server_documents', envVar: 'JSD_ENV', control: 'jsd_control' },
-  jcollab: { label: 'jupyter-collaboration', module: 'jupyter_server_ydoc', envVar: 'JCOLLAB_ENV', control: 'jcollab_control' }
+  jcollab: { label: 'jupyter-collaboration', module: 'jupyter_server_ydoc', envVar: 'JCOLLAB_ENV', control: 'jcollab_control' },
+  // not a Jupyter Server: its own launcher (server/jupyverse_control.py) starts it in the folder it serves, with the control contract
+  jupyverse: { label: 'jupyverse', module: 'jupyverse_api', envVar: 'JUPYVERSE_ENV', launcher: 'jupyverse_control.py' }
 };
 
 function findPythonEnv(backend) {
@@ -154,6 +156,7 @@ async function startServer(suite, options, port, out) {
   let rootDir = options['root-dir'];
   let command;
   let args;
+  let serveFrom;
   if (options.start) {
     command = 'sh';
     args = ['-c', options.start.replaceAll('{port}', String(port))];
@@ -168,11 +171,17 @@ async function startServer(suite, options, port, out) {
     rootDir ??= path.join(os.tmpdir(), 'conformance-root');
     fs.rmSync(rootDir, { recursive: true, force: true });
     fs.mkdirSync(rootDir, { recursive: true });
-    env.CONFORMANCE_CONTROL = backend.control;
-    command = path.join(pythonEnv, 'bin', 'jupyter');
-    args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
+    if (backend.launcher) {
+      command = path.join(pythonEnv, 'bin', 'python');
+      args = [path.join(suite, 'server', backend.launcher), `--port=${port}`];
+      serveFrom = rootDir; // it serves the folder it starts in
+    } else {
+      env.CONFORMANCE_CONTROL = backend.control;
+      command = path.join(pythonEnv, 'bin', 'jupyter');
+      args = ['lab', '--config', path.join(suite, 'server', 'conformance_config.py'), `--port=${port}`, '--no-browser', `--ServerApp.root_dir=${rootDir}`];
+    }
   }
-  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-'));
+  const cwd = serveFrom ?? fs.mkdtempSync(path.join(os.tmpdir(), 'conformance-server-'));
   // one process at a time; `server.pid` is the current one, so everything that stops the server stops the right one
   let current;
   let exited = false;
