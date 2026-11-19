@@ -71,8 +71,8 @@ def topbar(active: str, home: str = "index.html", side_toggle: bool = False, ext
     links = "".join(f'<a href="{href}"{current if href == active else ""}>{label}</a>' for href, label in pages)
     return (
         f'<header class="topbar">{toggle}'
-        f'<a class="brand" href="{home}" aria-label="Notebook stories, home">{LOGO}'
-        '<span class="brand-name">Jupyter</span><span class="brand-sep">/</span><span class="brand-page">Notebook stories</span></a>'
+        f'<a class="brand" href="{home}" aria-label="Server Side Document Conformance Storybook, home">{LOGO}'
+        '<span class="brand-name">Jupyter</span><span class="brand-sep">/</span><span class="brand-page">Server Side Document Conformance Storybook</span></a>'
         f'<nav class="topnav" aria-label="Pages">{links}</nav>{THEME_CONTROL}</header>'
     )
 

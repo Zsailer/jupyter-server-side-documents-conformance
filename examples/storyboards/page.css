@@ -211,3 +211,13 @@ html[data-theme='dark'] .tag-open, html[data-theme='dark'] .tag-new { color: #fb
 .change-diff > div { padding: 10px 14px; border: 1px solid var(--nbs-border); border-radius: 10px; background: var(--nbs-bg); }
 .change-diff b { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--nbs-fg3); }
 .change-diff p { margin: 4px 0 0; }
+
+/* ---- the long title of the bar stays on one line: it gives way first (cut short, then left out), then the links scroll ---- */
+.brand { min-width: 0; flex: 0 100 auto; white-space: nowrap; }
+.brand-name, .brand-sep { flex: none; }
+.brand-page { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.topnav { flex: 0 1 auto; min-width: 0; margin-left: auto; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+.topnav::-webkit-scrollbar { display: none; }
+.theme { flex: none; }
+@media (max-width: 1180px) { .topnav a { padding: 5px 7px; } }
+@media (max-width: 1060px) { .brand-sep, .brand-page { display: none; } .brand { flex: none; } }
