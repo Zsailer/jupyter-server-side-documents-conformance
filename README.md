@@ -51,7 +51,7 @@ Not sure where to start? Pick stories from a list, or run just one:
 
 ```sh
 jupyter conformance ssd pick --backend jsd       # choose stories from a list, then run them
-jupyter conformance ssd run Z3 --backend jsd     # run one story
+jupyter conformance ssd run crash/dies-before-save --backend jsd   # run one story
 jupyter conformance ssd list                     # see every story, and what each needs from a backend
 ```
 

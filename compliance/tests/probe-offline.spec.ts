@@ -1,4 +1,4 @@
-// Why was the second browser of W1 so slow to load? W1 opens it while the first browser is offline and just after the
+// Why was the second browser of rebuild/two-people-one-cell so slow to load? That story opens it while the first browser is offline and just after the
 // server let go of the notebook. This measures the first part alone: how long a browser takes to start JupyterLab, with
 // the first browser online, and with it offline. It runs only on purpose:
 //   COMPLIANCE_PROBE=1 npx playwright test tests/probe-offline.spec.ts     (against a running server)

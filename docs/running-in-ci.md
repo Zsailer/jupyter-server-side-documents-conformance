@@ -50,7 +50,7 @@ config and its side of the control contract come with the tests.
 `conformance-known-gaps.json` in the checkout (or `--known-gaps <file>`) is a JSON file in the backend's own repo:
 
 ```json
-{ "C2": "an offline add is lost when the server rebuilds the notebook (#102)" }
+{ "offline/second-tab-adds-cell": "an offline add is lost when the server rebuilds the notebook (#102)" }
 ```
 
 A listed story still runs and is expected to fail. The day it passes, the job fails and asks for the entry to be removed.

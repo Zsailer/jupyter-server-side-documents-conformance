@@ -18,18 +18,23 @@ That starts a JupyterLab with your tree, runs every story in real browsers, stop
   conformance v0.1.0
   jsd
 
-  ✓ A     Control: a tab reconnects to a notebook the server rebuilt  18s
-  ✗ C2    A second tab adds a cell while offline  31s
-          step 4. Second tab adds a cell “typed while offline” — tab: 3 cells, expected 4
-  ◐ H4    Two out-of-date tabs, the old session forgotten  24s
-          known gap: typing is lost across a rebuild (#102)
-  ◇ FLOW1 A tab loses its connection a moment after typing  12s
-          proposed, not met: tab: cell 0 reads "c0", expected "c0 +TYPED"
+  ✓ handshake/reconnect-after-rebuild-control  18s
+  ✗ offline/second-tab-adds-cell               31s
+    A second tab adds a cell while offline
+    step 4. Second tab adds a cell “typed while offline” — tab: 3 cells, expected 4
+  ◐ offline/stale-tabs-one-typed-forgotten     24s
+    Two out-of-date tabs, the old session forgotten, one of them typed offline
+    known gap: typing is lost across a rebuild (#102)
+  ◇ offline/loses-connection-after-typing      12s
+    A tab loses its connection a moment after typing
+    proposed, not met: tab: cell 0 reads "c0", expected "c0 +TYPED"
 
   14 passed  ·  1 failed  ·  1 known gap  ·  1 proposed, not met  ·  52 skipped   7m 40s
 
   Skipped
-   41  adapter "jsd" cannot: releaseRoom  (S1, S4, S5, …)
+   41  adapter "jsd" cannot: releaseRoom
+        rebuild/online-then-offline-edits, files/edited-outside-while-offline,
+        rebuild/session-forgotten-typed-offline, …
 ```
 
 The first run unpacks the tests into `~/.cache` and installs their dependencies, which takes a few minutes. After that it
@@ -51,10 +56,12 @@ a backend, and runs the ones you choose:
   ↑↓ move · space select · a all shown · g whole group · / filter · enter run · q quit
   filter offline  (escape clears it)
 
-  RECONNECTING  ·  3
- ❯ ◉ C3    A second tab types into a cell while offline
-   ◉ C2    A second tab adds a cell while offline
-   ○ C1    Control: the first tab adds a cell while offline
+  EDITING WHILE OFFLINE  ·  3
+ ❯ ◉ offline/second-tab-types
+   ◉ offline/second-tab-adds-cell
+   ○ offline/first-tab-adds-cell-control
+
+  A second tab types into a cell while offline
 
   2 selected   ↓ 17 below
 ```
@@ -81,8 +88,9 @@ jupyter conformance ssd list                   # every story, grouped, and what 
 jupyter conformance ssd list --filter offline  # only the stories about offline
 jupyter conformance ssd pick                   # choose stories from a list
 jupyter conformance ssd run --backend jsd       # every story (every example below also needs --backend, --start or --url)
-jupyter conformance ssd run Z3 C2              # just these
-jupyter conformance ssd run 'AI*'              # a prefix
+jupyter conformance ssd run crash/dies-before-save files/edit-keeps-mtime   # just these
+jupyter conformance ssd run 'agent/*'          # a pattern (so does: run agent)
+jupyter conformance ssd run S2                 # a name a story had before still works
 jupyter conformance ssd run --group handshake  # one group of the page
 jupyter conformance ssd run --workers 4         # four stories at once: much faster, and heavier on the machine
 jupyter conformance ssd run --workers max       # as many as the machine has processors
@@ -123,7 +131,7 @@ The exit code is 0 when no story failed, so it works as a CI step.
 A backend that does not yet meet an accepted story lists it in a JSON file in its own repo, with the reason:
 
 ```json
-{ "C2": "an offline add is lost when the server rebuilds the notebook (#102)" }
+{ "offline/second-tab-adds-cell": "an offline add is lost when the server rebuilds the notebook (#102)" }
 ```
 
 Save it as `conformance-known-gaps.json` in the directory you run from, or point at it with `--known-gaps`. A listed story

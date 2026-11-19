@@ -11,7 +11,8 @@ link at the bottom.
 To draft a new case, ask your agent: this repo has a skill, `write-a-case`, that drafts the story, checks it and
 previews it. To do it by hand:
 
-1. Add your story to the closest group file in `stories/storyboards/`, with `status: proposed`. The grammar is in
+1. Add your story to the closest group file in `stories/storyboards/`, with `status: proposed`, and name it
+   `group/what-happens` (`conflict/delete-while-typing`: the group, then what happens, in a few words). The grammar is in
    [`docs/02-spec-reference.md`](docs/02-spec-reference.md); how to design a good one is in
    [`docs/03-designing-a-good-scenario.md`](docs/03-designing-a-good-scenario.md).
 2. `npm run check` validates it and runs the tests of the tooling.

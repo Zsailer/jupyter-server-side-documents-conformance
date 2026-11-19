@@ -170,7 +170,7 @@ test('every window of a story gets the height of the tallest, so nothing grows o
   const ctrl = win.NbScenario.mount(el, st, { autoplay: false });
   ctrl.measure();
   const h = parseInt(el.querySelector('.nbs-board').style.getPropertyValue('--nbs-h'), 10);
-  // the most any frame of Z3 holds in a window is four cells (two tabs typing and deleting, plus the recovered copy of an option)
+  // the most any frame of conflict/delete-while-typing holds in a window is four cells (two tabs typing and deleting, plus the recovered copy of an option)
   assert.ok(h >= 60 + 40 * 3, 'tall enough for the fullest window, got ' + h);
   assert.ok(h <= 560);
 });

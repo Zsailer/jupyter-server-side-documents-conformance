@@ -14,8 +14,10 @@ story. Do not hand-write tests, and do not edit anything under `compliance/tests
 1. **Ask for the one question the case answers**, in the author's words, if they have not given it. A case answers one
    question ("what happens to what I typed offline if the server rebuilds the notebook?"). If it answers two, make two
    cases. Read `docs/03-designing-a-good-scenario.md` before drafting.
-2. **Pick the file.** Add the story to the group file whose subject is closest (`handshake`, `rebuild`, `edges`,
-   `files`, `crash`, `outputs`, `ai`, ...). Take the next free id: `grep -ho '^  [A-Z][A-Z0-9]*:' stories/storyboards/*.yaml`.
+2. **Pick the file.** Add the story to the group file whose subject is closest (`handshake`, `offline`, `rebuild`,
+   `conflict`, `crash`, `files`, `history`, `outputs`, `shutdown`, `agent`). Name it `group/what-happens`: a few words
+   (at most five, kebab-case) that say what happens, not what is checked, such as `crash/dies-before-save`. See which names
+   are taken: `grep -ho '^  [a-z]*/[a-z0-9-]*:' stories/storyboards/*.yaml`.
 3. **Write it** with the grammar of `docs/02-spec-reference.md` (lanes, steps with `at`/`kind`/`text`/`cells`, `result`,
    `ends`, optional `risk` and `decision`). Rules that matter:
    - Steps are sentences a person would say, in order of time. Show each lane's cells after the step, not only when they change at the end.

@@ -59,7 +59,7 @@ The suite takes nothing from a backend's repo. For jupyter-server-documents it b
 
 ```sh
 jupyter conformance ssd run --backend jsd   # start jupyter-server-documents, run every story, stop it (--backend is required)
-jupyter conformance ssd run Z3 C2           # just these
+jupyter conformance ssd run crash/dies-before-save 'files/*'   # just these
 jupyter conformance ssd run --url http://localhost:8888      # a server that is already running
 jupyter conformance ssd run --start "my-server --port {port}"  # your own command that starts one
 ```
@@ -73,8 +73,8 @@ cd compliance
 npm install && npx playwright install chromium
 npm run generate
 COMPLIANCE_BASE_URL=http://localhost:8899 COMPLIANCE_ROOT_DIR=/tmp/compliance-root npx playwright test
-npx playwright test -g "Z3"                       # one story
-npx playwright test --grep @group-residual        # one group
+npx playwright test -g "conflict/delete-while-typing"   # one story
+npx playwright test --grep @group-conflict        # one group
 npx playwright test --grep-invert @needs-alignment  # only the settled stories
 ```
 
@@ -88,7 +88,7 @@ the backend's side of the contract.
 | `COMPLIANCE_ADAPTER` | `http` (default), `generic`, or a path |
 | `COMPLIANCE_KNOWN_GAPS` | a JSON file of accepted stories this backend is known not to meet yet |
 | `COMPLIANCE_ROOT_DIR` | the folder the server serves; lets tests change the file from outside Jupyter |
-| `COMPLIANCE_DECISIONS` | `'{"Z3":1}'` holds Z3 to its second option instead of the proposed one |
+| `COMPLIANCE_DECISIONS` | `'{"conflict/delete-while-typing":1}'` holds that story to its second option instead of the proposed one |
 | `COMPLIANCE_TIMEOUT_MS`, `COMPLIANCE_SAVE_TIMEOUT_MS`, `COMPLIANCE_STABLE_MS`, `COMPLIANCE_SETTLE_MS` | waits (default 20 s, 40 s, 1.5 s, 0.75 s) |
 
 ## Reading a run

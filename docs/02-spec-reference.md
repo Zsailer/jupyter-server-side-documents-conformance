@@ -4,7 +4,8 @@ A scenario is a plain mapping (YAML or JSON). The player takes it as JSON; `tool
 grammar as a validator, and `tests/test_spec.py` keeps the two in agreement.
 
 ```yaml
-A:
+offline/typing-is-kept:                           # group/what-happens (see below)
+  aliases: [A]                                           # optional: what the story was called before
   title: "Typing made offline is kept"
   story: "Two tabs have the notebook open. ..."          # what happens, in plain words
   lanes: {tab: "Your tab", tab2: "Second tab", server: "Server"}   # optional: which windows, and their names
@@ -19,6 +20,17 @@ A:
 ```
 
 `id` and `badges` are added by whatever builds the page (see `examples/storyboards/build.py`).
+
+### Naming a story
+
+A story is named `group/what-happens`: the group it is in, then a few words (at most five, in kebab-case) that say what
+happens, not what is checked. `crash/dies-before-save` and `conflict/delete-while-typing` tell you what the story is
+about without opening it; a letter and a number did not. The group is the file the story is in (`crash.yaml`), and the name is
+its key. If a story is a control for others, end its name with `-control`.
+
+When a story is renamed, its old name goes in `aliases`, so that anything written with it (a known-gaps file, a link, a
+command line, an old issue) still finds it. Two stories never share a name or an alias: the generator refuses it.
+
 
 ## Lanes: the windows
 
