@@ -25,6 +25,8 @@ jobs:
         with:
           branch: gh-pages
           folder: examples/storyboards/site
-          # keep the previews of the open pull requests
-          clean-exclude: pr-preview/
+          # keep the previews of the open pull requests and the reports of the Environments workflow
+          clean-exclude: |
+            pr-preview/
+            environments/
           force: false
