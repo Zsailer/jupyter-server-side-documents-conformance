@@ -11,7 +11,8 @@ name: Environments
 #   jupyverse   jupyverse (with its JupyterLab and collaboration plugins)
 #
 # The three jobs run in parallel and do not cancel one another: a backend that fails does not hide the others.
-# Each uploads its results as an artifact named conformance-<environment>.
+# Each uploads its results as an artifact named conformance-<environment>, and a last job publishes the Playwright reports
+# of all three to GitHub Pages, under /environments/ (the latest run only).
 on:
   workflow_dispatch:
     inputs:
@@ -84,6 +85,8 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Run the conformance tests
         env:
+          # also keep Playwright's blob report, merged into an HTML report below
+          COMPLIANCE_BLOB_DIR: ${{ runner.temp }}/blob
           STORIES: ${{ inputs.stories }}
           WORKERS: ${{ inputs.workers }}
         # the known gaps are the ones recorded for this backend; jupyverse has none yet, so every miss is a real one
@@ -96,9 +99,64 @@ jobs:
             --workers "$WORKERS" \
             ${gaps:+--known-gaps "$gaps"} \
             --out "conformance-results/${{ matrix.id }}"
+      - name: Build the Playwright report
+        if: always()
+        working-directory: compliance
+        env:
+          PLAYWRIGHT_HTML_REPORT: ${{ runner.temp }}/report
+        run: |
+          if [ -d "$RUNNER_TEMP/blob" ]; then
+            npx playwright merge-reports --reporter html "$RUNNER_TEMP/blob"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: conformance-${{ matrix.id }}
           path: conformance-results/${{ matrix.id }}
           if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: report-${{ matrix.id }}
+          path: ${{ runner.temp }}/report
+          if-no-files-found: ignore
+
+  # one page for the three reports, replacing the last run's
+  publish:
+    name: Publish the reports
+    needs: conformance
+    # also when an environment failed: that is when the report is wanted
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # one publisher at a time, so this and the site do not race for the gh-pages branch
+    concurrency:
+      group: gh-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: report-*
+          path: site
+      - name: Add an index
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          cd site
+          for dir in report-*; do mv "$dir" "${dir#report-}"; done
+          {
+            echo '<!doctype html><meta charset="utf-8"><title>Conformance by environment</title>'
+            echo '<h1>Conformance by environment</h1>'
+            echo "<p>The latest <a href=\"$RUN_URL\">run</a>, on ${GITHUB_SHA::7}. Each report is Playwright's own.</p><ul>"
+            for dir in */; do echo "<li><a href=\"$dir\">${dir%/}</a></li>"; done
+            echo '</ul>'
+          } > index.html
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: site
+          target-folder: environments
+          # only this folder is replaced: the site and the pull request previews stay
+          clean: true
+          force: false
