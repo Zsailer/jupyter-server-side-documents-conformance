@@ -4,7 +4,11 @@ A case is one user-experience story: what people see when something happens to a
 few lines of YAML in `stories/storyboards/`. The page, the animation and the compliance tests come from it, so the pull
 request can be about the experience and nothing else.
 
-The quickest way is to ask your agent: this repo has a skill, `write-a-case`, that drafts the story, checks it and
+The quickest way to change a story is on the page itself: every story has an "Edit this story on GitHub" link, which opens
+its file in GitHub's editor and offers to open the pull request for you. Every page also has an "Edit this page on GitHub"
+link at the bottom.
+
+To draft a new case, ask your agent: this repo has a skill, `write-a-case`, that drafts the story, checks it and
 previews it. To do it by hand:
 
 1. Add your story to the closest group file in `stories/storyboards/`, with `status: proposed`. The grammar is in

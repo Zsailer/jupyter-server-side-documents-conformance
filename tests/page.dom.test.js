@@ -382,3 +382,17 @@ test('a preview of a change plays the new and the changed stories and says what 
   assert.match(doc.querySelector('.change-diff').textContent, /A different result\./);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the edit link of a story goes away with the story when the list is filtered', async () => {
+  const { doc } = open();
+  await sleep(100);
+  const rows = [...doc.querySelectorAll('.edit-story-row')];
+  assert.ok(rows.length >= 60 && rows.every(r => r.previousElementSibling.classList.contains('story-card')), 'one after each story');
+  const q = doc.getElementById('q');
+  q.value = 'tab adds a cell while offline';
+  q.dispatchEvent(new doc.defaultView.Event('input'));
+  const shown = rows.filter(r => !r.hidden);
+  assert.ok(shown.length >= 1 && shown.length < 10, 'only the matching stories keep a link');
+  assert.ok(shown.every(r => !r.previousElementSibling.hidden), 'a link is shown exactly when its story is');
+  assert.ok(shown[0].querySelector('a[href*="/edit/main/stories/storyboards/"]'));
+});

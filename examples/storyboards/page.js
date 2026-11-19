@@ -26,6 +26,8 @@
     cards.forEach(function (card) {
       var ok = matches(card);
       card.hidden = !ok;
+      var edit = card.nextElementSibling;
+      if (edit && edit.classList.contains('edit-story-row')) edit.hidden = !ok;
       var link = document.querySelector('.nav-story[data-id="' + card.id + '"]');
       if (link) link.hidden = !ok;
       if (ok) shown++;

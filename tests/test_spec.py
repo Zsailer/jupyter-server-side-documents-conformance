@@ -242,3 +242,22 @@ class PreviewTest(unittest.TestCase):
         self.assertNotIn("welcome.html", names)
         self.assertIn('class="welcome"', index)
         self.assertNotIn("This change", index)
+
+
+class EditLinkTest(unittest.TestCase):
+    def test_a_story_links_to_the_file_of_its_group_and_every_page_says_how_to_change_it(self):
+        src = build.load(DATA)
+        group = src["stories"]["Z3"]["group"]
+        with tempfile.TemporaryDirectory() as d:
+            build.build(DATA, Path(d))
+            pages = {p.name: p.read_text() for p in Path(d).iterdir()}
+        edit = f"{build.REPO}/edit/main/stories/storyboards/{group}.yaml"
+        for name in ("stories.html", "current.html", "discussion.html"):
+            self.assertIn(f'href="{edit}"', pages[name], name + " links Z3 to the file it is written in")
+        self.assertEqual(pages["stories.html"].count('class="edit-story-row"'), len(src["stories"]), "one link a story")
+        for name, page in pages.items():
+            self.assertIn('<footer class="site-foot">', page, name)
+            self.assertIn("Report a problem", page, name)
+        self.assertIn("Edit this page on GitHub", pages["about.html"])
+        self.assertIn("examples/storyboards/about.template.html", pages["about.html"])
+        self.assertIn("Edit the stories on GitHub", pages["current.html"])
