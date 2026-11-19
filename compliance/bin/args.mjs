@@ -40,9 +40,9 @@ Which stories (each needs a server too: see below)
 
 Which server
   --backend <name>     how to start the server, so no backend is assumed:
-                       jsd (jupyter-server-documents) or jcollab
-                       (jupyter-collaboration and nbmodel). Or use --start
-                       or --url
+                       jsd (jupyter-server-documents), jcollab
+                       (jupyter-collaboration and nbmodel) or jupyverse.
+                       Or use --start or --url
   --env <dir>          the Python environment with the backend installed
                        (default: the one on your PATH that has it)
   --start <command>    your own command that starts a JupyterLab on {port}.
