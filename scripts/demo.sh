@@ -1,16 +1,12 @@
 #!/bin/sh
 # Record the demo GIF of the README (docs/demo.tape) and, the first time, put it in the README.
 #
-#   JSD_ENV=/path/to/an/env/with/jupyter_server_documents npm run demo
+#   npm run demo
 set -e
 cd "$(dirname "$0")/.."
 
 if ! command -v vhs >/dev/null 2>&1; then
   echo "VHS records the GIF: brew install vhs" >&2
-  exit 1
-fi
-if [ -z "$JSD_ENV" ]; then
-  echo "The demo ends with a real run: set JSD_ENV to a Python environment that has jupyter_server_documents" >&2
   exit 1
 fi
 
