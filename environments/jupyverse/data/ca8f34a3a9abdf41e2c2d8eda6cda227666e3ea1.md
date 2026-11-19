@@ -1,0 +1,94 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: generated/outputs.spec.ts >> O6 · Outputs that live only in the store: the store is wiped
+- Location: tests/generated/outputs.spec.ts:217:5
+
+# Error details
+
+```
+Error: Timed out waiting for condition to be fulfilled.
+```
+
+```
+Error: page.evaluate: Target page, context or browser has been closed
+```
+
+# Page snapshot
+
+```yaml
+- generic:
+  - generic [ref=e1]:
+    - link "Skip to main panel" [ref=e3] [cursor=pointer]:
+      - /url: "#"
+    - banner "Top Bar" [ref=e4]:
+      - navigation "main menu" [ref=e9]:
+        - menubar [ref=e11]:
+          - menuitem "File" [ref=e12]
+          - menuitem "Edit" [ref=e14]
+          - menuitem "View" [ref=e16]
+          - menuitem "Run" [ref=e18]
+          - menuitem "Kernel" [ref=e20]
+          - menuitem "Tabs" [ref=e22]
+          - menuitem "Settings" [ref=e24]
+          - menuitem "Help" [ref=e26]
+      - toolbar "Topbar toolbar" [ref=e28]:
+        - generic [ref=e29]:
+          - generic:
+            - generic "Generate a Shared Link" [ref=e32] [cursor=pointer]:
+              - button "Generate a Shared Link" [ref=e33]
+            - menubar [ref=e36]:
+              - menuitem "JP" [disabled] [ref=e37]
+    - generic [ref=e40]:
+      - complementary "main sidebar" [ref=e41]:
+        - tablist "main sidebar" [ref=e42]:
+          - tab "File Browser (Ctrl+Shift+F)" [selected] [ref=e43]
+          - tab "Running Terminals and Kernels" [ref=e47]
+          - tab "Collaboration" [ref=e51]
+          - tab "Table of Contents" [ref=e57]
+          - tab "Extension Manager" [ref=e61]
+      - generic [ref=e66]:
+        - region "File Browser Section" [ref=e69]:
+          - toolbar "file browser" [ref=e70]:
+            - generic [ref=e71]:
+              - generic:
+                - generic "New Launcher (Ctrl+Shift+L)" [ref=e73] [cursor=pointer]:
+                  - button "New Launcher (Ctrl+Shift+L)" [ref=e74]
+                - generic "New Folder" [ref=e77] [cursor=pointer]:
+                  - button "New Folder" [ref=e78]
+                - generic "Upload Files" [ref=e81] [cursor=pointer]:
+                  - button "Upload Files" [ref=e82]
+                - generic "Refresh the file browser." [ref=e85] [cursor=pointer]:
+                  - button "Refresh the file browser." [ref=e86]
+                - generic "Toggle File Filter" [ref=e89] [cursor=pointer]:
+                  - button "Toggle File Filter" [ref=e90]
+          - region "side panel content" [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e96]:
+                - generic "Jupyter Server Root" [ref=e97]:
+                  - img [aria-hidden] [ref=e98] [cursor=pointer]
+                - text: /
+              - generic [ref=e101]:
+                - generic [ref=e102]: Name
+                - generic [ref=e108]: Modified
+        - main "Main Content" [ref=e111]
+      - complementary "alternate sidebar" [ref=e112]:
+        - tablist "alternate sidebar" [ref=e113]:
+          - tab "Property Inspector" [ref=e114]
+    - contentinfo "Bottom Panel" [ref=e118]:
+      - generic [ref=e119]:
+        - generic "0 Terminals, 0 Kernel sessions" [ref=e121]:
+          - button "0" [ref=e122] [cursor=pointer]
+        - button "0" [ref=e133]
+  - text: No results
+  - 'dialog "Cannot open Could not find path: generated-outputs-O6-·-Out-ffe39-he-store-the-store-is-wiped-stories" [ref=e139]':
+    - generic [ref=e140]:
+      - generic [ref=e141]: Cannot open
+      - generic [ref=e142]: "Could not find path: generated-outputs-O6-·-Out-ffe39-he-store-the-store-is-wiped-stories"
+      - button "Close" [active] [ref=e145]
+```

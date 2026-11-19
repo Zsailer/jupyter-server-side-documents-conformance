@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>S9 · The file is edited outside while a tab is connected, then the server dies</title>
+<style>
+  :root{color-scheme:light dark;font:15px/1.5 -apple-system,Segoe UI,Helvetica,Arial,sans-serif}
+  body{margin:0;padding:16px 20px 40px}
+  h1{font-size:1.05rem;margin:0 0 12px}
+  .row{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:12px}
+  figure{margin:0}figcaption{font-weight:600;margin-bottom:4px}
+  video{width:100%;background:#000;border-radius:6px}
+  .bar{display:flex;gap:10px;align-items:center;margin:14px 0 8px}
+  button,select{font:inherit;padding:4px 12px}
+  input[type=range]{flex:1}
+  #step{padding:10px 14px;border-left:4px solid #1976d2;background:rgba(25,118,210,.1);border-radius:4px;min-height:1.5em}
+  ol{color:gray;font-size:13.5px}ol li.on{color:inherit;font-weight:600}
+</style></head><body>
+<h1>S9 · The file is edited outside while a tab is connected, then the server dies</h1>
+<div class="row"><figure><figcaption>tab</figcaption><video id="v0" src="data:video/webm;base64," muted playsinline preload="auto"></video></figure></div>
+<div class="bar"><button id="play">Play</button><input id="seek" type="range" min="0" step="0.05"><span id="clock"></span>
+<select id="speed"><option>0.5</option><option selected>1</option><option>2</option><option>4</option></select>×</div>
+<div id="step"></div>
+<ol id="steps"></ol>
+<script>
+const D={"offsets":[0.063],"steps":[{"at":0.062,"text":"1. Your tab opens the notebook"},{"at":4.27,"text":"2. File on disk is edited outside Jupyter: c1 is rewritten and “EXTERNAL NEW CELL” is added"},{"at":4.272,"text":"3. Server reloads the file in place"},{"at":4.273,"text":"4. Your tab receives the changes"},{"at":6.091,"text":"5. Your tab loses its connection"},{"at":6.095,"text":"6. Server dies before it saved or recorded anything"},{"at":6.196,"text":"7. Server starts again from the file"},{"at":8.811,"text":"8. Your tab reconnects, already holding the new cell"},{"at":9.062,"text":"The end: every copy is compared with what the storyboard says"}]};
+const vids=D.offsets.map((_,i)=>document.getElementById('v'+i));
+const seek=document.getElementById('seek'),play=document.getElementById('play'),clock=document.getElementById('clock'),stepEl=document.getElementById('step'),list=document.getElementById('steps'),speed=document.getElementById('speed');
+let end=Math.max(...vids.map((v,i)=>D.offsets[i]+(isFinite(v.duration)?v.duration:0)),D.steps.length?D.steps[D.steps.length-1].at+3:0);
+let t=0,playing=false,last=0;
+D.steps.forEach(s=>{const li=document.createElement('li');li.textContent=s.text;list.appendChild(li)});
+function show(){
+  vids.forEach((v,i)=>{const local=t-D.offsets[i];
+    if(local<0){v.pause();v.currentTime=0;}
+    else if(isFinite(v.duration)&&local>=v.duration){v.pause();v.currentTime=v.duration;}
+    else{if(Math.abs(v.currentTime-local)>0.25)v.currentTime=local;if(playing&&v.paused)v.play();if(!playing&&!v.paused)v.pause();v.playbackRate=+speed.value;}});
+  let k=-1;D.steps.forEach((s,i)=>{if(t>=s.at)k=i});
+  stepEl.textContent=k>=0?D.steps[k].text:'';[...list.children].forEach((li,i)=>li.classList.toggle('on',i===k));
+  seek.max=end;seek.value=t;clock.textContent=t.toFixed(1)+' / '+end.toFixed(1)+' s';play.textContent=playing?'Pause':'Play';
+}
+function tick(now){if(playing){t=Math.min(end,t+(now-last)/1000*+speed.value);if(t>=end)playing=false;}last=now;show();requestAnimationFrame(tick)}
+play.onclick=()=>{if(t>=end)t=0;playing=!playing;if(!playing)vids.forEach(v=>v.pause())};
+seek.oninput=()=>{t=+seek.value;show()};
+vids.forEach(v=>v.addEventListener('loadedmetadata',()=>{end=Math.max(end,...vids.map((w,i)=>D.offsets[i]+(isFinite(w.duration)?w.duration:0)));show()}));
+requestAnimationFrame(tick);show();
+</script></body></html>
