@@ -1,0 +1,104 @@
+name: Environments
+# Runs the conformance tests against the latest release of each backend, side by side:
+#
+#   Actions > Environments > Run workflow
+#
+# Manual only: it never runs on a pull request or a push. It installs whatever is newest on PyPI at the time, so a run
+# says how the backends stand today, not how this tree stood when it was written.
+#
+#   jsd         jupyter-server-documents
+#   jcollab     jupyter-collaboration + jupyter-server-nbmodel
+#   jupyverse   jupyverse (with its JupyterLab and collaboration plugins)
+#
+# The three jobs run in parallel and do not cancel one another: a backend that fails does not hide the others.
+# Each uploads its results as an artifact named conformance-<environment>.
+on:
+  workflow_dispatch:
+    inputs:
+      stories:
+        description: Stories to run (ids or prefixes, space separated). Empty runs every story.
+        type: string
+        default: ""
+      workers:
+        description: Stories to run at once in each environment (every story opens several browsers)
+        type: string
+        default: "3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: environments-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  conformance:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: jupyter-server-documents
+            id: jsd
+            packages: jupyterlab jupyter-server-documents
+            # the suite starts the server itself, with its own config and side of the control contract
+            server: --backend jsd
+          - name: jupyter-collaboration + jupyter-server-nbmodel
+            id: jcollab
+            packages: jupyterlab jupyter-collaboration jupyter-server-nbmodel
+            server: --backend jcollab
+          - name: jupyverse
+            id: jupyverse
+            packages: "jupyverse[jupyterlab,noauth,collaboration]"
+            # jupyverse is not one of the backends the suite knows how to start, so it is started the way any other is
+            # (--start). It has no side of the control contract here: the stories that need the server to be told
+            # something are skipped, and the summary says which.
+            server: --start "cd $RUNNER_TEMP/root && $RUNNER_TEMP/env/bin/jupyverse --port {port}" --root-dir "$RUNNER_TEMP/root"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: compliance/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install the tests
+        working-directory: compliance
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Install the latest ${{ matrix.name }}
+        run: |
+          python -m venv "$RUNNER_TEMP/env"
+          "$RUNNER_TEMP/env/bin/pip" install --upgrade pip
+          "$RUNNER_TEMP/env/bin/pip" install --upgrade ${{ matrix.packages }}
+          mkdir -p "$RUNNER_TEMP/root"
+          # the versions this run is about, in the log and in the summary
+          {
+            echo "### ${{ matrix.name }}"
+            "$RUNNER_TEMP/env/bin/pip" list --format=freeze | grep -iE '^(jupyterlab|jupyter[-_]server[-_]documents|jupyter[-_]collaboration|jupyter[-_]server[-_]nbmodel|jupyverse|fps[-_]yjs)==' | sed 's/^/- /'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Run the conformance tests
+        env:
+          STORIES: ${{ inputs.stories }}
+          WORKERS: ${{ inputs.workers }}
+        # the known gaps are the ones recorded for this backend; jupyverse has none yet, so every miss is a real one
+        run: |
+          gaps="compliance/known-gaps/${{ matrix.id }}.json"
+          [ -f "$gaps" ] || gaps=""
+          node compliance/bin/conformance.mjs run $STORIES \
+            ${{ matrix.server }} \
+            --env "$RUNNER_TEMP/env" \
+            --workers "$WORKERS" \
+            ${gaps:+--known-gaps "$gaps"} \
+            --out "conformance-results/${{ matrix.id }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conformance-${{ matrix.id }}
+          path: conformance-results/${{ matrix.id }}
+          if-no-files-found: ignore
