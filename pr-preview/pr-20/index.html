@@ -1,0 +1,2273 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What this changes</title>
+<script>try{var t=localStorage.getItem('nbs-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>/*
+ * nbscenario — live notebook scenarios. Styles.
+ *
+ * Looks like JupyterLab. Every colour is a variable, so a page can re-theme it. Light is the default; dark follows the
+ * system unless the page sets <html data-theme="light|dark">.
+ */
+
+/* ---- tokens: JupyterLab Light ---- */
+:root,
+:root[data-theme='light'] {
+  --nbs-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --nbs-mono: 'Source Code Pro', ui-monospace, Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --nbs-bg: #ffffff;
+  --nbs-bg-page: #f7f7f7;
+  --nbs-bg-panel: #ffffff;
+  --nbs-bg-bar: #eeeeee;
+  --nbs-fg: rgba(0, 0, 0, 0.87);
+  --nbs-fg2: rgba(0, 0, 0, 0.62);
+  --nbs-fg3: rgba(0, 0, 0, 0.45);
+  --nbs-border: #e0e0e0;
+  --nbs-border-strong: #bdbdbd;
+  --nbs-brand: #2196f3;
+  --nbs-brand-strong: #1976d2;
+  --nbs-brand-bg: #e3f2fd;
+  --nbs-cell-bg: #f7f7f7;
+  --nbs-cell-edit-bg: #ffffff;
+  --nbs-edit: #43a047;
+  --nbs-prompt-in: #307fc1;
+  --nbs-prompt-out: #bf5b3d;
+  --nbs-ok: #2e7d32;
+  --nbs-ok-bg: #e8f5e9;
+  --nbs-warn: #8a5300;
+  --nbs-warn-bg: #fff3d6;
+  --nbs-warn-line: #f0b429;
+  --nbs-bad: #c62828;
+  --nbs-bad-bg: #ffebee;
+  --nbs-mute: #616161;
+  --nbs-mute-bg: #eeeeee;
+  --nbs-ins: #c8f7c5;
+  --nbs-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --nbs-k: #008000;
+  --nbs-s: #ba2121;
+  --nbs-c: #408080;
+  --nbs-n: #666666;
+  --nbs-mg: #aa22ff;
+  color-scheme: light;
+}
+
+/* ---- tokens: JupyterLab Dark ---- */
+:root[data-theme='dark'] {
+  --nbs-bg: #111111;
+  --nbs-bg-page: #0b0b0b;
+  --nbs-bg-panel: #1b1b1b;
+  --nbs-bg-bar: #2a2a2a;
+  --nbs-fg: rgba(255, 255, 255, 0.88);
+  --nbs-fg2: rgba(255, 255, 255, 0.66);
+  --nbs-fg3: rgba(255, 255, 255, 0.46);
+  --nbs-border: #3a3a3a;
+  --nbs-border-strong: #5c5c5c;
+  --nbs-brand: #42a5f5;
+  --nbs-brand-strong: #64b5f6;
+  --nbs-brand-bg: #0d2a45;
+  --nbs-cell-bg: #212121;
+  --nbs-cell-edit-bg: #141414;
+  --nbs-edit: #66bb6a;
+  --nbs-prompt-in: #6aa9ff;
+  --nbs-prompt-out: #ff9566;
+  --nbs-ok: #81c784;
+  --nbs-ok-bg: #12301a;
+  --nbs-warn: #ffcc66;
+  --nbs-warn-bg: #3a2c0a;
+  --nbs-warn-line: #b8860b;
+  --nbs-bad: #ef9a9a;
+  --nbs-bad-bg: #3b1518;
+  --nbs-mute: #b0b0b0;
+  --nbs-mute-bg: #2e2e2e;
+  --nbs-ins: #1f5a2b;
+  --nbs-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4);
+  --nbs-k: #c792ea;
+  --nbs-s: #ecc48d;
+  --nbs-c: #7f9a8a;
+  --nbs-n: #f78c6c;
+  --nbs-mg: #ff79c6;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --nbs-bg: #111111;
+    --nbs-bg-page: #0b0b0b;
+    --nbs-bg-panel: #1b1b1b;
+    --nbs-bg-bar: #2a2a2a;
+    --nbs-fg: rgba(255, 255, 255, 0.88);
+    --nbs-fg2: rgba(255, 255, 255, 0.66);
+    --nbs-fg3: rgba(255, 255, 255, 0.46);
+    --nbs-border: #3a3a3a;
+    --nbs-border-strong: #5c5c5c;
+    --nbs-brand: #42a5f5;
+    --nbs-brand-strong: #64b5f6;
+    --nbs-brand-bg: #0d2a45;
+    --nbs-cell-bg: #212121;
+    --nbs-cell-edit-bg: #141414;
+    --nbs-edit: #66bb6a;
+    --nbs-prompt-in: #6aa9ff;
+    --nbs-prompt-out: #ff9566;
+    --nbs-ok: #81c784;
+    --nbs-ok-bg: #12301a;
+    --nbs-warn: #ffcc66;
+    --nbs-warn-bg: #3a2c0a;
+    --nbs-warn-line: #b8860b;
+    --nbs-bad: #ef9a9a;
+    --nbs-bad-bg: #3b1518;
+    --nbs-mute: #b0b0b0;
+    --nbs-mute-bg: #2e2e2e;
+    --nbs-ins: #1f5a2b;
+    --nbs-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4);
+    --nbs-k: #c792ea;
+    --nbs-s: #ecc48d;
+    --nbs-c: #7f9a8a;
+    --nbs-n: #f78c6c;
+    --nbs-mg: #ff79c6;
+    color-scheme: dark;
+  }
+}
+
+/* ---- a story ---- */
+.nbs {
+  font-family: var(--nbs-font);
+  color: var(--nbs-fg);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.nbs *,
+.nbs *::before,
+.nbs *::after {
+  box-sizing: border-box;
+}
+.nbs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  margin: 0 0 4px;
+}
+.nbs-head h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+.nbs-id {
+  font: 700 12px var(--nbs-mono);
+  background: var(--nbs-brand);
+  color: #fff;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+.nbs-badge {
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: var(--nbs-mute-bg);
+  color: var(--nbs-mute);
+}
+.nbs-badge-need,
+.nbs-badge-warn {
+  background: var(--nbs-warn-bg);
+  color: var(--nbs-warn);
+}
+.nbs-badge-new,
+.nbs-badge-info {
+  background: var(--nbs-brand-bg);
+  color: var(--nbs-brand-strong);
+}
+.nbs-story {
+  margin: 0 0 12px;
+  color: var(--nbs-fg2);
+  max-width: 62rem;
+}
+
+/* ---- the notebook windows ---- */
+.nbs-stage {
+  position: relative;
+  overflow-x: auto;
+  padding: 10px 2px 6px;
+}
+.nbs-board {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 2), minmax(240px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+.nbs-panel {
+  display: flex;
+  flex-direction: column;
+  height: var(--nbs-h, auto); /* every window of a story is as tall as the tallest: set by the player */
+  background: var(--nbs-bg-panel);
+  border: 1px solid var(--nbs-border);
+  border-radius: 8px;
+  box-shadow: var(--nbs-shadow);
+  overflow: hidden;
+  min-height: 120px;
+  position: relative;
+  transition: border-color 0.25s, box-shadow 0.25s, opacity 0.25s;
+}
+.nbs-phead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: var(--nbs-bg-bar);
+  border-bottom: 1px solid var(--nbs-border);
+  font-size: 13px;
+}
+.nbs-ptitle {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nbs-ic {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nbs-ic .f {
+  fill: currentColor;
+  stroke: none;
+}
+.nbs-lane-tab .nbs-phead .nbs-ic {
+  color: #f37726;
+}
+.nbs-lane-server .nbs-phead .nbs-ic {
+  color: var(--nbs-brand-strong);
+}
+.nbs-lane-file .nbs-phead .nbs-ic {
+  color: var(--nbs-fg2);
+}
+.nbs-lane-ai .nbs-phead .nbs-ic {
+  color: #b05fe0;
+}
+.nbs-chip {
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 9px;
+  white-space: nowrap;
+  background: var(--nbs-mute-bg);
+  color: var(--nbs-mute);
+}
+.nbs-chip.nbs-ok {
+  background: var(--nbs-ok-bg);
+  color: var(--nbs-ok);
+}
+.nbs-chip.nbs-bad {
+  background: var(--nbs-bad-bg);
+  color: var(--nbs-bad);
+}
+.nbs-chip.nbs-warn {
+  background: var(--nbs-warn-bg);
+  color: var(--nbs-warn);
+}
+.nbs-col-lane {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.nbs-actrow {
+  flex: none;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.nbs-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--nbs-brand-strong);
+  background: var(--nbs-brand-bg);
+  animation: nbs-enter 0.35s ease-out;
+}
+.nbs-act.nbs-k-offline,
+.nbs-act.nbs-k-crash,
+.nbs-act.nbs-k-leave,
+.nbs-act.nbs-k-fault {
+  color: var(--nbs-bad);
+  background: var(--nbs-bad-bg);
+}
+.nbs-act.nbs-k-receive {
+  color: var(--nbs-fg2);
+  background: var(--nbs-mute-bg);
+}
+.nbs-act.nbs-k-reconnect,
+.nbs-act.nbs-k-rebuild,
+.nbs-act.nbs-k-late,
+.nbs-act.nbs-k-deadline,
+.nbs-act.nbs-k-outside {
+  color: var(--nbs-warn);
+  background: var(--nbs-warn-bg);
+}
+.nbs-pbody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 6px 10px;
+}
+.nbs-probe .nbs-panel {
+  height: auto;
+}
+.nbs-panel.nbs-acting {
+  border-color: var(--nbs-brand);
+}
+.nbs-panel.nbs-receiving {
+  animation: nbs-receive 0.9s ease-out;
+}
+.nbs-panel.nbs-away .nbs-pbody {
+  opacity: 0.62;
+  background: repeating-linear-gradient(135deg, transparent 0 8px, var(--nbs-mute-bg) 8px 9px);
+}
+.nbs-panel.nbs-dormant {
+  opacity: 0.45;
+  box-shadow: none;
+  border-style: dashed;
+}
+.nbs-snap {
+  animation: nbs-snap 0.9s ease-out;
+}
+.nbs-empty,
+.nbs-note {
+  padding: 10px;
+  color: var(--nbs-fg3);
+  font-size: 13px;
+}
+.nbs-note {
+  color: var(--nbs-fg2);
+  font-size: 14px;
+}
+
+/* ---- cells ---- */
+.nbs-cell {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+  padding-right: 2px;
+  border-left: 3px solid transparent;
+  border-radius: 2px;
+}
+.nbs-cell.nbs-active {
+  border-left-color: var(--nbs-brand);
+}
+.nbs-cell.nbs-active.nbs-edit {
+  border-left-color: var(--nbs-edit);
+}
+.nbs-prompt {
+  flex: 0 0 40px;
+  text-align: right;
+  padding-top: 7px;
+  font: 12px var(--nbs-mono);
+  color: var(--nbs-prompt-in);
+  white-space: nowrap;
+}
+.nbs-mv {
+  color: var(--nbs-brand-strong);
+  margin-right: 3px;
+  font-weight: 700;
+}
+.nbs-col {
+  flex: 1;
+  min-width: 0;
+}
+.nbs-src {
+  margin: 0;
+  padding: 6px 9px;
+  background: var(--nbs-cell-bg);
+  border: 1px solid var(--nbs-border);
+  border-radius: 2px;
+  font: 12.5px/1.45 var(--nbs-mono);
+  color: var(--nbs-fg);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 30px;
+}
+.nbs-active.nbs-edit .nbs-src {
+  background: var(--nbs-cell-edit-bg);
+  border-color: var(--nbs-edit);
+  box-shadow: 0 0 0 1px var(--nbs-edit);
+}
+.nbs-active:not(.nbs-edit) .nbs-src {
+  border-color: var(--nbs-brand);
+}
+.nbs-out {
+  margin: 3px 0 0;
+  padding: 3px 9px;
+  font: 12.5px var(--nbs-mono);
+  color: var(--nbs-fg2);
+}
+.nbs-oprompt {
+  color: var(--nbs-prompt-out);
+  margin-right: 8px;
+}
+.nbs-tag {
+  position: absolute;
+  right: 6px;
+  top: -8px;
+  z-index: 2;
+  max-width: 85%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 10.5px var(--nbs-font);
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--nbs-fg);
+  color: var(--nbs-bg);
+}
+.nbs-look-new .nbs-src {
+  border-left: 3px solid var(--nbs-ok);
+}
+.nbs-look-moved .nbs-src {
+  border-left: 3px solid var(--nbs-brand);
+}
+.nbs-look-copy .nbs-src {
+  background: var(--nbs-warn-bg);
+  border-color: var(--nbs-warn-line);
+}
+.nbs-look-copy .nbs-tag {
+  background: var(--nbs-warn-line);
+  color: #1a1a1a;
+}
+.nbs-look-bad .nbs-src {
+  background: var(--nbs-bad-bg);
+  border-color: var(--nbs-bad);
+}
+.nbs-look-bad .nbs-tag {
+  background: var(--nbs-bad);
+  color: #fff;
+}
+.nbs-look-edited .nbs-tag {
+  background: var(--nbs-brand-strong);
+  color: #fff;
+}
+.nbs-look-gone .nbs-src {
+  color: var(--nbs-bad);
+  background: var(--nbs-bad-bg);
+  border-color: var(--nbs-bad);
+  text-decoration: line-through;
+}
+.nbs-remark {
+  margin: 6px 4px 6px 46px;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--nbs-fg2);
+}
+.nbs-diff .nbs-src {
+  border-color: var(--nbs-warn-line);
+  background: var(--nbs-warn-bg);
+  box-shadow: 0 0 0 2px var(--nbs-warn-line);
+}
+.nbs-diff .nbs-tag {
+  background: var(--nbs-warn-line);
+  color: #1a1a1a;
+}
+.nbs-ins {
+  background: var(--nbs-ins);
+  border-radius: 2px;
+  animation: nbs-insfade 3s ease-out 1.2s forwards;
+}
+.nbs-ins.nbs-keep {
+  animation: none;
+}
+.nbs-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: -1px;
+  vertical-align: text-bottom;
+  background: var(--nbs-fg);
+  animation: nbs-blink 1s steps(1) infinite;
+}
+
+/* syntax */
+.nbs-k {
+  color: var(--nbs-k);
+  font-weight: 600;
+}
+.nbs-s {
+  color: var(--nbs-s);
+}
+.nbs-c {
+  color: var(--nbs-c);
+  font-style: italic;
+}
+.nbs-n {
+  color: var(--nbs-n);
+}
+.nbs-mg {
+  color: var(--nbs-mg);
+  font-weight: 600;
+}
+
+/* the moments */
+.nbs-fx-enter .nbs-src {
+  animation: nbs-enter 0.5s ease-out;
+}
+.nbs-fx-changed .nbs-src {
+  animation: nbs-flash 1.4s ease-out;
+}
+.nbs-fx-moved .nbs-src {
+  animation: nbs-flashblue 1.4s ease-out;
+}
+.nbs-fx-gone {
+  animation: nbs-gone 1.1s ease-in forwards;
+  overflow: hidden;
+}
+
+@keyframes nbs-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@keyframes nbs-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+}
+@keyframes nbs-flash {
+  0% {
+    box-shadow: 0 0 0 3px var(--nbs-warn-line);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes nbs-flashblue {
+  0% {
+    box-shadow: 0 0 0 3px var(--nbs-brand);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+@keyframes nbs-gone {
+  0%,
+  45% {
+    opacity: 1;
+    max-height: 120px;
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    margin: 0;
+  }
+}
+@keyframes nbs-insfade {
+  to {
+    background: transparent;
+  }
+}
+@keyframes nbs-snap {
+  0% {
+    box-shadow: 0 0 0 0 var(--nbs-brand);
+  }
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+@keyframes nbs-receive {
+  0% {
+    box-shadow: 0 0 0 0 var(--nbs-brand);
+  }
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+/* a message flying from one window to another */
+.nbs-flights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.nbs-dot {
+  position: absolute;
+  left: -14px;
+  top: -14px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--nbs-brand-strong);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 4px color-mix(in srgb, var(--nbs-brand) 28%, transparent);
+  opacity: 0;
+}
+.nbs-dot .nbs-ic {
+  width: 15px;
+  height: 15px;
+}
+.nbs-dot.nbs-lostx {
+  background: var(--nbs-bad);
+  font: 700 14px var(--nbs-font);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25), 0 0 0 4px color-mix(in srgb, var(--nbs-bad) 28%, transparent);
+}
+
+/* ---- controls ---- */
+.nbs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 6px;
+}
+.nbs-play {
+  flex: none;
+  width: 40px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--nbs-brand-strong);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.nbs-play:hover {
+  filter: brightness(1.1);
+}
+.nbs-segs {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+}
+.nbs-seg {
+  position: relative;
+  height: 34px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: var(--nbs-mute-bg);
+  color: var(--nbs-fg2);
+  font: 600 12px var(--nbs-font);
+  overflow: hidden;
+  cursor: pointer;
+}
+.nbs-seg .nbs-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--nbs-brand-bg);
+}
+.nbs-seg .nbs-n {
+  position: relative;
+}
+.nbs-seg.nbs-blip {
+  background: var(--nbs-warn-bg);
+  color: var(--nbs-warn);
+}
+.nbs-seg.nbs-blip .nbs-fill {
+  background: var(--nbs-warn-line);
+  opacity: 0.45;
+}
+.nbs-seg.on {
+  box-shadow: inset 0 0 0 2px var(--nbs-brand);
+  color: var(--nbs-fg);
+}
+.nbs-seg.nbs-blip.on {
+  box-shadow: inset 0 0 0 2px var(--nbs-warn-line);
+  animation: nbs-pulse 0.9s ease-in-out infinite;
+}
+.nbs-seg.past {
+  color: var(--nbs-fg);
+}
+.nbs-endseg.on {
+  background: var(--nbs-ok-bg);
+  color: var(--nbs-ok);
+  box-shadow: inset 0 0 0 2px var(--nbs-ok);
+}
+@keyframes nbs-pulse {
+  50% {
+    filter: brightness(1.15);
+  }
+}
+.nbs-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 3rem;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--nbs-bg-panel);
+  border: 1px solid var(--nbs-border);
+  border-left: 4px solid var(--nbs-brand);
+}
+.nbs-ended .nbs-caption {
+  border-left-color: var(--nbs-ok);
+}
+.nbs-instant .nbs-caption {
+  border-left-color: var(--nbs-warn-line);
+}
+.nbs-capnum {
+  flex: none;
+  min-width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--nbs-brand-strong);
+  color: #fff;
+  font: 700 12px var(--nbs-font);
+}
+.nbs-ended .nbs-capnum {
+  background: var(--nbs-ok);
+}
+.nbs-quick {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nbs-warn);
+  background: var(--nbs-warn-bg);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+.nbs-to {
+  color: var(--nbs-brand-strong);
+  font-weight: 600;
+}
+.nbs-steps {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--nbs-fg2);
+}
+.nbs-steps summary {
+  cursor: pointer;
+}
+.nbs-steps ol {
+  margin: 8px 0 0;
+  padding-left: 1.6rem;
+}
+.nbs-steps li.on {
+  color: var(--nbs-fg);
+  background: var(--nbs-brand-bg);
+  border-radius: 4px;
+}
+.nbs-result {
+  display: grid;
+  gap: 2px;
+  margin: 10px 0 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--nbs-ok-bg);
+  border-left: 4px solid var(--nbs-ok);
+}
+.nbs-result b,
+.nbs-risk b {
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--nbs-fg2);
+}
+.nbs-ended .nbs-result {
+  box-shadow: 0 0 0 2px var(--nbs-ok);
+}
+.nbs-risk {
+  margin: 8px 0 0;
+  color: var(--nbs-fg2);
+  font-size: 14px;
+}
+
+/* ---- a decision ---- */
+.nbs-decision {
+  margin: 14px 0 0;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--nbs-warn-bg);
+  border: 1px solid var(--nbs-warn-line);
+}
+.nbs-dhead {
+  font: 700 11.5px var(--nbs-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nbs-warn);
+}
+.nbs-q {
+  margin: 4px 0 10px;
+  font-weight: 600;
+}
+.nbs-opts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+.nbs-opt {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--nbs-border);
+  background: var(--nbs-bg-panel);
+  cursor: pointer;
+}
+.nbs-opt.on {
+  border-color: var(--nbs-brand);
+  box-shadow: 0 0 0 2px var(--nbs-brand);
+}
+.nbs-flag {
+  justify-self: start;
+  font: 700 11px var(--nbs-font);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--nbs-ok);
+  border-radius: 999px;
+  padding: 1px 9px;
+}
+.nbs-odetail {
+  font-size: 13.5px;
+  color: var(--nbs-fg2);
+}
+.nbs-oends {
+  font: 700 11px var(--nbs-font);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--nbs-fg3);
+}
+.nbs-mini {
+  display: grid;
+  gap: 4px;
+}
+.nbs-mcell {
+  position: relative;
+  padding: 3px 8px;
+  border: 1px solid var(--nbs-border);
+  border-radius: 3px;
+  background: var(--nbs-cell-bg);
+  font: 12px var(--nbs-mono);
+}
+.nbs-mcell .nbs-tag {
+  position: static;
+  margin-left: 8px;
+  display: inline-block;
+}
+.nbs-mcell.nbs-look-new {
+  border-left: 3px solid var(--nbs-ok);
+}
+.nbs-mcell.nbs-look-moved {
+  border-left: 3px solid var(--nbs-brand);
+}
+.nbs-mcell.nbs-look-copy {
+  background: var(--nbs-warn-bg);
+  border-color: var(--nbs-warn-line);
+}
+.nbs-mcell.nbs-look-bad {
+  background: var(--nbs-bad-bg);
+  border-color: var(--nbs-bad);
+}
+
+/* ---- "the problem in one picture": windows side by side, each a moment ---- */
+.nbs-trip {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 10px;
+  align-items: start;
+}
+.nbs-fig {
+  margin: 0;
+  position: relative;
+}
+.nbs-fig figcaption {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--nbs-fg2);
+}
+.nbs-figstep {
+  position: absolute;
+  z-index: 3;
+  top: -10px;
+  left: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--nbs-brand-strong);
+  color: #fff;
+  font: 700 12px var(--nbs-font);
+}
+.nbs-figarrow {
+  align-self: center;
+  font-size: 26px;
+  color: var(--nbs-brand-strong);
+}
+@media (max-width: 860px) {
+  .nbs-trip {
+    grid-template-columns: 1fr;
+  }
+  .nbs-figarrow {
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+}
+
+/* ---- paused: freeze every animation of the story, not only the clock ---- */
+.nbs-pausedall *,
+.nbs-pausedall *::before,
+.nbs-pausedall *::after {
+  animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nbs *,
+  .nbs *::before,
+  .nbs *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* the notebook kept its promise: said once, where it happened */
+.nbs-actrow {
+  gap: 6px;
+}
+.nbs-keep {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nbs-ok);
+  background: var(--nbs-ok-bg);
+  animation: nbs-enter 0.45s ease-out 0.35s both;
+}
+.nbs-count {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--nbs-fg3);
+  white-space: nowrap;
+}
+.nbs-same {
+  margin-left: auto;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--nbs-ok);
+  background: var(--nbs-ok-bg);
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+</style>
+<style>/* The page around the stories. The stories themselves are styled by player/nbscenario.css. */
+html { scroll-padding-top: 64px; scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--nbs-bg-page);
+  color: var(--nbs-fg);
+  font: 15px/1.55 var(--nbs-font);
+}
+a { color: var(--nbs-brand-strong); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---- the bar at the top, like JupyterLab's ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: 14px;
+  height: 48px; padding: 0 16px;
+  background: var(--nbs-bg-bar);
+  border-bottom: 1px solid var(--nbs-border-strong);
+}
+.brand { display: flex; align-items: center; gap: 9px; color: var(--nbs-fg); text-decoration: none; margin-right: auto; }
+.brand-name { font-weight: 600; font-size: 17px; letter-spacing: -0.01em; }
+.brand-sep { color: var(--nbs-fg3); }
+.brand-page { color: var(--nbs-fg2); }
+.theme { display: inline-flex; border: 1px solid var(--nbs-border-strong); border-radius: 8px; overflow: hidden; }
+.theme button {
+  font: inherit; font-size: 13px; padding: 5px 12px; border: 0;
+  background: transparent; color: var(--nbs-fg2); cursor: pointer;
+}
+.theme button + button { border-left: 1px solid var(--nbs-border-strong); }
+.theme button[aria-pressed='true'] { background: var(--nbs-brand-strong); color: #fff; }
+
+/* ---- layout ---- */
+.layout { display: grid; grid-template-columns: 310px minmax(0, 1fr); align-items: start; }
+.side {
+  position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto;
+  padding: 14px 12px 40px; background: var(--nbs-bg-panel);
+  border-right: 1px solid var(--nbs-border);
+}
+.main { padding: 0 32px 80px; max-width: 1240px; min-width: 0; }
+
+/* ---- the side bar ---- */
+.search input {
+  width: 100%; font: inherit; font-size: 14px; padding: 8px 10px;
+  border: 1px solid var(--nbs-border-strong); border-radius: 8px;
+  background: var(--nbs-bg); color: var(--nbs-fg);
+}
+.search input:focus { outline: 2px solid var(--nbs-brand); outline-offset: 1px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.chip-filter {
+  font: inherit; font-size: 12.5px; padding: 3px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--nbs-border-strong); background: transparent; color: var(--nbs-fg2);
+}
+.chip-filter.on { background: var(--nbs-brand-strong); border-color: var(--nbs-brand-strong); color: #fff; }
+.count { margin: 6px 2px 10px; font-size: 12.5px; color: var(--nbs-fg3); }
+.nav-group { margin: 0 0 14px; }
+.nav-gtitle { display: block; font-weight: 700; font-size: 13px; color: var(--nbs-fg); text-decoration: none; padding: 4px 6px; }
+.nav-story {
+  display: flex; gap: 8px; align-items: baseline; padding: 3px 6px; border-radius: 6px;
+  font-size: 13px; line-height: 1.35; color: var(--nbs-fg2); text-decoration: none;
+}
+.nav-story:hover { background: var(--nbs-mute-bg); color: var(--nbs-fg); }
+.nav-story.current { background: var(--nbs-brand-bg); color: var(--nbs-fg); }
+.nav-id { flex: none; font: 700 11px var(--nbs-mono); color: var(--nbs-brand-strong); min-width: 2.2em; }
+.nav-story.need .nav-id::after { content: ' •'; color: var(--nbs-warn-line); }
+
+/* ---- the top of the page ---- */
+.hero { padding: 40px 0 8px; }
+.hero h1 { margin: 0 0 10px; font-size: 2rem; line-height: 1.2; letter-spacing: -0.015em; }
+.lead { margin: 0; max-width: 62rem; font-size: 1.05rem; color: var(--nbs-fg2); }
+.block { padding: 30px 0 4px; }
+.block h2, .group h2 { margin: 0 0 6px; font-size: 1.45rem; letter-spacing: -0.01em; }
+.block-intro, .group-intro { margin: 0 0 18px; max-width: 62rem; color: var(--nbs-fg2); }
+.count-pill { font-size: 0.8rem; background: var(--nbs-warn-bg); color: var(--nbs-warn); border-radius: 999px; padding: 1px 10px; vertical-align: middle; }
+.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.how h3 { margin: 0 0 8px; font-size: 1rem; }
+.legend-list { margin: 0; padding-left: 1.1rem; color: var(--nbs-fg2); font-size: 14px; }
+.legend-list li { margin: 0 0 6px; }
+.legend-cells { display: grid; gap: 10px; }
+.legend-cells .row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; font-size: 13.5px; color: var(--nbs-fg2); }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.principle { background: var(--nbs-bg-panel); border: 1px solid var(--nbs-border); border-radius: 10px; padding: 14px 16px; }
+.principle h3 { margin: 0 0 4px; font-size: 1rem; }
+.principle p { margin: 0; color: var(--nbs-fg2); font-size: 14px; }
+.need-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.need-list a {
+  display: inline-flex; gap: 8px; align-items: baseline; padding: 4px 12px; border-radius: 999px;
+  font-size: 13px; text-decoration: none; color: var(--nbs-fg);
+  background: var(--nbs-warn-bg); border: 1px solid var(--nbs-warn-line);
+}
+
+/* ---- groups and stories ---- */
+.group { padding-top: 40px; }
+.story-card {
+  margin: 0 0 28px; padding: 18px 20px 20px;
+  background: var(--nbs-bg-panel); border: 1px solid var(--nbs-border); border-radius: 12px;
+  box-shadow: var(--nbs-shadow);
+}
+.story-card.has-decision { border-color: var(--nbs-warn-line); }
+.story-card ol { color: var(--nbs-fg2); }
+.empty { padding: 40px 0; text-align: center; color: var(--nbs-fg3); }
+.foot { margin-top: 60px; padding-top: 18px; border-top: 1px solid var(--nbs-border); font-size: 13.5px; color: var(--nbs-fg3); max-width: 62rem; }
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { position: fixed; inset: 48px 0 0 0; z-index: 25; height: auto; }
+  .main { padding: 0 16px 60px; }
+  .how { grid-template-columns: 1fr; }
+}
+
+/* ---- the second page, and the way to it ---- */
+.topnav a { font-size: 14px; color: var(--nbs-fg2); text-decoration: none; padding: 5px 10px; border-radius: 6px; }
+.topnav a:hover { background: var(--nbs-mute-bg); color: var(--nbs-fg); }
+.hero-links { margin: 14px 0 0; font-size: 14.5px; color: var(--nbs-fg3); }
+.doc { max-width: 1180px; margin: 0 auto; padding: 0 32px 80px; }
+@media (max-width: 1000px) { .doc { padding: 0 16px 60px; } }
+
+/* ---- the list of stories can be hidden, and each group folded ---- */
+.side-toggle {
+  flex: none; width: 36px; height: 36px; margin-left: -6px; padding: 0;
+  display: inline-grid; place-items: center; border: 0; border-radius: 8px; cursor: pointer;
+  background: transparent; color: var(--nbs-fg);
+}
+.side-toggle:hover { background: var(--nbs-mute-bg); }
+.side-toggle:focus-visible { outline: 2px solid var(--nbs-brand); outline-offset: 1px; }
+.side-toggle svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.side-toggle[aria-expanded='true'] { background: var(--nbs-mute-bg); }
+.layout.side-collapsed { grid-template-columns: minmax(0, 1fr); }
+.layout.side-collapsed .side { display: none; }
+.layout.side-collapsed .main { margin: 0 auto; }
+.nav-ghead { display: flex; align-items: center; gap: 2px; }
+.nav-chev {
+  flex: none; width: 24px; height: 24px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: transparent; color: var(--nbs-fg3); cursor: pointer;
+}
+.nav-chev:hover { background: var(--nbs-mute-bg); color: var(--nbs-fg); }
+.nav-chev svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s; }
+.nav-group.folded .nav-chev svg { transform: rotate(-90deg); }
+.nav-gtitle { flex: 1; min-width: 0; }
+.nav-gcount { font-size: 11.5px; color: var(--nbs-fg3); padding-right: 6px; }
+.nav-group.folded .nav-stories { display: none; }
+.side.filtering .nav-group.folded .nav-stories { display: block; }
+.nav-group.has-current .nav-gtitle { color: var(--nbs-brand-strong); }
+.foldall { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 6px 2px 10px; font-size: 12.5px; color: var(--nbs-fg3); }
+.foldall .count { margin: 0; }
+.foldall button { font: inherit; font-size: 12.5px; border: 0; background: none; padding: 0; color: var(--nbs-brand-strong); cursor: pointer; }
+
+/* ---- the welcome page: short, one column, plenty of room ---- */
+.topnav a[aria-current='page'] { color: var(--nbs-fg); font-weight: 600; }
+.logo { display: block; flex: none; }
+.welcome { max-width: 640px; margin: 0 auto; padding: 88px 24px 120px; }
+.welcome h1 { font-size: 34px; line-height: 1.2; letter-spacing: -0.02em; margin: 0 0 24px; }
+.welcome-lead { font-size: 18px; line-height: 1.6; color: var(--nbs-fg2); margin: 0 0 16px; }
+.welcome-links { list-style: none; margin: 40px 0 0; padding: 0; display: grid; gap: 12px; }
+.welcome-card {
+  display: block; padding: 16px 18px; border: 1px solid var(--nbs-border-strong); border-radius: 12px;
+  color: var(--nbs-fg); text-decoration: none; background: var(--nbs-bg);
+}
+.welcome-card:hover { border-color: var(--nbs-brand); }
+.welcome-card b { display: block; font-size: 17px; }
+.welcome-card span { display: block; margin-top: 2px; font-size: 14px; color: var(--nbs-fg3); }
+
+/* ---- the current state: a list to read, not to play ---- */
+.state-group { margin: 36px 0 0; }
+.state-group h2 { font-size: 20px; margin: 0 0 10px; }
+.state-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--nbs-border); }
+.state-list > li { border-bottom: 1px solid var(--nbs-border); }
+.state-row > summary {
+  display: grid; grid-template-columns: 56px minmax(0, 1fr) auto 18px; gap: 14px; align-items: baseline;
+  padding: 12px 4px; cursor: pointer; list-style: none;
+}
+.state-row > summary::-webkit-details-marker { display: none; }
+.state-row > summary::after {
+  content: ''; width: 7px; height: 7px; border: solid var(--nbs-fg3); border-width: 0 2px 2px 0;
+  transform: rotate(45deg); align-self: center; transition: transform 0.15s; margin-left: 4px;
+}
+.state-row[open] > summary::after { transform: rotate(-135deg); }
+.state-row > summary:hover .state-title { text-decoration: underline; }
+.state-row > summary:focus-visible { outline: 2px solid var(--nbs-brand); outline-offset: 2px; border-radius: 6px; }
+.state-row[hidden], .state-group[hidden], li:has(> .state-row[hidden]) { display: none; }
+.state-id { font: 600 12.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--nbs-fg3); }
+.state-main { display: block; }
+.state-title { display: block; font-size: 15.5px; margin: 0 0 2px; }
+.state-result { display: block; color: var(--nbs-fg2); font-size: 14.5px; }
+.tag {
+  display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+  border: 1px solid var(--nbs-border-strong); color: var(--nbs-fg2); background: transparent;
+}
+.tag-provisional { color: var(--nbs-brand-strong); border-color: var(--nbs-brand-strong); }
+.tag-open, .tag-new { color: #b45309; border-color: #d97706; }
+html[data-theme='dark'] .tag-open, html[data-theme='dark'] .tag-new { color: #fbbf24; border-color: #b45309; }
+@media (prefers-color-scheme: dark) { html:not([data-theme='light']) .tag-open, html:not([data-theme='light']) .tag-new { color: #fbbf24; border-color: #b45309; } }
+.state-demo { padding: 4px 4px 22px 70px; }
+.state-more { margin: 10px 0 0; font-size: 14px; }
+@media (max-width: 640px) { .state-row > summary { grid-template-columns: 1fr auto 18px; } .state-row .state-id { grid-column: 1 / -1; } .state-demo { padding-left: 4px; } }
+
+/* ---- up for discussion: each question with the answers side by side ---- */
+.talk { margin: 28px 0 0; padding: 20px 22px; border: 1px solid var(--nbs-border-strong); border-radius: 14px; background: var(--nbs-bg); }
+.talk header { display: flex; align-items: baseline; gap: 12px; }
+.talk h3 { margin: 0; font-size: 18px; }
+.talk-question { margin: 10px 0 4px; font-size: 16px; color: var(--nbs-fg); }
+.talk-note { margin: 14px 0 0; color: var(--nbs-fg2); font-style: italic; }
+.talk-links { display: flex; gap: 18px; margin: 14px 0 0; font-size: 14.5px; }
+.talk-join { font-weight: 600; }
+
+/* ---- a preview of a pull request: what it changes ---- */
+.preview-banner {
+  margin: 20px 0 0; padding: 10px 14px; border: 1px solid var(--nbs-brand); border-radius: 10px;
+  background: var(--nbs-brand-bg); color: var(--nbs-fg); font-size: 14.5px;
+}
+.change { margin: 32px 0 0; }
+.change header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.change h2 { margin: 0; font-size: 20px; }
+.change-what { margin: 0 0 12px; color: var(--nbs-fg2); }
+.change-diff { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 0 0 16px; }
+.change-diff > div { padding: 10px 14px; border: 1px solid var(--nbs-border); border-radius: 10px; background: var(--nbs-bg); }
+.change-diff b { font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--nbs-fg3); }
+.change-diff p { margin: 4px 0 0; }
+
+/* ---- the long title of the bar stays on one line: it gives way first (cut short, then left out), then the links scroll ---- */
+.brand { min-width: 0; flex: 0 100 auto; white-space: nowrap; }
+.brand-name, .brand-sep { flex: none; }
+.brand-page { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.topnav { flex: 0 1 auto; min-width: 0; margin-left: auto; white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+.topnav::-webkit-scrollbar { display: none; }
+.theme { flex: none; }
+@media (max-width: 1180px) { .topnav a { padding: 5px 7px; } }
+@media (max-width: 1060px) { .brand-sep, .brand-page { display: none; } .brand { flex: none; } }
+
+.talk-demo { margin: 16px 0 0; }
+
+/* ---- ways to change what is on the page ---- */
+.edit-story-row { margin: -4px 0 22px; text-align: right; font-size: 13.5px; }
+.edit-story-row[hidden] { display: none; }
+.edit-story-row a, .edit-story, .talk-links a[href*="/edit/"], .state-more a[href*="/edit/"] { color: var(--nbs-fg3); }
+.edit-story-row a:hover, .talk-links a[href*="/edit/"]:hover, .state-more a[href*="/edit/"]:hover { color: var(--nbs-brand-strong); }
+.site-foot { max-width: 1180px; margin: 0 auto; padding: 28px 32px 48px; font-size: 14px; color: var(--nbs-fg3); border-top: 1px solid var(--nbs-border); }
+.main .site-foot { max-width: none; padding-left: 0; padding-right: 0; margin-top: 40px; }
+.site-foot a { color: var(--nbs-fg2); }
+.welcome + .site-foot { max-width: 640px; padding-left: 24px; padding-right: 24px; }
+</style>
+</head>
+<body>
+
+<header class="topbar"><a class="brand" href="welcome.html" aria-label="Server Side Document Conformance Storybook, home"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="29" aria-hidden="true" class="logo" viewBox="0 0 39 51">  <path fill="#F37726" d="M20.005 38.114c-7.85 0-14.706-2.876-18.265-7.134a19.5 19.5 0 0 0 7.069 9.473 19.24 19.24 0 0 0 11.2 3.6c4.013 0 7.927-1.258 11.2-3.6a19.5 19.5 0 0 0 7.069-9.473c-3.567 4.258-10.423 7.134-18.273 7.134m-.002-27.694c7.85 0 14.706 2.876 18.265 7.133a19.5 19.5 0 0 0-7.069-9.473A19.24 19.24 0 0 0 20 4.48a19.24 19.24 0 0 0-11.2 3.6 19.5 19.5 0 0 0-7.069 9.473c3.567-4.248 10.423-7.134 18.273-7.134" class="jp-jupyter-icon-color"/>  <path fill="#767677" d="M37.194 3.154a3 3 0 0 1-.426 1.672 2.96 2.96 0 0 1-1.275 1.153 2.93 2.93 0 0 1-3.238-.505 3 3 0 0 1-.776-3.21c.2-.553.558-1.033 1.029-1.38a2.93 2.93 0 0 1 3.733.209c.576.532.919 1.274.953 2.061M9.228 46.393a3.77 3.77 0 0 1-.536 2.11 3.73 3.73 0 0 1-1.608 1.452 3.69 3.69 0 0 1-4.082-.638 3.75 3.75 0 0 1-1.097-1.875 3.8 3.8 0 0 1 .122-2.173 3.74 3.74 0 0 1 1.299-1.739 3.696 3.696 0 0 1 4.704.268 3.76 3.76 0 0 1 1.198 2.595M2.635 9.456a2.17 2.17 0 0 1-1.227-.318 2.2 2.2 0 0 1-.845-.951A2.22 2.22 0 0 1 .935 5.77a2.16 2.16 0 0 1 2.356-.577c.405.15.757.418 1.011.77a2.21 2.21 0 0 1-.156 2.783 2.17 2.17 0 0 1-1.511.71" class="jp-icon3"/></svg><span class="brand-name">Jupyter</span><span class="brand-sep">/</span><span class="brand-page">Server Side Document Conformance Storybook</span></a><nav class="topnav" aria-label="Pages"><a href="index.html" aria-current="page">This change</a><a href="current.html">Current state</a><a href="discussion.html">Up for discussion</a><a href="stories.html">All stories</a><a href="about.html">How to read these</a></nav><div class="theme" role="group" aria-label="Theme"><button type="button" data-theme-set="auto" aria-pressed="false">Auto</button><button type="button" data-theme-set="light" aria-pressed="false">Light</button><button type="button" data-theme-set="dark" aria-pressed="false">Dark</button></div></header>
+
+<main class="doc" id="top">
+<p class="preview-banner">A preview of pull request #20. This page shows only what changed; <a href="welcome.html">the whole site</a> is here too: <a href="current.html">current state</a>, <a href="discussion.html">up for discussion</a>, <a href="stories.html">all stories</a>.</p><section class="hero"><h1>What this changes</h1><p class="lead">4 stories: 0 new, 4 changed, 0 removed.</p></section><section class="change"><header><span class="tag tag-provisional">Changed</span><span class="state-id">agent/crash-before-autosave</span><h2>The server dies after the agent&#x27;s edit, before the next autosave</h2></header><p class="change-what">What changed: the alternatives.</p><article class="story-card" id="agent/crash-before-autosave" data-nbs><header class="nbs-head"><span class="nbs-id">agent/crash-before-autosave</span><h3>The server dies after the agent&#x27;s edit, before the next autosave</h3></header><p class="nbs-story">Nobody has the notebook open, but the server still holds it, so the agent edits the live copy and is told that it worked. The server then dies before the next autosave. When the server starts again, the agent&#x27;s edit is either in the file or gone.</p><ol><li><b>Your tab</b> opens the notebook</li><li><b>Your tab</b> the person closes the tab; the server still holds the notebook</li><li><b>AI agent</b> rewrites c1 as “fixed” through the server</li><li><b>Server</b> applies the edit and saves it to the file before telling the agent that it worked</li><li><b>File on disk</b> holds the edit</li><li><b>Server</b> dies before the next autosave</li><li><b>Server</b> starts again from the file</li><li><b>Your tab</b> later, a person opens the notebook</li></ol><div class="nbs-result"><b>What the product does</b><span>The agent&#x27;s edit survives: it was saved before the agent was told that it worked.</span></div></article></section><section class="change"><header><span class="tag tag-provisional">Changed</span><span class="state-id">agent/deletes-cell-person-edited</span><h2>The agent deletes a cell that a person edited while offline</h2></header><p class="change-what">What changed: the alternatives, the description.</p><article class="story-card" id="agent/deletes-cell-person-edited" data-nbs><header class="nbs-head"><span class="nbs-id">agent/deletes-cell-person-edited</span><h3>The agent deletes a cell that a person edited while offline</h3></header><p class="nbs-story">A person&#x27;s tab loses its connection and they type into c1. Meanwhile the agent, through the server, deletes c1. Then the tab reconnects. This is the story conflict/delete-while-typing with an agent as the one who deletes.</p><ol><li><b>Your tab</b> opens the notebook</li><li><b>Your tab</b> loses its connection</li><li><b>Your tab</b> types “+B-TYPED” at the end of c1</li><li><b>AI agent</b> meanwhile deletes c1 through the server</li><li><b>Server</b> applies the deletion</li><li><b>Your tab</b> reconnects</li><li><b>File on disk</b> autosave</li></ol><div class="nbs-result"><b>What the product does</b><span>The deletion wins, as it does between two people: the cell stays deleted and the typing goes with it.</span></div></article></section><section class="change"><header><span class="tag tag-provisional">Changed</span><span class="state-id">agent/rewrites-cell-person-typing</span><h2>The agent rewrites a cell while a person is typing in it</h2></header><p class="change-what">What changed: the alternatives.</p><article class="story-card" id="agent/rewrites-cell-person-typing" data-nbs><header class="nbs-head"><span class="nbs-id">agent/rewrites-cell-person-typing</span><h3>The agent rewrites a cell while a person is typing in it</h3></header><p class="nbs-story">A person is typing at the end of c1 in a tab. At the same moment the agent, through the server, rewrites c1 as “fixed”.</p><ol><li><b>Your tab</b> opens the notebook</li><li><b>Your tab</b> types “# check” at the end of c1</li><li><b>AI agent</b> at the same moment rewrites c1 as “fixed” through the server</li><li><b>Server</b> merges the two edits</li><li><b>Your tab</b> sees the merged cell</li><li><b>File on disk</b> autosave</li></ol><div class="nbs-result"><b>What the product does</b><span>Both survive, as between two people who are online: the cell holds the agent&#x27;s rewrite and the person&#x27;s typing.</span></div></article></section><section class="change"><header><span class="tag tag-provisional">Changed</span><span class="state-id">agent/writes-file-server-holds</span><h2>The agent writes the file although the server still holds the notebook</h2></header><p class="change-what">What changed: the description.</p><article class="story-card" id="agent/writes-file-server-holds" data-nbs><header class="nbs-head"><span class="nbs-id">agent/writes-file-server-holds</span><h3>The agent writes the file although the server still holds the notebook</h3></header><p class="nbs-story">A person types and closes the tab a moment later. The server still holds the notebook, with typing it has not saved yet. The agent takes the notebook for closed and edits the file directly. This depends on the answer to files/changed-outside-while-typing, the same question while the tab is still open.</p><ol><li><b>Your tab</b> opens the notebook</li><li><b>Your tab</b> types “+TYPED” at the end of c0; the server has not saved it yet</li><li><b>Your tab</b> the person closes the tab; the server still holds the notebook and the typing</li><li><b>AI agent</b> takes the notebook for closed and edits the file directly: rewrites c2 as “fixed”</li><li><b>File on disk</b> is changed</li><li><b>Server</b> notices the change before it saves, and merges it with the typing it holds</li><li><b>File on disk</b> holds both</li><li><b>Your tab</b> later, a person opens the notebook</li></ol><div class="nbs-result"><b>What the product does</b><span>The agent&#x27;s change is applied and the person&#x27;s last typing survives: both are in the file.</span></div></article></section>
+</main>
+<footer class="site-foot"><a href="https://github.com/Zsailer/jupyter-server-side-documents-conformance/tree/main/stories/storyboards" rel="noopener">Edit the stories on GitHub</a> · <a href="https://github.com/Zsailer/jupyter-server-side-documents-conformance/issues/new" rel="noopener">Report a problem</a> · <a href="https://github.com/Zsailer/jupyter-server-side-documents-conformance/blob/main/CONTRIBUTING.md" rel="noopener">How to contribute</a></footer>
+
+<script id="data" type="application/json">{"stories": {"agent/crash-before-autosave": {"aliases": ["AI7"], "title": "The server dies after the agent's edit, before the next autosave", "story": "Nobody has the notebook open, but the server still holds it, so the agent edits the live copy and is told that it worked. The server then dies before the next autosave. When the server starts again, the agent's edit is either in the file or gone.", "steps": [{"at": "tab", "kind": "open", "text": "opens the notebook", "cells": ["c0", "c1", "c2"]}, {"at": "tab", "kind": "leave", "text": "the person closes the tab; the server still holds the notebook"}, {"at": "ai", "kind": "type", "to": "server", "text": "rewrites c1 as “fixed” through the server"}, {"at": "server", "kind": "note", "text": "applies the edit and saves it to the file before telling the agent that it worked", "cells": ["c0", "c1=fixed", "c2"]}, {"at": "file", "kind": "save", "text": "holds the edit", "cells": ["c0", "c1=fixed", "c2"]}, {"at": "server", "kind": "crash", "text": "dies before the next autosave"}, {"at": "server", "kind": "rebuild", "text": "starts again from the file", "cells": ["c0", "c1=fixed", "c2"]}, {"at": "tab", "kind": "open", "text": "later, a person opens the notebook", "cells": ["c0", "c1=fixed", "c2"]}], "result": "The agent's edit survives: it was saved before the agent was told that it worked.", "ends": {"tab": ["c0", "c1=fixed", "c2"], "server": ["c0", "c1=fixed", "c2"], "file": ["c0", "c1=fixed", "c2"]}, "risk": "An agent that is told “done” for work that can still vanish cannot be trusted to report what it did.", "discussion": true, "decision": {"question": "An edit that a person types is not saved before it is relayed (see crash/dies-before-save-no-tab-left). Should an edit made by an AI agent be saved before the agent is told that it worked?", "options": [{"label": "The agent is told after the edit is saved", "proposed": true, "detail": "An agent's edits are few compared with keystrokes, so writing them to the file before answering costs little. The agent never reports success for work that can vanish.", "ends": ["c0", "c1=fixed", "c2"]}, {"label": "The same bound as typing", "detail": "The edit is saved with the next autosave, like anything typed. If the server dies in between and no tab holds the edit, it is lost, although the agent was told that it worked. An agent that needs to be sure has to check the file afterwards.", "ends": ["c0", "c1", "c2"]}], "answerLabel": "Suggested"}, "badges": [{"text": "Needs alignment", "tone": "need"}], "id": "agent/crash-before-autosave", "group": "agent"}, "agent/deletes-cell-person-edited": {"aliases": ["AI6"], "title": "The agent deletes a cell that a person edited while offline", "story": "A person's tab loses its connection and they type into c1. Meanwhile the agent, through the server, deletes c1. Then the tab reconnects. This is the story conflict/delete-while-typing with an agent as the one who deletes.", "steps": [{"at": "tab", "kind": "open", "text": "opens the notebook", "cells": ["c0", "c1", "c2"]}, {"at": "tab", "kind": "offline", "text": "loses its connection"}, {"at": "tab", "kind": "type", "text": "types “+B-TYPED” at the end of c1", "cells": ["c0", "c1=+B-TYPED", "c2"]}, {"at": "ai", "kind": "delete", "to": "server", "text": "meanwhile deletes c1 through the server"}, {"at": "server", "kind": "note", "text": "applies the deletion", "cells": ["c0", "c2"]}, {"at": "tab", "kind": "reconnect", "to": "server", "text": "reconnects", "cells": ["c0", "c2"]}, {"at": "file", "kind": "save", "text": "autosave", "cells": ["c0", "c2"]}], "result": "The deletion wins, as it does between two people: the cell stays deleted and the typing goes with it.", "ends": {"tab": ["c0", "c2"], "server": ["c0", "c2"], "file": ["c0", "c2"]}, "risk": "A person who was offline would lose their typing because of an edit they never saw, made by a program.", "discussion": true, "decision": {"question": "A deletion wins over typing made in the same cell at the same moment (see conflict/delete-while-typing). Does the answer change when the one who deleted the cell is an AI agent and not a person?", "options": [{"label": "The deletion wins, as for a person", "proposed": true, "detail": "One rule for everyone keeps the product simple: the agent was asked to change the notebook, and the merge treats its edits like anyone else's.", "ends": ["c0", "c2"]}, {"label": "The typing is kept as a recovered copy", "detail": "The person did not delete the cell themselves, so what they typed is set aside as a copy marked recovered, for everyone. Nothing a person typed is ever lost to a program.", "ends": ["c0", "?c1 +B-TYPED=recovered", "c2"]}], "answerLabel": "Suggested"}, "badges": [{"text": "Needs alignment", "tone": "need"}], "id": "agent/deletes-cell-person-edited", "group": "agent"}, "agent/rewrites-cell-person-typing": {"aliases": ["AI5"], "title": "The agent rewrites a cell while a person is typing in it", "story": "A person is typing at the end of c1 in a tab. At the same moment the agent, through the server, rewrites c1 as “fixed”.", "steps": [{"at": "tab", "kind": "open", "text": "opens the notebook", "cells": ["c0", "c1", "c2"]}, {"at": "tab", "kind": "type", "text": "types “# check” at the end of c1", "cells": ["c0", "c1=+# check", "c2"]}, {"at": "ai", "kind": "type", "to": "server", "text": "at the same moment rewrites c1 as “fixed” through the server"}, {"at": "server", "kind": "note", "text": "merges the two edits", "cells": ["c0", "c1=fixed + # check", "c2"]}, {"at": "tab", "kind": "note", "text": "sees the merged cell", "cells": ["c0", "c1=fixed + # check", "c2"]}, {"at": "file", "kind": "save", "text": "autosave", "cells": ["c0", "c1=fixed + # check", "c2"]}], "result": "Both survive, as between two people who are online: the cell holds the agent's rewrite and the person's typing.", "ends": {"tab": ["c0", "c1=fixed + # check", "c2"], "server": ["c0", "c1=fixed + # check", "c2"], "file": ["c0", "c1=fixed + # check", "c2"]}, "risk": "A person who is typing must not have their words wiped by an agent, and the agent's rewrite must not be thrown away silently either.", "discussion": true, "decision": {"question": "An AI agent rewrites a cell while a person is typing in it. Who gives way?", "options": [{"label": "Both are kept", "proposed": true, "detail": "As between two people who are online (see conflict/rewrite-same-cell): the merge keeps both, one after the other, and the cell may need a human look. Nothing is lost and nobody is blocked.", "ends": ["c0", "c1=fixed + # check", "c2"]}, {"label": "The agent waits", "detail": "The server refuses the agent's edit to a cell someone is typing in. The agent tries again when the cell has been quiet for a moment. The person is never interrupted, and the agent has to be able to retry.", "ends": ["c0", "c1=+# check", "c2", "*the agent's rewrite is applied later"]}, {"label": "The person decides", "detail": "The agent's rewrite is shown to the person as a suggestion, and nothing changes until they accept it. Nothing is ever merged without a person, at the price of a person who must always answer.", "ends": ["c0", "c1=+# check", "c2", "*the agent's rewrite waits for the person"]}], "answerLabel": "Suggested"}, "badges": [{"text": "Needs alignment", "tone": "need"}], "id": "agent/rewrites-cell-person-typing", "group": "agent"}, "agent/writes-file-server-holds": {"aliases": ["AI9"], "title": "The agent writes the file although the server still holds the notebook", "story": "A person types and closes the tab a moment later. The server still holds the notebook, with typing it has not saved yet. The agent takes the notebook for closed and edits the file directly. This depends on the answer to files/changed-outside-while-typing, the same question while the tab is still open.", "steps": [{"at": "tab", "kind": "open", "text": "opens the notebook", "cells": ["c0", "c1", "c2"]}, {"at": "tab", "kind": "type", "text": "types “+TYPED” at the end of c0; the server has not saved it yet", "cells": ["c0=+TYPED", "c1", "c2"]}, {"at": "tab", "kind": "leave", "text": "the person closes the tab; the server still holds the notebook and the typing"}, {"at": "ai", "kind": "outside", "to": "file", "text": "takes the notebook for closed and edits the file directly: rewrites c2 as “fixed”"}, {"at": "file", "kind": "outside", "text": "is changed", "cells": ["c0", "c1", "c2=fixed"]}, {"at": "server", "kind": "note", "text": "notices the change before it saves, and merges it with the typing it holds", "cells": ["c0=+TYPED", "c1", "c2=fixed"]}, {"at": "file", "kind": "save", "text": "holds both", "cells": ["c0=+TYPED", "c1", "c2=fixed"]}, {"at": "tab", "kind": "open", "text": "later, a person opens the notebook", "cells": ["c0=+TYPED", "c1", "c2=fixed"]}], "result": "The agent's change is applied and the person's last typing survives: both are in the file.", "ends": {"tab": ["c0=+TYPED", "c1", "c2=fixed"], "server": ["c0=+TYPED", "c1", "c2=fixed"], "file": ["c0=+TYPED", "c1", "c2=fixed"]}, "risk": "An agent that picks the wrong path must not erase what a person typed just before closing the tab, with nobody left to hold it.", "badges": [], "id": "agent/writes-file-server-holds", "group": "agent"}}, "config": {"bank": {"x9": "x9 = 9"}, "rewrites": {"fixed": "df = df.dropna()", "EDITED ON DISK": "df = pd.read_csv(path, sep=\";\")", "EXTERNAL EDIT": "df = pd.read_csv(path, sep=\";\")", "EDITED OFFLINE": "df = df.dropna()"}, "outputs": {"1 output": "42"}}}</script>
+<script>/*!
+ * nbscenario — live notebook scenarios.
+ *
+ * Turns a scenario spec (lanes, steps, cells; see docs/02-spec-reference.md) into side-by-side notebook
+ * windows that play the story: who does what, what each copy of the notebook holds after every step.
+ *
+ * No dependencies, no build step. Works in the browser (window.NbScenario) and in node (require) for tests:
+ * everything above `mount` is pure and never touches the DOM.
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.NbScenario = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ vocabulary */
+
+  /** Lanes, in the order they are drawn, with their default names. */
+  const LANES = {
+    tab: 'Your tab',
+    tab2: 'Second tab',
+    tab3: 'Third tab',
+    tab4: 'Fourth tab',
+    ai: 'AI agent',
+    server: 'Server',
+    record: 'History record',
+    store: 'Output store',
+    file: 'File on disk'
+  };
+  const LANE_ORDER = Object.keys(LANES);
+  /** Lanes that act on the notebook but hold no copy of it. */
+  const NO_COPY = new Set(['ai']);
+  const family = id => (/^tab\d*$/.test(id) ? 'tab' : id);
+
+  /**
+   * Kinds of step. `ms` is how long the step is on screen before typing time is added; `user` steps are
+   * something a person does (their cells animate as typing); `blip` steps are over in a moment in real life
+   * and are drawn that way.
+   */
+  const KINDS = {
+    open: { icon: 'enter', ms: 1300, verb: 'opens' },
+    offline: { icon: 'pause', ms: 1300, verb: 'goes offline' },
+    reconnect: { icon: 'swap', ms: 1300, verb: 'reconnects', blip: true },
+    leave: { icon: 'exit', ms: 1100, verb: 'leaves' },
+    type: { icon: 'pencil', ms: 900, verb: 'types', user: true },
+    add: { icon: 'plus', ms: 900, verb: 'adds a cell', user: true },
+    delete: { icon: 'cross', ms: 1300, verb: 'deletes', user: true },
+    move: { icon: 'updown', ms: 1300, verb: 'moves a cell', user: true },
+    run: { icon: 'play', ms: 1300, verb: 'runs', user: true },
+    free: { icon: 'exit', ms: 1200, verb: 'lets go' },
+    rebuild: { icon: 'refresh', ms: 1400, verb: 'rebuilds', blip: true },
+    crash: { icon: 'bolt', ms: 1300, verb: 'dies', blip: true },
+    save: { icon: 'down', ms: 1100, verb: 'saves' },
+    deadline: { icon: 'clock', ms: 1500, verb: 'waits' },
+    fault: { icon: 'lost', ms: 1400, verb: 'loses a message' },
+    late: { icon: 'hourglass', ms: 1400, verb: 'answers late' },
+    outside: { icon: 'doc', ms: 1400, verb: 'is edited outside' },
+    restore: { icon: 'undo', ms: 1300, verb: 'is restored' },
+    remove: { icon: 'bin', ms: 1300, verb: 'is removed' },
+    note: { icon: 'info', ms: 1400, verb: '' }
+  };
+
+  /** 16x16 line icons (stroke only unless the path has class "f"). */
+  const ICONS = {
+    enter: '<path d="M10 3h3v10h-3M7 5l3 3-3 3M10 8H3"/>',
+    exit: '<path d="M6 3H3v10h3M9 5l3 3-3 3M12 8H6"/>',
+    pause: '<path class="f" d="M4.5 3h2.5v10H4.5zM9 3h2.5v10H9z"/>',
+    play: '<path class="f" d="M5 3l8 5-8 5z"/>',
+    swap: '<path d="M3 6h9M9.5 3.5L12 6l-2.5 2.5M13 10H4M6.5 7.5L4 10l2.5 2.5"/>',
+    refresh: '<path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v3h-3"/>',
+    pencil: '<path d="M3 13l.8-3L11 2.8 13.2 5 6 12.2zM9.5 4.3l2.2 2.2"/>',
+    plus: '<path d="M8 3v10M3 8h10"/>',
+    cross: '<path d="M4 4l8 8M12 4l-8 8"/>',
+    updown: '<path d="M5 13V3M2.5 5.5L5 3l2.5 2.5M11 3v10M8.5 10.5L11 13l2.5-2.5"/>',
+    bolt: '<path class="f" d="M9.5 1.5L4 9h3.5l-1 5.5L12 7H8.5z"/>',
+    down: '<path d="M8 2.5v7.5M4.8 7.2L8 10.4l3.2-3.2M3 13.5h10"/>',
+    clock: '<circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2.2 1.4"/>',
+    lost: '<rect x="2" y="4" width="12" height="8.5" rx="1.2"/><path d="M2.3 5l5.7 4.2L13.7 5M2.5 14L13.5 2.5"/>',
+    hourglass: '<path d="M4 2h8M4 14h8M5 2v3l3 3-3 3v3M11 2v3L8 8l3 3v3"/>',
+    doc: '<path d="M4 2h5l3 3v9H4zM9 2v3h3M6 9h4M6 11.5h4"/>',
+    undo: '<path d="M3 8a5 5 0 1 1 1.6 3.7M3 13v-3h3"/>',
+    bin: '<path d="M3.5 4.5h9M6 4.5V3h4v1.5M4.8 4.5l.7 9h5l.7-9"/>',
+    info: '<circle cx="8" cy="8" r="5.8"/><path d="M8 7.2v3.6M8 5v.3"/>',
+    spark: '<path class="f" d="M8 1.5l1.4 4.6 4.6 1.4-4.6 1.4L8 13.5 6.6 8.9 2 7.5l4.6-1.4z"/>',
+    server: '<rect x="2.5" y="3" width="11" height="4" rx="1"/><rect x="2.5" y="9" width="11" height="4" rx="1"/><path d="M5 5h.1M5 11h.1"/>',
+    window: '<rect x="2" y="3" width="12" height="10" rx="1.4"/><path d="M2 6.2h12"/>',
+    mail: '<rect x="2" y="3.5" width="12" height="9" rx="1.4"/><path d="M2.3 4.7L8 9l5.7-4.3"/>',
+    box: '<path d="M2.5 5L8 2.5 13.5 5v6L8 13.5 2.5 11zM2.5 5L8 7.5 13.5 5M8 7.5v6"/>'
+  };
+
+  const icon = (name, cls) =>
+    '<svg class="nbs-ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 16 16" aria-hidden="true">' + ICONS[name] + '</svg>';
+
+  /** What each lane shows in its status chip. [label, tone] */
+  const STATUS = {
+    tab: { online: ['Connected', 'ok'], offline: ['Offline', 'bad'], reconnecting: ['Reconnecting…', 'warn'], closed: ['Closed', 'mute'] },
+    server: { holding: ['Holds the notebook', 'ok'], idle: ['Not holding it', 'mute'], rebuilding: ['Rebuilding…', 'warn'], stopped: ['Stopped', 'bad'] },
+    file: { saved: ['Saved', 'ok'], changed: ['Changed outside', 'warn'], missing: ['Deleted', 'bad'], restored: ['Restored', 'warn'] }
+  };
+  /** The status a lane takes when a kind of step happens to it. */
+  const AFTER = {
+    open: { tab: 'online', server: 'holding' },
+    offline: { tab: 'offline' },
+    reconnect: { tab: 'reconnecting' },
+    leave: { tab: 'closed' },
+    free: { server: 'idle' },
+    rebuild: { server: 'rebuilding' },
+    crash: { server: 'stopped' },
+    save: { file: 'saved' },
+    outside: { file: 'changed' },
+    remove: { file: 'missing' },
+    restore: { file: 'restored' }
+  };
+  /** A moment later, these statuses settle. */
+  const SETTLE = { reconnecting: 'online', rebuilding: 'holding' };
+  const START_STATUS = { tab: 'online', server: 'holding', file: 'saved' };
+
+  /* ------------------------------------------------------------------ defaults for the cell display */
+
+  const DEFAULTS = {
+    /** What a cell name stands for, as code. A name that is not here is shown as print("name"). */
+    bank: {
+      c0: 'import pandas as pd',
+      c1: 'df = pd.read_csv(path)',
+      c2: 'df.describe()',
+      tests: 'assert len(df) > 0',
+      docs: '# How to run this notebook'
+    },
+    /** A note that rewrites the cell: the cell shows this code and the note as a tag. */
+    rewrites: {},
+    /** What an output note ("1 output") shows. */
+    outputs: { default: '42' },
+    /** Speed of typing, in ms per character. */
+    typingMs: 55
+  };
+  const withDefaults = cfg => {
+    cfg = cfg || {};
+    return {
+      bank: Object.assign({}, DEFAULTS.bank, cfg.bank),
+      rewrites: Object.assign({}, DEFAULTS.rewrites, cfg.rewrites),
+      outputs: Object.assign({}, DEFAULTS.outputs, cfg.outputs),
+      typingMs: cfg.typingMs || DEFAULTS.typingMs
+    };
+  };
+
+  /* ------------------------------------------------------------------ cells */
+
+  const MARKS = { '': 'plain', '+': 'new', '-': 'gone', '^': 'moved', '?': 'copy', '#': 'out', '!': 'bad' };
+  const CELL_RE = /^([+\-^?#!]?)([^=]*?)(?:=([\s\S]*))?$/;
+
+  /** `{look, name, note}` of a cell token. `look` is a value of MARKS, `edited` or `remark`. */
+  function parseCell(token) {
+    if (token.charAt(0) === '*') return { look: 'remark', name: token.slice(1).trim(), note: '' };
+    const m = CELL_RE.exec(token);
+    const name = m[2].trim();
+    const note = (m[3] || '').trim();
+    let look = MARKS[m[1]];
+    if (look === 'plain' && note) look = 'edited';
+    return { look, name, note };
+  }
+
+  /** "+A +B" -> ["# A", "# B"]: typed text is drawn as a trailing comment so that it reads as code. */
+  function splitTyped(note) {
+    return note
+      .split(/\s+(?=\+)/)
+      .map(s => s.replace(/^\+/, '').trim())
+      .filter(Boolean)
+      .map(s => (s.charAt(0) === '#' ? s : '# ' + s));
+  }
+
+  /** How one cell token is shown. Pure. */
+  function viewOf(token, cfg) {
+    const p = parseCell(token);
+    if (p.look === 'remark') return { remark: true, text: p.name, key: '~' + p.name, look: 'remark' };
+    let name = p.name;
+    let typed = [];
+    const withTyped = /^(\S+) (\+.+)$/.exec(name); // "c1 +B-TYPED": a copy of c1 with typing in it
+    if (withTyped) {
+      name = withTyped[1];
+      typed = typed.concat(splitTyped(withTyped[2]));
+    }
+    let base = cfg.bank[name] !== undefined ? cfg.bank[name] : 'print(' + JSON.stringify(name) + ')';
+    let tag = '';
+    let out = null;
+    let note = p.note;
+    if (note) {
+      if (/^\d+ outputs?$/.test(note)) {
+        out = cfg.outputs[note] !== undefined ? cfg.outputs[note] : cfg.outputs.default;
+      } else if (note.charAt(0) === '+') {
+        typed = typed.concat(splitTyped(note));
+      } else {
+        const parts = note.split(' + ');
+        if (parts.length === 2 && cfg.rewrites[parts[0]] !== undefined) {
+          base = cfg.rewrites[parts[0]];
+          tag = parts[0];
+          typed = typed.concat(splitTyped('+' + parts[1]));
+        } else if (cfg.rewrites[note] !== undefined) {
+          base = cfg.rewrites[note];
+          tag = note;
+        } else if (/ = /.test(note)) {
+          base = note; // the note is the new code
+        } else {
+          tag = note;
+        }
+      }
+    }
+    const code = base + typed.map(t => '  ' + t).join('');
+    return { key: name, look: p.look, base, typed, code, tag, out, sig: [p.look, code, tag, out].join('\u0000') };
+  }
+
+  /* ------------------------------------------------------------------ timeline */
+
+  class SpecError extends Error {}
+
+  function lanesOf(step) {
+    return Array.isArray(step.at) ? step.at : [step.at];
+  }
+
+  /** The lanes drawn, in order: those the spec lists, else those it uses. */
+  function laneList(spec) {
+    const given = spec.lanes || {};
+    let ids = LANE_ORDER.filter(l => l in given);
+    if (!ids.length) {
+      const used = new Set(Object.keys(spec.start || { file: 1 }));
+      Object.keys(spec.ends || {}).forEach(l => l !== 'all' && used.add(l));
+      (spec.steps || []).forEach(s => {
+        lanesOf(s).forEach(l => used.add(l));
+        if (s.to) used.add(s.to);
+      });
+      ids = LANE_ORDER.filter(l => used.has(l));
+    }
+    return ids.map(id => ({ id, title: given[id] || LANES[id] }));
+  }
+
+  const emptyLane = id => ({
+    id,
+    visible: false,
+    status: null,
+    cells: [],
+    ghosts: [],
+    text: '',
+    verb: '',
+    kind: '',
+    acting: false,
+    receiving: false,
+    unchanged: false,
+    active: null,
+    editing: false
+  });
+
+  const stripFx = v => (v.fx || v.typeAll || v.typeText || v.diff ? Object.assign({}, v, { fx: null, typeAll: false, typeText: '', before: '', diff: false }) : v);
+
+  /** The next frame starts from the last one, with everything that was momentary cleared. */
+  function carry(prev) {
+    const out = {};
+    Object.keys(prev).forEach(id => {
+      const l = prev[id];
+      out[id] = Object.assign({}, l, {
+        cells: l.cells.map(stripFx),
+        ghosts: [],
+        acting: false,
+        receiving: false,
+        unchanged: false,
+        verb: '',
+        kind: '',
+        text: l.text,
+        status: SETTLE[l.status] || l.status
+      });
+    });
+    return out;
+  }
+
+  /** Put new cells in a lane, working out what changed (for the animation). */
+  function setCells(lane, tokens, user, cfg) {
+    const prev = lane.cells;
+    const prevByKey = new Map(prev.filter(c => !c.remark).map((c, i) => [c.key, { c, i }]));
+    const seen = {};
+    const views = [];
+    const ghosts = [];
+    (typeof tokens === 'string' ? ['*' + tokens] : tokens).forEach((tok, idx) => {
+      const v = viewOf(tok, cfg);
+      if (v.look === 'gone') {
+        ghosts.push(Object.assign({}, v, { at: idx, fx: 'gone' }));
+        return;
+      }
+      seen[v.key] = (seen[v.key] || 0) + 1;
+      if (seen[v.key] > 1) v.key += '~' + seen[v.key];
+      views.push(v);
+    });
+    let typedKey = null;
+    let typedChars = 0;
+    views.forEach((v, i) => {
+      if (v.remark) return;
+      const old = prevByKey.get(v.key);
+      if (!old) {
+        if (user && v.look === 'new') {
+          v.typeAll = true;
+          typedKey = v.key;
+          typedChars = Math.max(typedChars, v.code.length);
+        }
+        v.fx = 'enter';
+      } else if (old.c.sig !== v.sig) {
+        const had = old.c.typed;
+        const grew = v.typed.length > had.length && had.every((t, j) => t === v.typed[j]);
+        if (user && grew) {
+          v.typeText = v.typed.slice(had.length).map(t => '  ' + t).join('');
+          v.before = v.code.slice(0, v.code.length - v.typeText.length);
+          typedKey = v.key;
+          typedChars = Math.max(typedChars, v.typeText.length);
+        }
+        v.fx = 'changed';
+      } else if (old.i !== i && v.look === 'moved') {
+        v.fx = 'moved';
+      }
+    });
+    // what was there and no longer is: shown struck through for a moment
+    const keys = new Set(views.map(v => v.key));
+    prev.forEach((c, i) => {
+      if (!c.remark && !keys.has(c.key) && !ghosts.some(g => g.key === c.key)) ghosts.push(Object.assign({}, c, { at: i, fx: 'gone' }));
+    });
+    lane.cells = views;
+    lane.ghosts = ghosts;
+    if (typedKey) {
+      lane.active = typedKey;
+      lane.editing = !!user;
+    } else {
+      lane.editing = false;
+    }
+    return typedChars;
+  }
+
+  /**
+   * The server loads the notebook from the file when the first tab opens it (so its window is not blank while the file
+   * and the tab both hold cells), and its live copy is gone when it lets go of the notebook or dies.
+   */
+  function loadOrDrop(frameLanes, step, at, cfg) {
+    const server = frameLanes.server;
+    if (!server) return;
+    const names = at.filter(id => family(id) === 'server');
+    // a step that gives the server cells means it holds the notebook (it loaded it, say)
+    if (names.length && 'cells' in step && step.kind !== 'free' && step.kind !== 'crash' && server.status === 'idle' && server.cells.length) server.status = 'holding';
+    if (step.kind === 'open' && at.some(id => family(id) === 'tab') && server.status !== 'holding' && !names.length) {
+      const opener = frameLanes[at.find(id => family(id) === 'tab')];
+      const from = frameLanes.file && frameLanes.file.visible && frameLanes.file.cells.length ? frameLanes.file : opener;
+      server.visible = true;
+      server.status = 'holding';
+      server.cells = from.cells.map(v => Object.assign({}, v, { fx: 'enter', diff: false, typeAll: false, typeText: '', before: '' }));
+      server.ghosts = [];
+    }
+    // a tab that opens the notebook shows what it loaded, not what it held before it closed
+    if (step.kind === 'open' && !('cells' in step) && server.status === 'holding' && server.cells.length) {
+      at.filter(id => family(id) === 'tab').forEach(id => {
+        frameLanes[id].cells = server.cells.map(v => Object.assign({}, v, { fx: 'enter', diff: false, typeAll: false, typeText: '', before: '' }));
+        frameLanes[id].ghosts = [];
+        frameLanes[id].active = null;
+      });
+    }
+    if ((step.kind === 'free' || step.kind === 'crash') && names.length && !('cells' in step)) {
+      setCells(server, [], false, cfg);
+      server.active = null;
+    }
+  }
+
+  /**
+   * On a reconnect, mark what differs between the tab and the others: the pause before the jump. The reference is the
+   * server's copy when the story gives it one, else the copy of a tab that is still connected.
+   */
+  function markDiff(frameLanes, step) {
+    if (step.kind !== 'reconnect') return;
+    const away = lane => lanesOf(step).indexOf(lane.id) >= 0 || lane.status === 'offline' || lane.status === 'closed';
+    lanesOf(step).forEach(id => {
+      const tab = frameLanes[id];
+      if (!tab || !tab.cells.length) return;
+      const named = step.to && frameLanes[step.to];
+      let ref = named && named.cells.length ? named : null;
+      if (!ref) {
+        ref = Object.keys(frameLanes).map(k => frameLanes[k]).find(l => l.visible && l.cells.length && !away(l) && !NO_COPY.has(l.id));
+      }
+      if (!ref) return;
+      const server = family(ref.id) === 'server' || family(ref.id) === 'file';
+      const mineTag = server ? 'differs from the server' : 'differs from the other tab';
+      const theirTag = server ? 'the server’s version' : 'the other tab’s version';
+      const pool = {};
+      ref.cells.forEach(c => !c.remark && (pool[c.code] = (pool[c.code] || 0) + 1));
+      const mine = {};
+      tab.cells.forEach(c => !c.remark && (mine[c.code] = (mine[c.code] || 0) + 1));
+      tab.cells = tab.cells.map(c => {
+        if (c.remark) return c;
+        if (pool[c.code] > 0) {
+          pool[c.code]--;
+          return c;
+        }
+        return Object.assign({}, c, { diff: mineTag });
+      });
+      ref.cells = ref.cells.map(c => {
+        if (c.remark) return c;
+        if (mine[c.code] > 0) {
+          mine[c.code]--;
+          return c;
+        }
+        return Object.assign({}, c, { diff: theirTag });
+      });
+    });
+  }
+
+  /** A lost message is on its way to somewhere: the server, or, if the server's message is lost, a tab. */
+  function lostTarget(frameLanes, at) {
+    const id = at[0];
+    if (family(id) === 'server') return Object.keys(frameLanes).find(l => family(l) === 'tab') || null;
+    return frameLanes.server ? 'server' : null;
+  }
+
+  const codesOf = cells => cells.filter(c => !c.remark).map(c => c.code).join('\n');
+
+  /**
+   * A reconnect, a rebuild or a late answer that leaves a copy exactly as it was is an event worth showing: it is the
+   * product keeping its promise. Mark the lanes it happened to.
+   */
+  function markUnchanged(before, after, ids) {
+    ids.forEach(id => {
+      const b = before[id];
+      const a = after[id];
+      if (!a || !b) return;
+      const real = a.cells.filter(c => !c.remark);
+      if (real.length && codesOf(a.cells) === codesOf(b.cells) && !real.some(c => c.diff)) a.unchanged = true;
+    });
+  }
+
+  const cloneLanes = lanes => {
+    const out = {};
+    Object.keys(lanes).forEach(id => (out[id] = Object.assign({}, lanes[id])));
+    return out;
+  };
+
+  /**
+   * The frames of a story: `start`, one per step, `end`. Each frame holds a snapshot of every lane,
+   * what is momentary in it (typing, changes, ghosts) and how long it stays on screen.
+   */
+  function buildTimeline(spec, config) {
+    const cfg = withDefaults(config);
+    if (!Array.isArray(spec.steps) || !spec.steps.length) throw new SpecError('a scenario has steps');
+    const lanes = laneList(spec);
+    const ids = lanes.map(l => l.id);
+    const titleOf = id => (lanes.find(l => l.id === id) || { title: LANES[id] || id }).title;
+    let cur = {};
+    ids.forEach(id => (cur[id] = emptyLane(id)));
+    // by default the file holds three cells; a story that does not draw the file just does not show them
+    // a server that is drawn holds nothing until somebody opens the notebook
+    if (cur.server) {
+      cur.server.visible = true;
+      cur.server.status = 'idle';
+    }
+    const start = spec.start || (cur.file ? { file: ['c0', 'c1', 'c2'] } : {});
+    Object.keys(start).forEach(id => {
+      if (!cur[id]) throw new SpecError('start names a lane that is not drawn: ' + id);
+      cur[id].visible = true;
+      cur[id].status = START_STATUS[family(id)] || null;
+      setCells(cur[id], start[id], false, cfg);
+      cur[id].cells = cur[id].cells.map(stripFx);
+      cur[id].ghosts = [];
+    });
+    const frames = [{ index: 0, kind: 'start', text: 'Start: what each copy of the notebook holds', at: [], to: null, ms: 1100, lanes: cloneLanes(cur) }];
+
+    spec.steps.forEach((st, i) => {
+      const kind = KINDS[st.kind];
+      if (!kind) throw new SpecError('step ' + (i + 1) + ': unknown kind ' + st.kind);
+      const next = carry(cur);
+      const at = lanesOf(st);
+      let typedChars = 0;
+      at.concat(st.to ? [st.to] : []).forEach(id => {
+        if (!next[id]) throw new SpecError('step ' + (i + 1) + ': lane ' + id + ' is not drawn');
+      });
+      at.forEach(id => {
+        const l = next[id];
+        l.visible = true;
+        l.acting = true;
+        l.verb = kind.verb;
+        l.kind = st.kind;
+        l.text = st.text;
+        const after = (AFTER[st.kind] || {})[family(id)];
+        if (after) l.status = after;
+        else if (!l.status && STATUS[family(id)]) l.status = START_STATUS[family(id)];
+        if ('cells' in st && !NO_COPY.has(id)) typedChars = Math.max(typedChars, setCells(l, st.cells, !!kind.user, cfg));
+      });
+      loadOrDrop(next, st, at, cfg);
+      if (st.to) {
+        next[st.to].visible = true;
+        next[st.to].receiving = true;
+        if (!next[st.to].status && STATUS[family(st.to)]) next[st.to].status = START_STATUS[family(st.to)];
+      }
+      markDiff(next, st);
+      if (st.kind === 'reconnect' || st.kind === 'rebuild' || st.kind === 'late') markUnchanged(cur, next, at.concat(st.to ? [st.to] : []));
+      const typing = Math.min(typedChars * cfg.typingMs, 2600);
+      const reading = Math.max(0, st.text.length - 70) * 12;
+      frames.push({
+        index: i + 1,
+        kind: st.kind,
+        text: st.text,
+        at,
+        to: st.to || (st.kind === 'fault' ? lostTarget(next, at) : null),
+        user: !!kind.user,
+        blip: !!kind.blip,
+        ms: Math.round(kind.ms + typing + reading),
+        typingStart: 350,
+        lanes: cloneLanes(next)
+      });
+      cur = next;
+    });
+
+    frames.push(endFrame(spec, cur, ids, cfg, frames.length));
+    const starts = [];
+    let total = 0;
+    frames.forEach(f => {
+      starts.push(total);
+      total += f.ms;
+    });
+    return { lanes, frames, starts, total, config: cfg, titleOf };
+  }
+
+  /** The last frame: every lane that holds a copy shows how the story must end. */
+  function endFrame(spec, cur, ids, cfg, index, ends) {
+    ends = ends || spec.ends || {};
+    if (Array.isArray(ends) || typeof ends === 'string') ends = { all: ends };
+    const next = carry(cur);
+    // when the story is over the file has been saved again, whatever changed it on the way
+    ids.forEach(id => {
+      if (next[id].status === 'changed' || next[id].status === 'restored') next[id].status = 'saved';
+    });
+    ids.forEach(id => {
+      if (NO_COPY.has(id)) return;
+      const cells = id in ends ? ends[id] : ends.all;
+      if (cells === undefined) return;
+      next[id].visible = true;
+      if (!next[id].status && STATUS[family(id)]) next[id].status = START_STATUS[family(id)];
+      setCells(next[id], cells, false, cfg);
+    });
+    return { index, kind: 'end', text: spec.result || '', at: [], to: null, end: true, ms: 3400, lanes: cloneLanes(next) };
+  }
+
+  /** The timeline of a story whose ending is the one an option of its decision gives. */
+  function withEnding(tl, spec, ends) {
+    const frames = tl.frames.slice(0, -1);
+    const before = frames[frames.length - 1].lanes;
+    const ids = tl.lanes.map(l => l.id);
+    frames.push(endFrame(spec, before, ids, tl.config, frames.length, ends));
+    return Object.assign({}, tl, { frames });
+  }
+
+  /* ------------------------------------------------------------------ drawing (strings) */
+
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const HL = /(^%%\w+)|(#.*$)|("[^"\n]*"|'[^'\n]*')|\b(import|as|from|def|return|for|in|if|else|None|True|False|assert|not|and|or|with|lambda)\b|\b(\d+(?:\.\d+)?)\b/gm;
+  /** Python-ish syntax colouring: enough for the short cells these stories use. */
+  function highlight(code) {
+    return esc(code).replace(HL, (m, magic, comment, str, kw, num) =>
+      magic ? '<span class="nbs-mg">' + magic + '</span>'
+      : comment ? '<span class="nbs-c">' + comment + '</span>'
+      : str ? '<span class="nbs-s">' + str + '</span>'
+      : kw ? '<span class="nbs-k">' + kw + '</span>'
+      : num ? '<span class="nbs-n">' + num + '</span>' : m);
+  }
+
+  const DEFAULT_TAG = { moved: 'moved', copy: 'copy', bad: 'must never happen' };
+
+  function cellHTML(v, lane, o) {
+    if (v.remark) return '<div class="nbs-remark">' + esc(v.text) + '</div>';
+    const live = !o.static;
+    const fx = live && v.fx ? ' nbs-fx-' + v.fx : '';
+    const active = lane.active === v.key && family(lane.id) === 'tab' ? ' nbs-active' + (lane.editing ? ' nbs-edit' : '') : '';
+    const diff = v.diff ? ' nbs-diff' : '';
+    const caret = active && lane.editing && (lane.status === 'online' || lane.status === 'offline') ? '<span class="nbs-caret"></span>' : '';
+    let src;
+    if (!live && v.typed.length) src = highlight(v.base) + '<span class="nbs-ins nbs-keep">' + highlight(v.typed.map(t => '  ' + t).join('')) + '</span>' + caret;
+    else if (live && v.typeAll) src = '<span class="nbs-ins nbs-tw">' + highlight(v.code) + '</span>' + caret;
+    else if (live && v.typeText) src = highlight(v.before) + '<span class="nbs-ins nbs-tw">' + highlight(v.typeText) + '</span>' + caret;
+    else src = highlight(v.code) + caret;
+    const tag = v.diff || v.tag || DEFAULT_TAG[v.look] || '';
+    const marker = v.look === 'moved' ? '<span class="nbs-mv">↕</span>' : '';
+    return (
+      '<div class="nbs-cell nbs-look-' + v.look + fx + active + diff + '" data-key="' + esc(v.key) + '">' +
+      (tag ? '<span class="nbs-tag">' + esc(tag) + '</span>' : '') +
+      '<div class="nbs-prompt">' + marker + (v.out ? '[1]:' : '[ ]:') + '</div>' +
+      '<div class="nbs-col"><pre class="nbs-src">' + src + '</pre>' +
+      (v.out ? '<div class="nbs-out"><span class="nbs-oprompt">Out[1]:</span>' + esc(v.out) + '</div>' : '') +
+      '</div></div>'
+    );
+  }
+
+  function ghostHTML(g, o) {
+    return '<div class="nbs-cell nbs-look-gone' + (o.static ? '' : ' nbs-fx-gone') + '"><div class="nbs-prompt">[ ]:</div><div class="nbs-col"><pre class="nbs-src">' + highlight(g.code) + '</pre></div></div>';
+  }
+
+  function cellsHTML(lane, o) {
+    const items = lane.cells.map(v => cellHTML(v, lane, o));
+    if (!o.static) {
+      lane.ghosts
+        .slice()
+        .sort((a, b) => b.at - a.at)
+        .forEach(g => items.splice(Math.min(g.at, items.length), 0, ghostHTML(g, o)));
+    }
+    return items.join('') || '<div class="nbs-empty">no cells</div>';
+  }
+
+  const LANE_ICON = { tab: 'window', server: 'server', file: 'doc', ai: 'spark', record: 'box', store: 'box' };
+
+  function panelHTML(lane, title, o) {
+    const fam = family(lane.id);
+    const realCells = lane.cells.filter(c => !c.remark).length;
+    const count = lane.visible && realCells && !NO_COPY.has(lane.id) ? '<span class="nbs-count">' + realCells + (realCells === 1 ? ' cell' : ' cells') + '</span>' : '';
+    const head = (chip, extra) =>
+      '<header class="nbs-phead">' + icon(LANE_ICON[fam] || 'box') + '<span class="nbs-ptitle">' + esc(title) + '</span>' + count + chip + '</header>' + (extra || '');
+    // what the lane does in this step is said above its window, in a row that is always there, so that no window's cells move
+    const lift = (actHtml, windowHtml) => (o.bare ? windowHtml : '<div class="nbs-col-lane"><div class="nbs-actrow">' + actHtml + '</div>' + windowHtml + '</div>');
+    if (!lane.visible) {
+      return lift('', '<section class="nbs-panel nbs-dormant nbs-lane-' + fam + '" data-lane="' + lane.id + '">' + head('<span class="nbs-chip nbs-mute">not yet</span>', '<div class="nbs-pbody"><div class="nbs-empty">—</div></div>') + '</section>');
+    }
+    const st = (STATUS[fam] || {})[lane.status];
+    const chip = st ? '<span class="nbs-chip nbs-' + st[1] + '">' + esc(st[0]) + '</span>' : '';
+    const doing = lane.acting && lane.verb
+      ? '<div class="nbs-act nbs-k-' + lane.kind + '">' + icon((KINDS[lane.kind] || KINDS.note).icon) + '<span>' + esc(lane.verb) + '</span></div>'
+      : lane.receiving ? '<div class="nbs-act nbs-k-receive">' + icon('mail') + '<span>receives</span></div>' : '';
+    const act = doing + (lane.unchanged ? '<div class="nbs-keep">✓ nothing lost</div>' : '');
+    const snap = !o.static && lane.cells.some(c => c.fx && c.fx !== 'gone') && !lane.editing ? ' nbs-snap' : '';
+    let body;
+    if (NO_COPY.has(lane.id) || ((fam === 'record' || fam === 'store') && !lane.cells.length)) {
+      body = '<div class="nbs-note">' + (lane.text ? esc(lane.text) : '—') + '</div>';
+    } else if (fam === 'server' && !lane.cells.length) {
+      body = '<div class="nbs-empty">' + (lane.status === 'stopped' ? 'Stopped: its live copy of the notebook is gone.' : 'Not holding the notebook. It loads it from the file when someone opens it.') + '</div>';
+    } else {
+      body = cellsHTML(lane, o);
+    }
+    return lift(act, (
+      '<section class="nbs-panel nbs-lane-' + fam + (lane.acting ? ' nbs-acting' : '') + (lane.receiving ? ' nbs-receiving' : '') + snap + (lane.status === 'offline' || lane.status === 'closed' || lane.status === 'stopped' ? ' nbs-away' : '') + '" data-lane="' + lane.id + '">' +
+      head(chip) + '<div class="nbs-pbody">' + body + '</div></section>'
+    ));
+  }
+
+  /** The notebook windows of one frame. */
+  function boardHTML(tl, frame, opts) {
+    const o = opts || {};
+    return tl.lanes.map(l => panelHTML(frame.lanes[l.id], l.title, o)).join('');
+  }
+
+  /** A small static picture of a list of cells (an option of a decision, say). */
+  function miniHTML(tokens, config) {
+    const cfg = withDefaults(config);
+    const cells = typeof tokens === 'string' ? ['*' + tokens] : tokens;
+    return '<div class="nbs-mini">' + cells.map(t => {
+      const v = viewOf(t, cfg);
+      if (v.remark) return '<div class="nbs-remark">' + esc(v.text) + '</div>';
+      return '<div class="nbs-mcell nbs-look-' + v.look + '"><code>' + highlight(v.code.split('\n')[0]) + '</code>' + ((v.tag || DEFAULT_TAG[v.look]) ? '<span class="nbs-tag">' + esc(v.tag || DEFAULT_TAG[v.look]) + '</span>' : '') + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /**
+   * "The problem in one picture": a few notebook windows side by side, each a moment in time.
+   * panels: [{title, status: 'online'|'offline'|..., cells: [tokens], caption, lane?: 'tab'}]
+   */
+  function triptychHTML(panels, config) {
+    const cfg = withDefaults(config);
+    return '<div class="nbs-trip">' + panels.map((p, i) => {
+      const lane = Object.assign(emptyLane(p.lane || 'tab'), { visible: true, status: p.status || 'online', active: p.active || null, editing: !!p.editing });
+      lane.cells = (p.cells || []).map((t, j) => Object.assign(viewOf(t, cfg), {}));
+      const used = new Set();
+      lane.cells.forEach(c => {
+        while (used.has(c.key)) c.key += '~';
+        used.add(c.key);
+      });
+      return '<figure class="nbs-fig"><div class="nbs-figstep">' + (i + 1) + '</div>' +
+        panelHTML(lane, p.title, { static: true, bare: true }) +
+        (p.caption ? '<figcaption>' + p.caption + '</figcaption>' : '') + '</figure>';
+    }).join('<div class="nbs-figarrow" aria-hidden="true">→</div>') + '</div>';
+  }
+
+  /* ------------------------------------------------------------------ the player (DOM) */
+
+  const players = new Set();
+  let ticking = false;
+  let last = 0;
+  function tickAll(now) {
+    const dt = Math.min(100, now - last);
+    last = now;
+    let any = false;
+    players.forEach(p => {
+      if (p.active()) {
+        any = true;
+        p.tick(dt);
+      }
+    });
+    if (any) requestAnimationFrame(tickAll);
+    else ticking = false;
+  }
+  function wake() {
+    if (!ticking) {
+      ticking = true;
+      last = performance.now();
+      requestAnimationFrame(tickAll);
+    }
+  }
+
+  /**
+   * Mount a story in `el`. Returns {play, pause, seek, destroy}.
+   * opts: {config, autoplay: 'visible' | true | false, loop: true, reduced: bool, answerLabel: 'Proposed'}
+   */
+  function mount(el, spec, opts) {
+    opts = opts || {};
+    const reduced = opts.reduced !== undefined ? opts.reduced : typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let tl = buildTimeline(spec, opts.config);
+    const baseTl = tl;
+    const n = tl.lanes.length;
+
+    const badges = (spec.badges || []).map(b => '<span class="nbs-badge nbs-badge-' + esc(b.tone || 'info') + '"' + (b.title ? ' title="' + esc(b.title) + '"' : '') + '>' + esc(b.text) + '</span>').join('');
+    const steps = spec.steps.map((s, i) => '<li data-i="' + (i + 1) + '"><b>' + esc(lanesOf(s).map(tl.titleOf).join(' + ')) + '</b> ' + esc(s.text) + (s.to ? ' <span class="nbs-to">→ ' + esc(tl.titleOf(s.to)) + '</span>' : '') + '</li>').join('');
+    const d = spec.decision;
+    const label = opts.answerLabel || (spec.decision && spec.decision.answerLabel) || 'Proposed';
+    const decision = d
+      ? '<div class="nbs-decision"><div class="nbs-dhead">Needs alignment</div><p class="nbs-q">' + esc(d.question) + '</p>' +
+        '<div class="nbs-opts" role="radiogroup" aria-label="Options">' +
+        d.options.map((op, i) => '<button type="button" role="radio" class="nbs-opt' + (op.proposed ? ' nbs-proposed on' : '') + '" aria-checked="' + (op.proposed ? 'true' : 'false') + '" data-o="' + i + '">' +
+          (op.proposed ? '<span class="nbs-flag">' + esc(label) + '</span>' : '') + '<b>' + esc(op.label) + '</b><span class="nbs-odetail">' + esc(op.detail) + '</span>' +
+          (op.ends ? '<span class="nbs-oends">How it ends</span>' + miniHTML(op.ends, opts.config) : '') + '</button>').join('') +
+        '</div></div>'
+      : '';
+
+    el.classList.add('nbs');
+    el.innerHTML =
+      (spec.title ? '<header class="nbs-head">' + (spec.id ? '<span class="nbs-id">' + esc(spec.id) + '</span>' : '') + '<h3>' + esc(spec.title) + '</h3>' + badges + '</header>' : '') +
+      (spec.story ? '<p class="nbs-story">' + esc(spec.story) + '</p>' : '') +
+      '<div class="nbs-stage"><div class="nbs-board" style="--n:' + n + '"></div><div class="nbs-flights" aria-hidden="true"></div></div>' +
+      '<div class="nbs-bar"><button type="button" class="nbs-play" aria-label="Play or pause"></button><div class="nbs-segs" role="group" aria-label="Steps"></div></div>' +
+      '<div class="nbs-caption" aria-live="polite"></div>' +
+      '<details class="nbs-steps"><summary>The steps, as text</summary><ol>' + steps + '</ol></details>' +
+      (spec.result ? '<div class="nbs-result"><b>What the product does</b><span>' + esc(spec.result) + '</span></div>' : '') +
+      (spec.risk ? '<p class="nbs-risk"><b>Why it matters</b> ' + esc(spec.risk) + '</p>' : '') +
+      decision;
+
+    const $ = s => el.querySelector(s);
+    const board = $('.nbs-board');
+    const flights = $('.nbs-flights');
+    const stage = $('.nbs-stage');
+    const playBtn = $('.nbs-play');
+    const segsEl = $('.nbs-segs');
+    const caption = $('.nbs-caption');
+    const stepItems = el.querySelectorAll('.nbs-steps li');
+
+    function drawSegs() {
+      segsEl.innerHTML = tl.frames.map((f, i) => {
+        const lbl = f.kind === 'start' ? '' : f.end ? '✓' : String(i);
+        return '<button type="button" class="nbs-seg' + (f.blip ? ' nbs-blip' : '') + (f.end ? ' nbs-endseg' : '') + '" data-i="' + i + '" style="flex:' + f.ms + ' 1 ' + (f.blip ? 22 : 18) + 'px" aria-label="' + esc(f.kind === 'start' ? 'Start' : f.end ? 'End' : 'Step ' + i + ': ' + f.text) + '"><span class="nbs-fill"></span><span class="nbs-n">' + lbl + '</span></button>';
+      }).join('');
+    }
+    drawSegs();
+
+    let t = reduced ? tl.starts[tl.frames.length - 1] + 1 : 0;
+    let shown = -1;
+    let playing = opts.autoplay !== false && !reduced;
+    let visible = false;
+    let hold = 0;
+    let typing = [];
+    let flight = null;
+    let elapsed = 0;
+
+    const frameAt = tt => {
+      let idx = 0;
+      tl.starts.forEach((s, i) => {
+        if (tt >= s) idx = i;
+      });
+      return idx;
+    };
+
+    /** How many cells every copy holds at the end, if they all hold the same ones; else 0. */
+    function sameEverywhere(frame) {
+      const copies = tl.lanes.map(l => frame.lanes[l.id]).filter(L => L.visible && !NO_COPY.has(L.id) && L.cells.some(c => !c.remark));
+      if (copies.length < 2) return 0;
+      const first = codesOf(copies[0].cells);
+      return copies.every(L => codesOf(L.cells) === first) ? copies[0].cells.filter(c => !c.remark).length : 0;
+    }
+
+    function render(idx) {
+      const f = tl.frames[idx];
+      board.innerHTML = boardHTML(tl, f, { static: reduced });
+      el.classList.toggle('nbs-ended', !!f.end);
+      el.classList.toggle('nbs-instant', !!f.blip);
+      const names = f.at.map(tl.titleOf).join(' + ');
+      const kind = KINDS[f.kind];
+      const agree = f.end ? sameEverywhere(f) : 0;
+      caption.innerHTML = f.kind === 'start' || f.end
+        ? '<span class="nbs-capnum">' + (f.end ? '✓' : '·') + '</span><span>' + esc(f.text) + '</span>' + (agree ? '<span class="nbs-same">✓ every copy holds the same ' + agree + ' cells</span>' : '')
+        : '<span class="nbs-capnum">' + idx + '</span>' + icon(kind.icon) + '<span><b>' + esc(names) + '</b> ' + esc(f.text) + (f.to ? ' <span class="nbs-to">→ ' + esc(tl.titleOf(f.to)) + '</span>' : '') + '</span>' + (f.blip ? '<span class="nbs-quick">⚡ over in a moment</span>' : '');
+      stepItems.forEach((li, i) => li.classList.toggle('on', i + 1 === idx));
+      segsEl.querySelectorAll('.nbs-seg').forEach((s, i) => {
+        s.classList.toggle('on', i === idx);
+        s.classList.toggle('past', i < idx);
+      });
+      typing = [];
+      if (!reduced) {
+        board.querySelectorAll('.nbs-tw').forEach((tw, k) => {
+          const nodes = [];
+          const w = document.createTreeWalker(tw, NodeFilter.SHOW_TEXT);
+          while (w.nextNode()) nodes.push([w.currentNode, w.currentNode.nodeValue]);
+          const total = nodes.reduce((a, x) => a + x[1].length, 0);
+          nodes.forEach(x => (x[0].nodeValue = ''));
+          typing.push({ nodes, total, shown: 0 });
+        });
+      }
+      startFlight(f);
+      shown = idx;
+    }
+
+    function startFlight(f) {
+      if (flight) flight.els.forEach(x => x.remove());
+      flight = null;
+      flights.innerHTML = '';
+      if (reduced || !f.to || !f.at.length || typeof Element === 'undefined' || !Element.prototype.animate) return;
+      const from = board.querySelector('[data-lane="' + f.at[0] + '"]');
+      const to = board.querySelector('[data-lane="' + f.to + '"]');
+      if (!from || !to) return;
+      const base = stage.getBoundingClientRect();
+      const a = from.getBoundingClientRect();
+      const b = to.getBoundingClientRect();
+      const ax = a.left + a.width / 2 - base.left;
+      const bx = b.left + b.width / 2 - base.left;
+      const y = 24;
+      const pos = x => 'translate(' + x + 'px,' + y + 'px)';
+      const dur = f.kind === 'late' ? Math.max(900, f.ms - 250) : f.kind === 'fault' ? 1100 : 900;
+      const mk = html => {
+        const d = document.createElement('div');
+        d.className = 'nbs-dot';
+        d.innerHTML = html;
+        flights.appendChild(d);
+        return d;
+      };
+      const msg = mk(icon('mail'));
+      let anims;
+      if (f.kind === 'fault') {
+        // lost on the way: it stops part of the way across, and a cross takes its place
+        const mx = ax + (bx - ax) * 0.55;
+        const lost = mk('✕');
+        lost.classList.add('nbs-lostx');
+        anims = [
+          msg.animate([{ transform: pos(ax), opacity: 0 }, { transform: pos(ax + (mx - ax) * 0.2), opacity: 1, offset: 0.15 }, { transform: pos(mx), opacity: 1, offset: 0.55 }, { transform: pos(mx), opacity: 0, offset: 0.7 }, { transform: pos(mx), opacity: 0 }], { duration: dur, fill: 'both' }),
+          lost.animate([{ transform: pos(mx), opacity: 0 }, { transform: pos(mx), opacity: 0, offset: 0.5 }, { transform: pos(mx), opacity: 1, offset: 0.65 }, { transform: pos(mx), opacity: 1 }], { duration: dur, fill: 'both' })
+        ];
+      } else {
+        anims = [msg.animate([{ transform: pos(ax), opacity: 0 }, { transform: pos(ax + (bx - ax) * 0.06), opacity: 1, offset: 0.1 }, { transform: pos(bx - (bx - ax) * 0.06), opacity: 1, offset: 0.9 }, { transform: pos(bx), opacity: 0 }], { duration: dur, fill: 'both' })];
+      }
+      anims.forEach(x => x.pause());
+      flight = { els: Array.prototype.slice.call(flights.children), anims, dur };
+    }
+
+    function step() {
+      const f = tl.frames[shown];
+      elapsed = t - tl.starts[shown];
+      const per = tl.config.typingMs;
+      let begin = (f.typingStart || 0);
+      typing.forEach(ty => {
+        const k = Math.max(0, Math.min(ty.total, Math.floor((elapsed - begin) / per)));
+        begin += ty.total * per + 200;
+        if (k === ty.shown) return;
+        ty.shown = k;
+        let left = k;
+        ty.nodes.forEach(x => {
+          const m = Math.min(x[1].length, left);
+          x[0].nodeValue = x[1].slice(0, m);
+          left -= m;
+        });
+      });
+      if (flight) flight.anims.forEach(an => (an.currentTime = Math.max(0, Math.min(flight.dur, elapsed - 100))));
+      const fills = segsEl.children;
+      for (let i = 0; i < fills.length; i++) {
+        const frac = i < shown ? 1 : i === shown ? Math.min(1, elapsed / tl.frames[i].ms) : 0;
+        fills[i].firstChild.style.width = (tl.frames[i].blip ? (i < shown ? 100 : 0) : frac * 100) + '%';
+      }
+    }
+
+    function paint() {
+      const idx = frameAt(t);
+      if (idx !== shown) render(idx);
+      step();
+      playBtn.textContent = playing ? '❚❚' : '▶';
+      playBtn.classList.toggle('nbs-paused', !playing);
+      el.classList.toggle('nbs-pausedall', !playing);
+    }
+
+    const ctrl = {
+      active: () => playing && visible,
+      tick(dt) {
+        if (t >= tl.total) {
+          hold += dt;
+          if (hold > 600 && opts.loop !== false) {
+            t = 0;
+            hold = 0;
+          }
+        } else {
+          t = Math.min(tl.total, t + dt);
+        }
+        paint();
+      },
+      play() {
+        if (t >= tl.total) t = 0;
+        playing = true;
+        paint();
+        wake();
+      },
+      pause() {
+        playing = false;
+        paint();
+      },
+      seek(i) {
+        t = tl.starts[Math.max(0, Math.min(tl.frames.length - 1, i))] + 1;
+        hold = 0;
+        shown = -1;
+        paint();
+      },
+      destroy() {
+        players.delete(ctrl);
+        io && io.disconnect();
+        ro && ro.disconnect();
+      }
+    };
+
+    playBtn.addEventListener('click', () => (playing ? ctrl.pause() : ctrl.play()));
+    segsEl.addEventListener('click', e => {
+      const b = e.target.closest('.nbs-seg');
+      if (b) ctrl.seek(+b.dataset.i);
+    });
+    const optsEl = el.querySelector('.nbs-opts');
+    if (optsEl) {
+      optsEl.addEventListener('click', e => {
+        const b = e.target.closest('.nbs-opt');
+        if (!b) return;
+        const op = d.options[+b.dataset.o];
+        optsEl.querySelectorAll('.nbs-opt').forEach(x => {
+          x.classList.toggle('on', x === b);
+          x.setAttribute('aria-checked', x === b ? 'true' : 'false');
+        });
+        tl = op.ends && !op.proposed ? withEnding(baseTl, spec, op.ends) : baseTl;
+        shown = -1;
+        t = tl.starts[tl.frames.length - 1] + 1;
+        hold = 0;
+        drawSegs();
+        paint();
+      });
+    }
+
+    /**
+     * Every window of a story is as tall as the tallest any frame needs, so that nothing grows or shrinks while the
+     * story plays and the windows can be compared side by side. Measured off screen, at the width they have now.
+     */
+    function measure() {
+      const w = board.offsetWidth;
+      if (!w) return; // not on screen (a filtered-out story, say): measured when it appears
+      const probe = document.createElement('div');
+      probe.className = 'nbs-board nbs-probe';
+      probe.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;width:' + w + 'px;--n:' + n;
+      stage.appendChild(probe);
+      const timelines = [baseTl].concat((spec.decision ? spec.decision.options : []).filter(o => o.ends && !o.proposed).map(o => withEnding(baseTl, spec, o.ends)));
+      let tallest = 0;
+      timelines.forEach(t => t.frames.forEach(f => {
+        probe.innerHTML = boardHTML(t, f, {});
+        probe.querySelectorAll('.nbs-panel').forEach(pn => {
+          tallest = Math.max(tallest, pn.offsetHeight);
+        });
+      }));
+      probe.remove();
+      if (tallest > 0) board.style.setProperty('--nbs-h', Math.min(Math.ceil(tallest), 560) + 'px');
+    }
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(measure);
+    let ro = null;
+    if (typeof ResizeObserver === 'function') {
+      let lastW = 0;
+      ro = new ResizeObserver(() => {
+        if (board.offsetWidth !== lastW) {
+          lastW = board.offsetWidth;
+          measure();
+        }
+      });
+      ro.observe(stage);
+    }
+
+    players.add(ctrl);
+    let io = null;
+    if (typeof IntersectionObserver === 'function' && opts.autoplay !== false && !reduced) {
+      io = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+          visible = en.isIntersecting;
+          if (visible) wake();
+        });
+      }, { threshold: 0.35 });
+      io.observe(el);
+    } else {
+      visible = opts.autoplay !== false;
+    }
+    paint();
+    ctrl.measure = measure;
+    return ctrl;
+  }
+
+  /** Mount every `<div data-nbs>` that holds a `<script type="application/json">` spec. */
+  function mountAll(rootEl, opts) {
+    const out = [];
+    (rootEl || document).querySelectorAll('[data-nbs]').forEach(el => {
+      const s = el.querySelector('script[type="application/json"]');
+      if (s) out.push(mount(el, JSON.parse(s.textContent), opts));
+    });
+    return out;
+  }
+
+  /** Draw a triptych ("the problem in one picture") into `el`. */
+  function triptych(el, panels, config) {
+    el.classList.add('nbs');
+    el.innerHTML = triptychHTML(panels, config);
+  }
+
+  return {
+    LANES, KINDS, STATUS, ICONS,
+    SpecError, parseCell, viewOf, buildTimeline, withEnding, boardHTML, miniHTML, triptychHTML, highlight,
+    mount, mountAll, triptych
+  };
+});
+</script>
+<script>/* The theme control shared by the pages: auto follows the system; light and dark are remembered. */
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll('[data-theme-set]');
+  function setTheme(mode) {
+    if (mode === 'light' || mode === 'dark') root.dataset.theme = mode;
+    else delete root.dataset.theme;
+    try { if (mode === 'auto') localStorage.removeItem('nbs-theme'); else localStorage.setItem('nbs-theme', mode); } catch (e) { /* private mode */ }
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.themeSet === mode)); });
+  }
+  var saved = 'auto';
+  try { saved = localStorage.getItem('nbs-theme') || 'auto'; } catch (e) { /* private mode */ }
+  setTheme(saved);
+  buttons.forEach(function (b) { b.addEventListener('click', function () { setTheme(b.dataset.themeSet); }); });
+})();
+</script>
+<script>/* The page of what a pull request changes: the new and changed stories, each played. */
+(function () {
+  'use strict';
+  var data = JSON.parse(document.getElementById('data').textContent);
+  Array.prototype.forEach.call(document.querySelectorAll('.story-card'), function (card) {
+    try { window.NbScenario.mount(card, data.stories[card.id], { config: data.config }); } catch (e) { console.error('story ' + card.id, e); }
+  });
+})();
+</script>
+</body>
+</html>
