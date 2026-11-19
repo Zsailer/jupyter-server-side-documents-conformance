@@ -28,7 +28,7 @@ KINDS = (
     "rebuild", "crash", "save", "deadline", "fault", "late", "outside", "restore", "remove", "note",
 )
 
-STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges", "status"}
+STORY_KEYS = {"id", "title", "story", "lanes", "start", "steps", "result", "ends", "risk", "decision", "badges", "status", "discussion"}
 # "proposed": the case is up for discussion, so a backend that does not meet it is reported but not failed
 STATUSES = ("accepted", "proposed")
 REQUIRED = ("title", "story", "steps", "result", "ends")
@@ -120,6 +120,18 @@ def validate_story(sid: str, story: dict) -> None:
         hidden = set(mapping) - {"all"} - set(drawn_lanes(story))
         if hidden:
             raise SpecError(f"{where}: {what} holds {sorted(hidden)}, which is not drawn (see `lanes`)")
+    discussion = story.get("discussion")
+    if discussion is not None:
+        if not (story.get("decision") or story.get("status") == "proposed"):
+            raise SpecError(f"{where}: only a story with a decision, or a proposed case, can be up for discussion")
+        if discussion is not True:
+            if not isinstance(discussion, dict) or set(discussion) - {"link", "note"}:
+                raise SpecError(f"{where}: discussion is true, or has a link and a note")
+            link = discussion.get("link")
+            if link is not None and not (isinstance(link, str) and re.match(r"^https?://\S+$", link)):
+                raise SpecError(f"{where}: the link of a discussion is a web address (https://...)")
+            if "note" in discussion and not isinstance(discussion["note"], str):
+                raise SpecError(f"{where}: the note of a discussion is text")
     decision = story.get("decision")
     if decision:
         if not decision.get("question") or len(decision.get("options") or []) < 2:

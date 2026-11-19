@@ -15,6 +15,7 @@ A:
   ends: {all: [c0, "c1=+OFFLINE", c2]}                   # what every lane holds at the end (or one entry per lane)
   risk: "What a user sees if it goes wrong."             # optional
   decision: ...                                          # optional: an open question, see below
+  discussion: true                                       # optional: list it on the "Up for discussion" page, see below
 ```
 
 `id` and `badges` are added by whatever builds the page (see `examples/storyboards/build.py`).
@@ -176,6 +177,20 @@ decision:
 Each option is a card with a small picture of its ending. Clicking an option **plays that ending** in the windows
 above. `decision.answerLabel` (set by your page builder) is the word on the proposed option: "Proposed" for an answer
 that was taken for now, "Suggested" for one nobody has discussed.
+
+### Putting a story up for discussion
+
+`discussion:` lists a story on the "Up for discussion" page of the site, with its question and its answers side by side.
+Use `discussion: true`, or add where the talk is and where it stands:
+
+```yaml
+discussion:
+  link: https://github.com/<owner>/<repo>/issues/12   # optional: an issue or pull request, shown as "Join the discussion"
+  note: "Leaning to the first answer; waiting on the server team."   # optional
+```
+
+Only a story with a `decision`, or a proposed case (`status: proposed`), can be put up for discussion, and a proposed case is
+listed whether or not it says so. The build refuses `discussion:` on any other story.
 
 ## Player API
 

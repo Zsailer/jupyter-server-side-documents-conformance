@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What this changes</title>
+<script>try{var t=localStorage.getItem('nbs-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>{{PLAYER_CSS}}</style>
+<style>{{PAGE_CSS}}</style>
+</head>
+<body>
+
+{{TOPBAR}}
+
+<main class="doc" id="top">
+{{CONTENT}}
+</main>
+{{FOOTER}}
+
+<script id="data" type="application/json">{{CHANGES_DATA}}</script>
+<script>{{PLAYER_JS}}</script>
+<script>{{THEME_JS}}</script>
+<script>{{CHANGES_JS}}</script>
+</body>
+</html>
