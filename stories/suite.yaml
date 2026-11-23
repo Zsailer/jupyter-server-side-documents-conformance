@@ -921,14 +921,6 @@ scenarios:
           agents_work_in_the_file: true
           agents_work_in_the_tab: true
       - empty: [duplicated]
-    expect:
-      stopgap: floor
-      healing: floor
-      lineage: floor
-      lineage+healing: floor
-    why: >-
-      A room whose first read of the file fails never reads it again: the notebook stays unavailable until the room is freed,
-      even once the agent has finished writing the file.
 
   AI9:
     group: ai
