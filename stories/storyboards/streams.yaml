@@ -1,0 +1,151 @@
+# Long output: a window in the notebook, the rest in files beside it.
+# These stories apply only if the server keeps long output in a window (a feature that is not part of every server).
+# A chip with a blue edge and a note is a cell with its output; "notice + last 1 KB" is a notice that says earlier output is stored, followed by the
+# last 1 KB of the text.
+# All six are proposed: they come from the acceptance suite of jupyter-server-documents, and it is not settled that they are something
+# a person is promised rather than one server's way of keeping long output. (How a storyboard is written: docs/02-spec-reference.md.)
+shared:
+  discuss: &discuss
+    note: "Open: is this something a person is promised, or how one server keeps long output? If it is the second it may not belong here."
+  three: &three [c0, c1, c2]
+  window7: &window7 ["#c0=5 lines", "#c1=notice + last 1 KB", c2]
+  window: &window [c0, "#c1=notice + last 1 KB", c2]
+  window_c2_going: &window_c2_going [c0, "#c1=notice + last 1 KB", "#c2=notice + window, still printing"]
+  window_c2: &window_c2 [c0, "#c1=notice + last 1 KB", "#c2=notice + last 1 KB"]
+  run_a: &run_a [c0, "#c1=A: notice + last 1 KB", c2]
+  run_b: &run_b [c0, "#c1=B: 300 ordinary outputs", c2]
+  run_c: &run_c [c0, "#c1=C: notice + last 1 KB", c2]
+  run_d: &run_d [c0, "#c1=D: 5 ordinary outputs", c2]
+  mixed: &mixed [c0, "#c1=notice + window, widget, notice + window, widget, 5 lines", c2]
+
+scenarios:
+  O7:
+    title: "A cell that prints without end keeps a window in the notebook"
+    lanes: {tab: "A new tab", server: "Server", store: "Files beside the notebook", file: "File on disk"}
+    story: >-
+      A notebook has three cells. The first prints 5 lines. The second prints 20,000 lines (1.2 MB). The server keeps only the last 1 KB of
+      such an output in the notebook, with a notice that says earlier output is stored, and keeps every line in files beside the notebook,
+      which anybody can read without the server.
+    steps:
+      - {at: server, kind: open, text: "holds the notebook", cells: *three}
+      - {at: server, kind: run, text: "runs the first cell, which prints 5 lines, and the second, which prints 20,000 lines", cells: *window7}
+      - {at: store, kind: note, text: "keeps every line the second cell printed, in whole lines, in files that are only ever added to", cells: ["#c1=all 20,000 lines"]}
+      - {at: tab, kind: open, text: "a new tab opens the notebook: it is sent the notice and the window, a few KB and not the 1.2 MB", cells: *window7}
+      - {at: file, kind: save, text: "the server saves the notebook: a small file, with the notice and the window", cells: *window7}
+    result: "The notebook, the new tab and the saved file hold the notice and the last 1 KB of the second cell, and the files beside the notebook hold every line. The cell that printed little is left as it always was."
+    ends: {tab: *window7, server: *window7, store: ["#c1=all 20,000 lines"], file: *window7}
+    risk: "A cell that prints without end must not make the notebook grow, in the server's memory, in every tab or in the saved file, and must not lose what it printed."
+    status: proposed
+    discussion: *discuss
+
+  O8:
+    title: "A tab that is open while a cell prints ends with the server's window"
+    lanes: {tab: "Your tab", server: "Server"}
+    story: >-
+      A tab has the notebook open. A cell prints 3,000 lines (186 KB), one message at a time, while the tab is connected. The window slides in
+      the notebook as the cell runs: the oldest lines go from the front, new lines are added at the end, and a notice appears above the output
+      the first time a line leaves it.
+    steps:
+      - {at: tab, kind: open, text: "opens the notebook before the cell runs", cells: *three}
+      - {at: server, kind: run, text: "the second cell prints 3,000 lines: the window slides, and a notice appears the first time a line leaves it", cells: *window}
+      - {at: tab, kind: note, text: "receives each change as an ordinary update of the notebook, none of them bigger than 4 KB", cells: *window}
+    result: "The tab ends with the notice and exactly the window the server holds, from updates that are never big."
+    ends: {tab: *window, server: *window}
+    risk: "A tab that watches a long output must not be sent all of it again and again, and must not end with another text than the server's."
+    status: proposed
+    discussion: *discuss
+
+  O9:
+    title: "A notebook that was let go and built again has its window, its notice and its files, and running the cell again replaces the files"
+    lanes: {tab: "Your tab", server: "Server", store: "Files beside the notebook", file: "File on disk"}
+    story: >-
+      A cell has printed 5,000 lines (310 KB) and the notebook is saved. Nobody is connected, so the server lets go of the notebook and builds
+      it again from the saved file. A person opens it and runs the cell again, and it prints 3,000 other lines.
+    steps:
+      - {at: server, kind: open, text: "holds the notebook; the second cell prints 5,000 lines", cells: *run_a}
+      - {at: store, kind: note, text: "keeps every line of that run", cells: ["#c1=all of run A"]}
+      - {at: file, kind: save, text: "the server saves the notebook", cells: *run_a}
+      - {at: server, kind: free, text: "lets go of the notebook: nobody is connected and it has been quiet"}
+      - {at: server, kind: rebuild, text: "builds the notebook again from the file: the notice and the window are what was saved", cells: *run_a}
+      - {at: store, kind: note, text: "is still there and still holds every line of run A", cells: ["#c1=all of run A"]}
+      - {at: tab, kind: open, text: "a person opens the notebook and finds the notice and the window", cells: *run_a}
+      - {at: tab, kind: run, text: "runs the second cell again; it prints 3,000 other lines", cells: ["c0", "#c1=B: notice + last 1 KB", "c2"]}
+      - {at: store, kind: note, text: "the files of run A go with the outputs they belonged to; the files of run B hold the second run", cells: ["#c1=all of run B"]}
+      - {at: file, kind: save, text: "the server saves: the file shows the end of the second run", cells: ["c0", "#c1=B: notice + last 1 KB", "c2"]}
+    result: "After the notebook is built again it shows what was saved, and its notice still leads to every line. Running the cell again replaces the files of the first run with those of the second: nothing of the first run is left behind."
+    ends: {tab: ["c0", "#c1=B: notice + last 1 KB", "c2"], server: ["c0", "#c1=B: notice + last 1 KB", "c2"], store: ["#c1=all of run B"], file: ["c0", "#c1=B: notice + last 1 KB", "c2"]}
+    risk: "A notebook that is built again must not lead to files that are gone, and a cell that is run over and over must not leave a large set of files behind each time."
+    status: proposed
+    discussion: *discuss
+
+  O10:
+    title: "Keeping long output in a window is turned on and off between runs, and no run is lost"
+    lanes: {server: "Server", store: "Files beside the notebook"}
+    story: >-
+      Keeping long output in a window is a setting of the server, and changing it means restarting the server. One cell is run four times,
+      the server restarted between the runs: with the setting on (4,000 lines), off (300 lines), on (4,000 lines) and off (5 lines). Every
+      time the notebook is opened as it was saved, whichever setting the server has now.
+    steps:
+      - {at: server, kind: run, text: "with the setting on, the cell prints 4,000 lines (run A): a notice and a window", cells: *run_a}
+      - {at: store, kind: note, text: "keeps every line of A", cells: ["#c1=all of A"]}
+      - {at: server, kind: rebuild, text: "restarts with the setting off and opens the notebook as it was saved", cells: *run_a}
+      - {at: server, kind: run, text: "the cell runs again and prints 300 lines (run B): ordinary outputs, every one of them there", cells: *run_b}
+      - {at: store, kind: remove, text: "the files of A go: the outputs they belonged to were cleared", cells: []}
+      - {at: server, kind: rebuild, text: "restarts with the setting on and opens the notebook as it was saved: the 300 outputs of B, whole", cells: *run_b}
+      - {at: server, kind: run, text: "the cell runs again and prints 4,000 lines (run C): a notice and a window", cells: *run_c}
+      - {at: store, kind: note, text: "keeps every line of C and nothing of B", cells: ["#c1=all of C"]}
+      - {at: server, kind: rebuild, text: "restarts with the setting off and opens the notebook as it was saved", cells: *run_c}
+      - {at: server, kind: run, text: "the cell runs again and prints 5 lines (run D): ordinary outputs", cells: *run_d}
+      - {at: store, kind: remove, text: "the files of C go with the outputs they belonged to", cells: []}
+    result: "Each run is whole, as a window and its files or as ordinary outputs, each notebook opens as it was saved under either setting, and no files are left behind at the end."
+    ends: {server: *run_d, store: []}
+    risk: "Turning the setting on or off must not lose output, leave a notebook that cannot be opened, or leave the files of a cell that was run again behind."
+    status: proposed
+    discussion: *discuss
+
+  O11:
+    title: "Widgets stay inline between windowed outputs"
+    lanes: {tab: "A new tab", server: "Server", store: "Files beside the notebook", file: "File on disk"}
+    story: >-
+      A notebook carries the state of its widgets, 2 MB of it. A cell prints 3,000 lines, shows a widget, prints 3,000 other lines, shows a
+      second widget whose view carries 300 KB of text, and prints 5 lines. Only streams of text are kept in a window: a widget is never
+      replaced by a notice or a reference.
+    steps:
+      - {at: server, kind: open, text: "holds a notebook whose widget state is 2 MB", cells: *three}
+      - {at: server, kind: run, text: "the second cell prints 3,000 lines, shows a widget, prints 3,000 other lines, shows a second widget and prints 5 lines", cells: *mixed}
+      - {at: store, kind: note, text: "keeps each long run of lines in files of its own", cells: ["#c1=all of both long runs"]}
+      - {at: tab, kind: open, text: "a new tab opens the notebook: the outputs are in the same order, and the widgets are just as the kernel sent them", cells: *mixed}
+      - {at: file, kind: save, text: "the server saves the notebook: the widgets and the state of all widgets are as they were, in their places", cells: *mixed}
+      - {at: server, kind: run, text: "runs the cell again with nothing to print: its outputs are cleared", cells: *three}
+      - {at: store, kind: remove, text: "the files of both runs go with the outputs", cells: []}
+      - {at: file, kind: save, text: "the server saves the notebook again", cells: *three}
+    result: "Every widget is where and as the kernel sent it, in the notebook, in a new tab and in the saved file, and so is the state of all widgets; only the long runs of text are in a window. When the outputs are cleared, no output and no file is left."
+    ends: {server: *three, store: [], file: *three}
+    risk: "A widget that is replaced by a notice, or a notebook whose widget state is cut short, no longer shows what its author made."
+    status: proposed
+    discussion: *discuss
+
+  O12:
+    title: "Earlier output is read back and joins the window exactly"
+    lanes: {tab: "Your tab", server: "Server", store: "Files beside the notebook"}
+    story: >-
+      The second cell of a notebook printed 20,000 lines (1.2 MB), so the notebook holds a notice and the last 1 KB. The author wants the
+      output as it was before: the earlier output is read back from the files beside the notebook, a page at a time above the window or the
+      whole in chunks. A third cell is still printing while it is read. Another notebook asks for the same files.
+    steps:
+      - {at: server, kind: open, text: "holds the notebook: the second cell has a notice and the last 1 KB", cells: *window}
+      - {at: store, kind: note, text: "holds every line", cells: ["#c1=all 20,000 lines"]}
+      - {at: tab, kind: open, text: "the author opens the notebook", cells: *window}
+      - {at: tab, kind: note, text: "asks for the earlier output a page at a time above the window: the pages and the window are exactly what the cell printed, no line missing and none twice", cells: *window}
+      - {at: tab, kind: note, text: "asks for the whole output, in chunks: it is the same text", cells: *window}
+      - {at: server, kind: run, text: "the third cell prints 3,000 lines and its run goes on", cells: *window_c2_going}
+      - {at: tab, kind: note, text: "reads the third cell in the middle of its run: it is given what was printed so far, and it joins the window exactly", cells: *window_c2_going}
+      - {at: server, kind: note, text: "the third cell prints 3,000 more lines and its run ends", cells: *window_c2}
+      - {at: store, kind: note, text: "holds every line of both cells; for a run that has ended it says where the window begins", cells: ["#c1=all 20,000 lines", "#c2=all 6,000 lines"]}
+      - {at: tab, kind: note, text: "reads the third cell again: everything it printed, once", cells: *window_c2}
+      - {at: server, kind: note, text: "refuses a request from another notebook for the files of the second cell", cells: *window_c2}
+    result: "What is read back joins the window exactly: the earlier output and the window together are everything the cell printed, the pages and the chunks are the same text, and a run that is still going can be read too. Reading leaves the notebook as it was, and another notebook cannot read the files."
+    ends: {tab: *window_c2, server: *window_c2, store: ["#c1=all 20,000 lines", "#c2=all 6,000 lines"]}
+    risk: "Output that is read back with a line missing or twice, or that another notebook can read, is worse than output that was never kept."
+    status: proposed
+    discussion: *discuss
