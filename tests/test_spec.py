@@ -162,10 +162,12 @@ class DiscussionTest(unittest.TestCase):
             current = (Path(d) / "current.html").read_text()
             discussion = (Path(d) / "discussion.html").read_text()
         self.assertEqual(current.count('class="state-row"'), len(src["stories"]))
-        self.assertEqual(current.count('data-status="settled"'), 58)
+        # 64 settled: the six streams stories are settled in suite.yaml (no policy), though proposed as cases
+        self.assertEqual(current.count('data-status="settled"'), 64)
         opted_in = [sid for sid, s in src["stories"].items() if build.discussed(s)]
-        self.assertEqual(len(opted_in), 11)
-        self.assertEqual(discussion.count('class="talk"'), 11)
+        # 11 stories with a decision up for discussion, and the six proposed streams stories, which are listed whether or not they say so
+        self.assertEqual(len(opted_in), 17)
+        self.assertEqual(discussion.count('class="talk"'), 17)
         self.assertNotIn('class="talk-join"', discussion, "no link, no button")
 
     def test_a_link_makes_a_join_button(self):

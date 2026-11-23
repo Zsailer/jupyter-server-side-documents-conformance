@@ -54,6 +54,11 @@ page:
       text: >-
         The server keeps a record of each notebook's editing history next to the file, so that a tab that comes back can pick up where
         it left off.
+    windowed_streams:
+      badge: "Applies only if the server keeps long output in a window"
+      text: >-
+        A cell can print without end. The server keeps only the last part of such an output in the notebook, with a notice that says where
+        the rest is, and keeps every line in files beside the notebook.
   footer: >-
     Generated from the files in storyboards/ by python -m jupyter_server_documents.tests.acceptance.render. Each story is also a test of the
     acceptance suite (SCENARIOS.md), which says which versions of the code already do what the page describes (CATALOGUE.md). The page
@@ -93,6 +98,12 @@ groups:
     title: "Notebook outputs"
     intro: >-
       The outputs of cells (results, plots, text) must survive the server letting go of a notebook and building it again.
+  streams:
+    title: "Long output: a window in the notebook"
+    intro: >-
+      A cell that prints a great deal must not make the notebook grow, in memory, in any tab or in the saved file, and must not lose what
+      it printed. These stories apply only if the server keeps the last part of such an output in the notebook and the rest in files beside
+      it.
   stop:
     title: "Shutting a notebook down"
     intro: >-
